@@ -1,0 +1,4 @@
+#!/bin/sh
+putgitrepo \
+	git@github.com:ivi-vink/dotfiles.git \
+	/home/$USER

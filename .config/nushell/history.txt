@@ -1,0 +1,1167 @@
+bash
+ls .config/nushell/
+vi .config/nushell/env.nu
+path
+path add
+vi .config/nushell/env.nu
+vi .config/nushell/config.nu 
+vi /nix-config/profiles/core/home.nix 
+xdg-open https://google.com
+cat .local/bin/desktop-open-pipe 
+/nix/store/zcw13r2mmpzlnv2yvfl13mcpky3hivq1-system-path/bin/xdg-open https://google.com
+which xdg-open 
+vi /nix-config
+cd /nix-config/
+git fetch --all
+ls
+htop
+ssh-add ~/.ssh/id_ed25519_sk
+vi
+git fetch --all
+git pull
+vi
+sudo nixos-rebuild switch --flake /nix-config 
+vi /nix-config/profiles/core/home.nix 
+vi
+cd mut/neovim/pack/plugins/start/blink.cmp/
+git status
+vi
+ls
+vi
+cd /nix-config/
+vi mut/neovim/lua/my/packages/blink.lua 
+vi
+cp /nix-config/mut/surf/surf-open.sh /nix-config/mut/bin
+surf-open.sh 
+vi .local/bin/surf-open.sh 
+mkdir tmp
+surf-open.sh 
+sudo nixos-rebuild switch --flake /nix-config 
+chromium 
+vi /nix-config/mut/surf/
+sudo nixos-rebuild switch --flake /nix-config 
+man surf
+man tabbed
+xwininfo
+vi /nix-config/profiles/graphical/suckless.nix 
+sudo nixos-rebuild switch --flake /nix-config 
+xwininfo 
+surf-open.sh https://troubleshooters.com/linux/surf.htm
+vi /nix-config/mut/tabbed/config.def.h 
+sudo nixos-rebuild switch --flake /nix-config 
+cat ~/.ssh/id_rsa_yubikey.pub 
+vi /nix-config/lib/my.nix 
+ssh-add ~/.ssh/id_ed25519_sk
+ssh 192.168.178.44
+ssh -i ~/.ssh/id_ed25519_sk  192.168.178.44 -p 2222
+ssh -i ~/.ssh/id_ed25519_sk  192.168.178.44 -p 2222 -vvv
+build-pixie 
+build-pixie pump
+which run-pixiecore 
+which run-pixiecore | open ($in | get patch)
+which run-pixiecore | open ($in | get path)
+which run-pixiecore | open ($in.0 | get path)
+run-pixiecore 
+ssh -i ~/.ssh/id_ed25519_sk  192.168.178.44 -p 2222 -vvv
+ls
+ls initrd/
+ls
+ls init/bin/
+cd initrd/initrw
+cd initrd/
+ls
+ls initrd.zst
+ls -l initrd.zst
+ls -al initrd.zst
+zstd 
+zstd -h
+zstd initrd -o here
+zstd initrd -o ~/here
+cd ..
+cd here
+ls
+cd ..
+ls
+cd
+ls
+cd ~/here
+ls ~/here
+file ~/here
+rm ~/here
+cd initrd/
+ls
+zstd
+zstd -h
+zstd -d initrd -o ~/here
+cd ~/here
+ls
+cd ../
+ls
+file here
+cpio
+open here | cpio -idmv
+ls
+cd nix/
+ls
+cd store/
+ls
+cd ..
+cat init
+ls
+rm -rf nix
+sudo rm -rf ./nix
+ls
+mkdir unpackedinitrd
+cd unpackedinitrd/
+cp ../here .
+ls
+open here | cpio -idmv
+ls
+cat init 
+cat init | grep mnt
+cd
+cd /nix-config
+vi
+git status
+vi
+ls
+vi
+ssh-add ~/.ssh/id_ed25519_sk
+git push
+git remote remove origin 
+surf-open.sh
+surf
+tabbed
+surf-open.sh
+which surf-open.sh 
+which surf-open.sh | get path | open
+which surf-open.sh | get path.0 | open
+which surf-open.sh | get path.0 | nvim
+which surf-open.sh | get path.0 | nvim $in
+ls tmp
+rm tmp/tabbed-surf.xid
+vi
+git remote add origin git@github.com:ivi-vink/flake.git
+vi
+cccccbhnjjflcnulunfkudgidkhejkdlibutfngdreeh
+cd
+cd Programming/ThirdParty/
+git clone https://github.com/martanne/vis
+cd vis
+makegcc
+gcc
+./configure
+gcc
+vi Dockerfile
+cd vis
+make docker
+vi Dockerfile
+ls
+./vis
+vi hello 
+vis
+vi
+mv vis ~/.local/bin
+vi
+vis
+cd
+vis
+cd Programming/
+vis
+ls
+vis
+cd ~/.config/
+man vis-open
+vis-open
+ls
+./vis-open
+vis
+ls
+vis
+vi
+vis
+cd 
+rm ~/.local/bin/vis
+cd /nix-config/
+vi flake.nix 
+s
+sudo nixos-rebuild switch --flake /nix-config 
+vis
+which vis
+echo 1 2 3 | vis-menu 
+^echo 1 2 3 | vis-menu 
+^echo 1\n2 3 | vis-menu 
+^ls | vis-menu 
+ls | get name | vis-menu 
+ls | each {get name} | vis-menu 
+ls | each {|f| $f.name} | vis-menu 
+ls | each {|f| $f.name}
+ls | each {|f| $f.name} | to tsv
+ls | each {|f| $f.name}
+ls | each {|f| $f.name} | to json
+ls | each {|f| $f.name} | to text
+ls | each {|f| $f.name} | to text | vis-menu
+let result = ls | each {|f| $f.name} | to text | vis-menu
+$result
+vis
+man vis
+cd .config/vis
+ls
+wget https://repo.or.cz/vis-quickfix.git/blob_plain/ff8e5e14c0b9e47238fa14723e1a0f5913ee3aeb:/init.lua
+ls
+mkdir quickfix
+mv init.lua quickfix/
+vis visrc.lua
+grpe
+cd .config/vis
+grep -n require
+grep -n require .
+grep -n require *
+grep -rn require *
+vis
+grep -n -rn require *
+which grep
+grep require *
+which rg
+vis visrc.lua
+vis
+vis
+vis
+which bash
+ls /bin/bash
+ls /usr/bin/bash
+vis
+ls
+vis
+cd .config/vis
+vis
+vis visrc.lua
+vis
+cd .config/vis
+vis
+touch vislogs
+surf
+surf-open.sh
+surf-open.sh google.com
+surf-open.sh https://google.com
+surf
+rm tmp/tabbed-surf.xid
+cd
+cd .config/vis
+vis
+tail -f vislogs
+ls
+vis
+grep -rn require quickfix
+vis
+ls
+rm debug
+rm --debug
+rm '--debug'
+ls
+rm vislogs
+ls
+vis
+cd .config/vis
+vis
+vis visrc.lua
+vis
+vis visrc.lua
+fmt
+which fmt
+vis
+cd .config/vis
+vis
+vis visrc.lua
+ll
+ls
+vis-open .config
+vi /run/current-system/sw/bin/vis-open
+which sh
+ls /etc/profiles/per-user/ivi/bin/sh
+ls -l /etc/profiles/per-user/ivi/bin/sh
+ls -l /etc/profiles/per-user/ivi/bin/sh | get target
+ls -l /nix/store/88s532drks0ip0ffyp9va413zssq9hvr-home-manager-path/bin/sh
+ls -l /nix/store/88s532drks0ip0ffyp9va413zssq9hvr-home-manager-path/bin/sh | get target
+vi /run/current-system/sw/bin/vis-open
+which vis-open
+$env.PATH
+chmod +x .local/bin/vis-open 
+which vis-open
+vis-open .config
+vi ~/.local/bin/vis-open 
+vis-open .config
+vi ~/.local/bin/vis-open 
+vis-open .config
+vi ~/.local/bin/vis-open 
+vis-open .config
+vi ~/.local/bin/vis-open 
+man getops
+vis
+vis .local/bin/vis-open
+rm .local/bin/vis-open
+rm .config/vis/--debug
+vis
+cd Programming/Projects/csapp/
+ls
+vis Makefile
+vis `--debug`
+ls
+rm --debug
+rm ./--debug
+vis ~/.config/vis/quickfix/init.lua
+ls
+rm ./--debug
+vis
+ls
+mkdir 4
+ls
+cd 4
+ls
+cd ..
+vis
+git status
+git add .
+git commit -m dunno
+ls
+vis 58_decode2.s
+ls
+vis 58_decode2.s
+vis *.s
+vis
+man getopts
+man vis
+lf
+vis
+vis 
+ls
+cd 4
+ls
+ls ../3/
+vis
+vis ~/.config/vis/visrc.lua
+vis
+cd 4
+vis
+sb-battery 
+rm -rf tmp/
+surf-open.sh https://google.com
+mkdir tmp
+vis
+git clone https://github.com/seifferth/vis-editorconfig "$HOME/.config/vis/edconf"
+uarocks install editorconfig-core
+luarocks install editorconfig-core
+which lua
+lua
+vis
+man vis
+vis
+cd third vis
+ls
+vis ~/.config/vis/visrc.lua
+cd third vis
+ls
+man vis-complete
+ls --raw
+^ls
+^ls | vis-complete
+^ls | vis-complete --file
+^ls | vis-complete --file *.c
+^ls | vis-complete --word *.c
+vis-complete --word *.c
+man vis-complete
+l
+ls
+vis Dockerfile
+cd csapp
+ls
+sb-battery 
+cd /nix-config/
+vi machines/pump-netboot.nix 
+cd /nix-config/
+build-pixie pump
+run-pixiecore 
+run-pixiecore 
+which build-pixie 
+ls -al /run/current-system/sw/bin/build-pixie
+vi machines/pump-netboot.nix 
+sudo nixos-rebuild switch --flake /nix-config 
+which build-pixie 
+ls -l /run/current-system/sw/bin/build-pixie
+ls init/
+man read
+bash
+ls init/
+man switch_root
+ls init
+ls init/init
+cat init/init
+cd unpackedinitrd/
+ls
+ls nix/store
+ls **/*
+ls **/init
+ls **/init | each { |f| $f.name }
+open nix/store/r1m9wckjsjgiiai77hfxazc0mc3k2nc3-extra-utils/bin/init
+rm -rf unpackedinitrd/
+sudo rm -rf unpackedinitrd/
+rm -rf init/
+rm -f init
+rm -f kernel/
+rm -f kernel
+rm -f initrd/
+rm -f initrd
+vi machines/pump-netboot.nix 
+ls
+cd
+ls
+ls -l
+rm lib
+ls -l
+vi init/init 
+cpio
+man cpio
+nix-collect-garbage -d
+df -h
+sudo nixos-rebuild switch --flake /nix-config 
+build-pixie pump
+ls
+open hando
+open hando | xdg-open $in
+surf-open.sh https://drive.google.com/drive/folders/1r5DIUnDRfc1JlgZmRUEODCxsw5YcnixW
+ls
+ls hando
+ls
+ls initrd/
+open initrd/initrd | zstd -d -o unpacked
+ls unpacked
+file unpacked 
+open unpacked | cpio -d
+open unpacked | cpio
+cpio --help
+open unpacked | cpio -i
+ls
+ls unpacked
+mkdir unpacked
+mkdir test
+mv unpacked test
+cd test
+ls
+cd .
+cd ..
+ls -al tes
+ls -al test
+sudo rm -rf
+ls
+sudo rm -rf test
+ls -al test
+mkdir test
+mv unpacked test
+cd test
+open unpacked | cpio -i
+ls
+ls nix/
+ls nix/store/
+ls ../init
+ls nix/store/6wxswzjpf7fp5flag2baqqkm75rqqykf-linux-6.6.68-modules-shrunk
+ls nix/store/6wxswzjpf7fp5flag2baqqkm75rqqykf-linux-6.6.68-modules-shrunk/lib/
+ls nix/store/**/init
+file nix/store/v971vc1mpx06qavx6z9kwj3nbyifbd1g-extra-utils/bin/init
+ls
+cd ..
+ls
+sudo nixos-rebuild switch --flake /nix-config 
+cd /nix-config/
+vi flake.nix 
+sudo nixos-rebuild switch --flake /nix-config 
+sudo nixos-rebuild switch --flake /nix-config  --impure
+vi flake.nix 
+sudo nixos-rebuild switch --flake /nix-config  --impure
+run-pixiecore 
+which run-pixiecore | get path.0
+ls -l /run/current-system/sw/bin/run-pixiecore
+ls -l /run/current-system/sw/bin/run-pixiecore | get target.0 | open $in
+ls /nix/store/m9j4rark32jdpigzdwdpj1q9w9l70230-nixos-system-pump-25.05.20241229.88195a9/init
+ls /nix/store/m9j4rark32jdpigzdwdpj1q9w9l70230-nixos-system-pump-25.05.20241229.88195a9/init/
+ls /nix/store/m9j4rark32jdpigzdwdpj1q9w9l70230-nixos-system-pump-25.05.20241229.88195a9/init
+cat /nix/store/m9j4rark32jdpigzdwdpj1q9w9l70230-nixos-system-pump-25.05.20241229.88195a9/init
+run-pixiecore 
+ssh -i ~/.ssh/id_ed25519_sk  192.168.178.44 -p 2222 -vvv
+vi /etc/resolv.conf 
+ip
+ip a
+ip route
+sudo -E vi /etc/resolv.conf 
+run-pixiecore 
+rm tmp/tabbed-surf.xid
+pass show personal/home-admin 
+vis
+cd /nix-config/
+gitu
+git status
+git diff
+git add .
+git commit -m 'fix netboot'
+ls init/
+rm ~/tmp/tabbed-surf.xid
+git rm --cached init*
+git rm --cached kernel*
+ls
+rm init* kernel*
+ls
+rm result
+ls
+git status
+git add .
+git commit --amend
+git stash pop
+git status
+vis flake.nix
+git diff
+git stash clear
+git diff
+vis flake.lock
+git diff
+git clean -fd
+ls
+git reset --hard
+ls
+git pull
+ls
+curl -LO larbs.xyz/larbs.sh
+vis larbs.sh
+mv larbs.sh ~/larbs.sh
+cd ~
+ls
+ls larbs.sh
+cd /nix-config/
+git pull
+git log
+git pull --rebase
+vi
+git branch --set-upstream-to=origin/master master
+git pull --rebase
+git diff
+vis mut/ghostty/config 
+git rebase --continue 
+git add mut/ghostty/config 
+git status
+git rebase --continue 
+git push
+vis
+mv ~/.config/vis ~/vis.bu
+just 
+nix-shell -p just
+ls ~/.config/
+ls ~/.config/nvim
+ls -l ~/.config
+s
+sudo nixos-rebuild switch --flake /nix-config  --impure
+vis flake.nix
+ls mut/vis/
+ls mut/vis/vis-editorconfig/
+ls ~/.config/vis/
+ls -l ~/.config/vis
+ls -l ~/.config
+ls
+surfraw 
+ls
+bash
+ls
+which sh
+readlink sh
+readlink /etc/profiles/per-user/ivi/bin/sh
+realpaht /nix/store/gh3ri50y5k7mjmvxz4ncllb4xqjj3nhp-home-manager-path/bin/sh
+realpath /nix/store/gh3ri50y5k7mjmvxz4ncllb4xqjj3nhp-home-manager-path/bin/sh
+surf
+ls .local/bin/dmenu
+vis .local/bin/dmenu
+rm .local/bin/dmenu
+wget https://raw.githubusercontent.com/LukeSmithxyz/LARBS/master/static/progs.csv
+ls
+git status
+cd /nix-config/
+cd pnsh
+vis progs.csv
+git add progs.csv 
+git status
+gs
+git commit -m 'add progs.csv'
+git log
+git push
+virt-admin 
+virt-viewer 
+cd /nix-config/
+cd mut/vis
+ls
+touch Makefile
+ls
+vis Makefile
+vis larbs.sh
+ls /run/secrets/
+sudo su
+ls Downloads/
+ls Downloads | sort
+ls Downloads
+ls Downloads | sort-by modified
+cd Downloads/
+ls Downloads | sort-by modified
+ls | sort-by modified
+ls | sort-by --reverse modified
+cd
+ls
+cd /nix-config/
+ls
+vis secrets/root.yaml
+ls -al
+vis .sops.yaml
+vis machines/pump-netboot.nix
+cd ~/.config
+ls age
+ls
+cd -
+vis machines/pump-netboot.nix
+ls ~/sync/
+ls ~/sync/my/
+ls ~/.config/
+ls ~/.config/sops/age/
+cat /home/ivi/.config/sops/age/keys.txt
+vis machines/pump-netboot.nix
+vis profiles/homeserver/transmission.nix
+run-pixiecore 
+ssh 192.168.178.44
+TERM=xterm ssh 192.168.178.44
+sudo su
+cd /nix-config/
+nix shell
+cd /nix-config/
+nix repl
+vis flake.nix
+nix repl
+nix flake --help
+nix flake lock
+nix repl
+vis flake.nix
+nix repl
+vis flake.nix
+rg sops-nix
+vis profiles/core/secrets.nix
+nix repl
+vis profiles/netboot/system.nix
+cd /nix-config/
+ls
+cat .sops.yaml
+ls /run/secrets.d/
+sudo su
+age
+ls
+cat pump
+ls
+age
+age-keygen -o pump-age-keys.txt
+cd /nix-config/
+vis ~/.config/sops/age/keys.txt
+cat ~/pump-age-keys.txt
+vis .sops.yaml
+age
+sops -h
+sops -h | less
+sops -r 
+sops -r ./secrets/*
+sops -r ./secrets/**/*
+./secrets/**/* | each {|f| sops -r $f.name }
+ls ./secrets/**/* | each {|f| sops -r $f.name }
+ls ./secrets/**/*
+ls ./secrets/**/* | where type == file | each {|f| sops -r $f.name }
+ls ./secrets/**/* | where type == file | each {|f| sops -r -i $f.name }
+git status
+git add secrets
+git status
+sops ./secrets/porkbun
+vis ./secrets/porkbun
+cat .sops.yaml
+sops -h | less
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys -r -i $f.name }
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys -i $f.name }
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys $f.name }
+git status
+vis ./secrets/porkbun
+sops ./secrets/porkbun
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys $f.name }
+vis /nix-config/secrets/root.yaml
+sops updatekeys
+sops updatekeys ./secrets
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys $f.name }
+vis /nix-config/secrets/serber/ivi
+git log
+git clean -fd ./secrets/
+git status
+git rm --cached ./clean
+git diff
+git diff --cached
+git status
+ls ./secrets/**/* | where type == file | each {|f| git restore --stage $f.name }
+git status
+git clean -fd ./secrets/
+git status
+git reset --hard ./clean
+ls ./secrets/**/* | where type == file | each {|f| git restore $f.name }
+git status
+ls ./secrets/**/* | where type == file | each {|f| sops updatekeys $f.name }
+git status
+vis /nix-config/secrets/serber/ivi
+vis .sops.yaml
+vis /nix-config/secrets/porkbun
+sops updatekeys ./secrets/porkbun
+sops -h
+sops -h | less
+bash
+git status
+git add secrets
+git commit -m 'sops updatekeys'
+git log
+git push
+TERM=xterm ssh 192.168.178.44
+sed /192.168.178.44/d ~/.ssh/known_hosts
+sed -i /192.168.178.44/d ~/.ssh/known_hosts
+run-pixiecore 
+cd 
+cat pump-age-keys.txt
+TERM=xterm ssh 192.168.178.44
+vis /nix-config/profiles/homeserver/
+vis /nix-config/profiles/homeserver/nginx.nix
+sudo nixos-rebuild switch --flake /nix-config  --impure
+ssh 192.168.178.44
+pass show personal/zpool
+TERM=xterm ssh 192.168.178.44
+sed -i /192.168.178.44/d ~/.ssh/known_hosts
+run-pixiecore 
+TERM=xterm ssh 192.168.178.44
+vis /nix-config/profiles/homeserver/transmission.nix
+sudo nixos-rebuild switch --flake /nix-config  --impure
+run-pixiecore 
+pass show personal/zpool
+cat pump-age-keys.txt
+TERM=xterm ssh 192.168.178.44
+sed -i /192.168.178.44/d ~/.ssh/known_hosts
+virt-manager 
+pass show personal/zpool
+cat pump-age-keys.txt
+cd /nix-config/
+ls
+vis profiles/homeserver/transmission.nix
+vis machines/pump-netboot.nix
+grep -rn docker .
+grep -rn rootless .
+vis profiles/homeserver/transmission.nix
+TERM=xterm ssh 192.168.178.44
+cd /nix-config/
+vis profiles/homeserver/transmission.nix
+sudo nixos-rebuild switch --flake /nix-config  --impure
+run-pixiecore 
+pass show personal/zpool
+cat pump-age-keys.txt
+cd
+cat pump-age-keys.txt
+ssh 192.168.178.44
+TERM=xterm ssh 192.168.178.44
+sed -i /192.168.178.44/d ~/.ssh/known_hosts
+cat pump-age-keys.txt
+curl 192.168.178.44:9091
+curl -f 192.168.178.44:9091
+curl -4 http://192.168.178.44:9091
+curl - http://192.168.178.44:9091
+curl http://192.168.178.44:9091
+TERM=xterm ssh 192.168.178.44
+cd /nix-config/
+vis profiles/homeserver/transmission.nix
+curl http://192.168.178.44:8096
+curl -L http://192.168.178.44:8096
+ip a
+TERM=xterm ssh 192.168.178.44
+cd /var/lib/libvirt/images/
+ls
+sudo su
+ssh 192.168.122.158
+ssh root@192.168.122.158
+ssh ivi@192.168.122.159
+TERM=xterm ssh ivi@192.168.122.159
+cd /nix-config/
+ls
+mv ~/larbs.sh .
+ls
+mv larbs.sh mvbs.sh
+vis larbs.sh
+ssh ivi@192.168.122.159
+TERM=xterm ssh ivi@192.168.122.159
+TERM=xterm ssh ivi@192.168.122.159 < /nix-config/mvbs.sh
+open /nix-config/mvbs.sh | TERM=xterm ssh ivi@192.168.122.159
+ssh-add ~/.ssh/id_ed25519_sk
+ssh-add -L
+open /nix-config/mvbs.sh | TERM=xterm ssh root@192.168.122.159
+open /nix-config/mvbs.sh | TERM=xterm ssh ivi@192.168.122.159
+vis mvbs.sh
+TERM=xterm ssh ivi@192.168.122.159
+TERM=xterm ssh root@192.168.122.159
+open /nix-config/mvbs.sh | TERM=xterm ssh ivi@192.168.122.159
+open /nix-config/mvbs.sh | TERM=xterm ssh root@192.168.122.159
+bash
+ssh-copy-id
+TERM=xterm ssh-copy-id root@192.168.122.159
+ssh 'root@192.168.122.159'
+open /nix-config/mvbs.sh | TERM=xterm ssh root@192.168.122.159
+scp /nix-config/mvbs.sh root@192.168.122.159:/opt/installer | TERM=xterm ssh root@192.168.122.159 /opt/installer
+scp /nix-config/mvbs.sh root@192.168.122.159:/opt/installer; TERM=xterm ssh root@192.168.122.159 bash /opt/installer
+scp /nix-config/mvbs.sh root@192.168.122.159:/opt/installer; TERM=xterm ssh root@192.168.122.159 
+ls
+vi mvbs.sh
+vis mvbs.sh
+virt-manager 
+cd /e
+cd /nix-config/
+grep progs.csv
+grep desktop progs.csv
+grep -e '^desktop' progs.csv
+grep -e '^desktop' -e '^cli' progs.csv
+vis progs.csv
+ls ~/.config/vis/
+cd /nix-config/mut/dwm/
+git stuat
+git status
+cd ../..
+vis mut/dwm/dwm.c
+git subtree
+git subtree push --prefix mut/dwm git@github.com:ivi-vink/dwm.git master
+git subtree pull --prefix mut/dwm git@github.com:ivi-vink/dwm.git master
+git status
+rm mut/vis/Makefile
+TERM=xterm ssh root@192.168.122.159 
+git add .
+git commit -m 'fix homeserver and start xbps'
+git push
+git subtree pull --prefix mut/dwm git@github.com:ivi-vink/dwm.git master
+git subtree push --prefix mut/dwm git@github.com:ivi-vink/dwm.git master -f
+cd ~
+ls
+git clone git@github.com:ivi-vink/dwm.git
+cp -r /nix-config/mut/dwm dwm
+ls dwm
+rm -rf dwm/dwm
+cp -r /nix-config/mut/dwm/* dwm
+ls dwm
+cd dwm
+git status
+git diff
+git add .
+git commit -m 'fix homeserver and start xbps'
+git push
+cd /nix-config
+ls
+rm tmp/tabbed-surf.xid
+git clone git@github.com:ivi-vink/vis.git
+cd vis
+ls
+git remote 
+git remote add upstream git@github.com:martanne/vis.git
+git fetch upstream v0.9
+git status
+git checkout v0.9
+git checkout upstream/v0.9
+git checkout -b v0.9
+git checkout master
+git log
+git branch -d v0.9
+git checkout refs/tags/v0.9
+carapace 
+cd vis
+git remote
+git fetch upstream v0.9
+ssh-add ~/.ssh/id_ed25519_sk
+ls
+git checkout upstream/refs/tags/v0.9
+git checkout upstream/v0.9
+git fetch upstream
+git reset --hard v0.9 
+git push -f
+git clone git@github.com:ivi-vink/lua.git
+cd ..
+git clone git@github.com:ivi-vink/lua.git
+cd lua/
+vis Makefile
+man make
+vis Makefile
+ls
+rm Makefile
+cd ..
+git clone git@github.com:pionative/pnsh.git
+cd pnsh/
+ls
+cd ~/sync/my/
+ls
+cd ../..
+cd lua
+cd /nix-config
+ls
+cd ~/sync/my/
+ls
+cd
+cd ~/sync/my/
+ls
+cd notes
+ls
+cd ..
+ls
+vis Dockerfile.vis
+ls
+cat Dockerfile.vis 
+cd lua
+ls
+curl -L -R -O https://www.lua.org/ftp/lua-5.4.7.tar.gz
+ls
+tar zxf lua-5.4.7.tar.gz
+ls
+rm -rf lua-5.4.7/
+ls
+tar zxf --strip-components 1 lua-5.4.7.tar.gz
+tar -zxf --strip-components 1 lua-5.4.7.tar.gz
+ls
+tar -zxf lua-5.4.7.tar.gz --strip-components 1
+ls
+rm lua-5.4.7.tar.gz
+ls
+git add .
+git commit -m 'fetch tarball'
+sed -i -e 's/^TO_LIB=.*/\0 liblua.so/' Makefile
+git diff
+sed -i -e 's/^CFLAGS.*/\0 -fPIC/' src/Makefile
+git diff
+sed -i -e '/^LUA_A=/a LUA_SO= liblua.so' src/Makefile
+sed -i -e 's/^ALL_T=.*/\0 $(LUA_SO)/' src/Makefile
+git diff
+echo >> src/Makefile
+^echo >> src/Makefile
+bash
+git diff
+git add .
+git commit -m 'patch to also compile shared object'
+vis Makefile
+man LD_LIBRARY_PATHERR
+man LD_LIBRARY_PATH
+ls /usr/lib
+vis Makefile
+virt-manager 
+ssh-add ~/.ssh/id_ed25519_sk
+ssh 'root@192.168.122.159'
+ssh 'root@192.168.122.158'
+sed -i /192.168.122.158/d ~/.ssh/known_hosts
+ssh 'root@192.168.122.158'
+eval
+ssh-add ~/.ssh/id_ed25519_sk
+ssh-agent
+$env.SSH_AUTH_SOCK = '/tmp/ssh-XXXXXXeXq31s/agent.30985'
+ssh-add ~/.ssh/id_ed25519_sk
+cd vis
+cd ..
+cd lua
+ls
+git push
+ssh-add ~/.ssh/id_ed25519_sk
+git push
+ls
+cd ..
+git clone git@github.com:ivi-vink/luarocks.git
+cd luarocks/
+ls
+curl -L -R -O https://luarocks.github.io/luarocks/releases/luarocks-3.11.1.tar.gz
+ls
+tar -zxf luarocks-3.11.1.tar.gz --strip-components 1
+ls
+rm luarocks-3.11.1.tar.gz
+ls
+cat configure 
+vis ./configure
+ls
+git add .
+git commit -m 'fetch tarball'
+git push
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.159:/opt/installer; TERM=xterm ssh root@192.168.122.159 
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.159:/opt/installer; TERM=xterm ssh root@192.168.122.158
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt/installer; TERM=xterm ssh root@192.168.122.158
+ssh 'ivi@192.168.122.158'
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt/installer; TERM=xterm ssh root@192.168.122.158
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158
+vis Dockerfile.vis
+cd /nix-config/
+git diff
+cd
+ls
+ls larbs.sh
+vis larbs.sh
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158 bash
+vis mvbs.sh
+git add progs.csv
+git status
+git commit -m 'update progs'
+git push
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158 
+cd /nix-config/
+vis mvbs.sh
+cd
+cd lua/
+ls
+vi Makefile 
+git diff
+ls
+vi src/Makefile 
+git diff
+make
+vi src/Makefile 
+vi
+git push
+vis
+cd /nix-config/
+ls
+vis mvbs.sh
+cd ~
+cd lua/
+ls
+git push
+cd -
+cd /nix-config/
+ls
+cd pnsh/
+ls
+cd /nix-config/
+ls
+cd sync my
+vis mvbs.sh
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158 
+vi Dockerfile.vis 
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158 
+cd
+git add progs.csv
+git commit -m 'update progs'
+git push
+cd /nix-config/
+scp /nix-config/mvbs.sh /nix-config/progs.csv root@192.168.122.158:/opt; TERM=xterm ssh root@192.168.122.158 
+ls
+git status
+git diff progs.csv
+git add progs.csv mvbs.sh 
+git commit -m 'update progs mvbs.sh'
+git push
+git status
+git diff
+cd /nix-config/
+git status
+vis
+vis progs.csv
+cd /nix-config/
+virt-manager 
+cd /nix-config/
+ssh 'ivi@192.168.122.68'
+ssh 'ivi@192.168.122.86'
+ssh 'root@192.168.122.86'
+ssh 'ivi@192.168.122.86'
+LS
+ls
+ssh 'root@192.168.122.86'
+ssh-copy-id 
+ssh-copy-id  'root@192.168.122.86'
+ssh 'root@192.168.122.86'
+ssh-agent
+$env.SSH_AUTH_SOCK = "/tmp/ssh-XXXXXXiOxnW8/agent.21661"
+ssh 'root@192.168.122.86'
+TERM=xterm ssh 'root@192.168.122.86'
+TERM=xterm scp /nix-config/progs.csv /nix-config/mvbs.sh 'root@192.168.122.86:/opt'
+oksh
+nix-shell -p oksh
+e
+vis
+cd /nix-config/
+git status
+tig
+rm bash_carapace_completion
+ls
+git status
+vis mut/nushell/config.nu
+git diff
+git add .
+git commit -m 'update progs mvbs.sh'
+git push
+ls
+rm tmp/tabbed-surf.xid
+man git
+ls
+cd /nix-config/
+ls
+cd 
+man git clone
+mkdir .local/src
+cd .local/src/
+ls
+git clone git@github.com:ivi-vink/dotfiles.git
+cd dotfiles/
+git checkout -b master --orphan 
+git checkout -b master --orphan origin  
+git checkout master --orphan origin  
+git checkout master --orphan 
+git checkout -b master --orphan 
+git checkout -b master --orphan origin/main 
+git checkout master --orphan origin/main 
+git checkout --orphan master
+git status
+git diff
+git stat
+git stattus
+git status
+git rm --cached .
+git rm -r --cached .
+git status
+rm -rf *
+ls
+git status
+vis .gitmodules
+ls
+mkdir -p .local/bin
+mkdir .local/bin
+cd /nix-config/
+ls
+ls mut/
+cp -r /nix-config/mut/bin/* .local/bin
+ls .local/bin
+rm .local/bin/hs
+rm .local/bin/choose
+ls .local/bin
+git add .local
+git status
+rm .gitmodules
+vis .gitignore
+rm .gitignore
+vis .gitconfig
+rm .gitconfig
+git status
+git add .local
+git commit -m 'copy bin'
+ls
+mkdir .config
+cp -r /nix-config/mut/aerospace .config
+cp -r /nix-config/mut/carapace .config
+cp -r /nix-config/mut/dwmblocks .config
+cp -r /nix-config/mut/ghostty/ .config
+cp -r /nix-config/mut/k9s .config
+cp -r /nix-config/mut/neovim/* .config/nvim
+mkdir .config/nvim
+cp -r /nix-config/mut/neovim/* .config/nvim
+ls .config/nvim/
+cp -r /nix-config/mut/wal .config
+cp -r /nix-config/mut/emacs .config
+ls .config/emacs/
+cp -r /nix-config/mut/git .config
+ls .config/git/
+open .config/git/config
+vis .config/git/config
+cp -r /nix-config/mut/lf .config
+ls
