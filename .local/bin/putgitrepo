@@ -1,4 +1,5 @@
 #!/bin/sh
+name=$USER
 putgitrepo() {
 	# Downloads a gitrepo $1 and places the files in $2 only overwriting conflicts
 	[ -z "$3" ] && branch="master" || branch="$repobranch"
