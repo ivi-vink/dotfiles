@@ -1,0 +1,40 @@
+#!/bin/sh
+echo " Compiliiing ${@}"
+
+error () {
+    echo "$1"
+    exit 1
+}
+
+case "${@}" in
+    racket*)
+        shift
+        echo " \-> racket -l errortrace -t ${@}"
+        racket -l errortrace -t ${@}
+        ;;
+    ansible-lint*)
+        shift
+        echo " \-> ansible-lint --profile production --write=all -qq --nocolor"
+        ansible-lint --profile production --write=all -qq --nocolor ${@}
+        ;;
+    ansible-playbook*)
+        shift
+        echo " \-> ansible-playbook -e@<(pass)"
+        ansible-playbook -b -e "{\"ansible_become_pass\":\"$PASSWORD\"}" ${@}
+        ;;
+    awx*)
+        echo " \-> awx"
+        shift
+        awx "$@" | filter-ansi
+        ;;
+    helm\ lint*)
+        shift
+        shift
+        echo " \-> helm lint --set cluster=debug-cluster --strict --quiet --with-subcharts ${@}"
+        helm lint --set cluster=debug-cluster --strict --quiet --with-subcharts ${@} | sed -u -E -e "s@$(basename ${PWD})/|error during tpl function execution for \".*\"@@g"
+        ;;
+    *)
+        echo " \-> ${@}"
+        ${@}
+        ;;
+esac

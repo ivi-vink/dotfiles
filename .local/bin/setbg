@@ -1,0 +1,19 @@
+#!/bin/sh
+reload=0
+while getopts "r" opt; do
+  case "$opt" in
+    h|\?) exit 0 ;;
+    r)  reload=1 ;;
+  esac
+done
+if [ $reload -eq 1 ]; then
+    # (cat ~/.cache/wal/sequences &)
+    wal -R
+else
+    if [ -z "$1" ]; then
+        sxiv -tob ~/Wallpapers | xargs wal -i
+    else
+        wal -i "$1"
+    fi
+    kill -HUP "$(pidof dwm)"
+fi

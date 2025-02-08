@@ -1,0 +1,7 @@
+#!/usr/bin/env nu
+echo listening for open commands
+loop {
+  let line = nc -l 127.0.0.1 1994
+  echo $line | save --append /tmp/debuglogs
+  try { ^open $line }
+}
