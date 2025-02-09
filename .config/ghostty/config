@@ -17,3 +17,6 @@ macos-option-as-alt=true
 clipboard-read = allow
 clipboard-write = allow
 clipboard-paste-protection=false
+
+background-blur = true
+background-opacity = 0.9
