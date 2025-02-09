@@ -1,3 +1,9 @@
 export HISTFILE="$HOME/.history"
-export PS1="$(hostname) $pwd"
-bind -m ^L=clear^J
+export HISTCONTROL="ignorespace"
+
+# Emacs mode clear chops off multline prompts.
+export PS1="$(hostname):/\$(
+pwd | cut -d'/' -f2- --output-delimiter '
+' | cut -c1-3 | paste -sd '/'
+)\n# "
+bind -m ^L=" clear^J"
