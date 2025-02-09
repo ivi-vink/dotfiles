@@ -1,9 +1,4 @@
-export HISTFILE="$HOME/.history"
-export HISTCONTROL="ignorespace"
+export EDITOR=vis
 
-# Emacs mode clear chops off multline prompts.
-export PS1="$(hostname):/\$(
-pwd | cut -d'/' -f2- --output-delimiter '
-' | cut -c1-3 | paste -sd '/'
-) \$(prompt-git)\n# "
-bind -m ^L=" clear^J"
+export PATH=$PATH:$HOME/go/bin:/usr/local/go/bin
+

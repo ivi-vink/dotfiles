@@ -16,8 +16,9 @@
 #    called directly instead of normal lf.
 
 # Basic vars
-set shellopts '-eu'
+# set shellopts '-eu'
 set ifs "\n"
+set hidden
 set scrolloff 10
 set icons
 set period 1
@@ -120,7 +121,7 @@ cmd bulkrename ${{
     tmpfile_old="$(mktemp)"
     tmpfile_new="$(mktemp)"
 
-    [ -n "$fs" ] && fs=$(basename -a $fs) || fs=$(ls)
+    [ -n "$fs" ] && fs=$(basename -a $fs) || fs=$(ls -A)
 
     echo "$fs" > "$tmpfile_old"
     echo "$fs" > "$tmpfile_new"
@@ -146,7 +147,7 @@ cmd on-quit ${{
   fi
 }}
 
-cmd change-last-dir &{{
+cmd change-last-dir ${{
   echo "$PWD" > /tmp/lf-on-quit
 }}
 

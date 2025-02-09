@@ -75,34 +75,34 @@ local parent = function(filename)
   return nil
 end
 
-local lfcd = function(cd_or_select_path)
-  local code, result, err = vis:pipe("", "lf --print-selection " .. cd_or_select_path)
-  vis:command("cd " .. err)
+-- Only works on linux for now.
+local pcwd = function()
+  local stat = io.open("/proc/self/stat"):read("*a")
+  local fields = {}
+  for k in stat:gmatch("[^%s]+") do table.insert(fields, k) end
+  if not fields[4] then
+    return "."
+  end
+  local parent_cwd = "/proc/" .. fields[4] .. "/cwd"
+  vis:info(parent_cwd)
+  return parent_cwd
+end
+
+vis:map(m.NORMAL, "<C-x>~", function()
+  vis:command("cd " .. pcwd())
+  return true;
+end)
+vis:map(m.NORMAL, "<C-x>_", function()
+  local code, result, err = vis:pipe("vis-open .")
   if result then
     vis:command("e " .. result)
   end
   return true;
-end
-
-vis:map(m.NORMAL, "<C-x>~", function()
-  vis:command("cd " .. (parent(vis.win.file.path) or "."))
-  return true;
 end)
 vis:map(m.NORMAL, "<C-x><C-f>", function()
-  local code, result, err = vis:pipe("", "vis-open " .. (parent(vis.win.file.path) or "."))
+  local code, result, err = vis:pipe("vis-open " .. (parent(vis.win.file.path) or "."))
   if result then
-    if not os.execute("cd " .. result) then
-      vis:command("e " .. result)
-    else
-      return lfcd(result)
-    end
-    return true;
+    vis:command("e " .. result)
   end
   return true;
-end)
-vis:map(m.NORMAL, "<C-x>-", function()
-  return lfcd(parent(vis.win.file.path) or "")
-end)
-vis:map(m.NORMAL, "<C-x>_", function()
-  return lfcd(".")
 end)
