@@ -1,0 +1,1 @@
+[ -d .git ] && git status --porcelain=v1 | { while read tag file; do case $tag in M) modified=$(( modified + 1));; ?*) untracked=$(( untracked + 1));; esac ; done; echo "git(M$modified|?$untracked)"; }
