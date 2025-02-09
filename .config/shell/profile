@@ -1,2 +1,3 @@
 export HISTFILE="$HOME/.history"
+export PS1="$(hostname) $pwd"
 bind -m ^L=clear^J
