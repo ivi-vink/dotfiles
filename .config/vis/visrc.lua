@@ -5,7 +5,7 @@ local quickfix = require('vis-quickfix')
 local format = require('vis-format')
 local m = vis.modes
 
-quickfix.grepprg = "rg --hidden --no-ignore-vcs --vimgrep"
+quickfix.grepprg = "grep -Hn "
 
 vis.ftdetect.filetypes.terraform = {
   ext = { "%.tf$" },
@@ -22,7 +22,10 @@ vis.events.subscribe(vis.events.INIT, function()
   vis:command"set change256colors off"
   vis:command"set theme lemonsoda"
 
+  vis:map(m.NORMAL,      '<C-[>', ':cp<Enter>')
+  vis:map(m.NORMAL,      '<C-]>', ':cn<Enter>')
   vis:map(m.INSERT,      '<C-r>"', '<C-r>+')
+
   vis:map(m.NORMAL,      'y', '<vis-register>+<vis-operator-yank>')
   vis:map(m.VISUAL,      'y', '<vis-register>+<vis-operator-yank>')
   vis:map(m.VISUAL_LINE, 'y', '<vis-register>+<vis-operator-yank>')
@@ -99,6 +102,7 @@ vis:map(m.NORMAL, "<C-x>_", function()
   end
   return true;
 end)
+vis:map(m.NORMAL, "<C-x>g", ":!tig<Enter>")
 vis:map(m.NORMAL, "<C-x><C-f>", function()
   local code, result, err = vis:pipe("vis-open " .. (parent(vis.win.file.path) or "."))
   if result then

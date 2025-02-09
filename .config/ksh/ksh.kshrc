@@ -16,6 +16,8 @@ pwd | cut -d'/' -f2- --output-delimiter '
 )\$(prompt-git)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
+eval "$(zoxide init posix --cmd cd --hook prompt)"
+
 export HISTFILE="$HOME/.history"
 export HISTCONTROL=ignorespace
 set -o emacs
