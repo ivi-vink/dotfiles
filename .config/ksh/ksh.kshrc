@@ -13,7 +13,7 @@ bind -m ^O=' lfcd^J'
 export PS1="$(hostname):/\$(
 pwd | cut -d'/' -f2- --output-delimiter '
 ' | cut -c1-3 | paste -sd '/'
-)\$(prompt-git)\n# "
+)\$(prompt-git)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
 export HISTFILE="$HOME/.history"
