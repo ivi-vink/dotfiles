@@ -1,4 +1,11 @@
 #!/bin/sh
-putgitrepo \
-	https://github.com/ivi-vink/dotfiles.git \
-	/home/$USER
+if [ -d "$HOME/.local/src/dotfiles/.git" ]; then
+	cp -rfT \
+		"$HOME/.local/src/dotfiles" \
+		 "/home/$USER"
+else
+	putgitrepo \
+		https://github.com/ivi-vink/dotfiles.git \
+		/home/$USER
+fi
+rm -rf "/home/$USER/.git"
