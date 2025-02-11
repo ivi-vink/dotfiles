@@ -11,8 +11,12 @@ bind -m ^O=' lfcd^J'
 
 # Emacs mode clear chops off multline prompts.
 export PS1="$(hostname):/\$(
+root=\$(pwd | cut -d'/' -f2- --output-delimiter '
+' | head -n-3 | cut -c1-3 | paste -sd '/')
+[ -z \$root ] || echo "\${root}/"
+)\$(
 pwd | cut -d'/' -f2- --output-delimiter '
-' | cut -c1-3 | paste -sd '/'
+' | tail -n3 | paste -sd '/'
 )\$(prompt-git)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
