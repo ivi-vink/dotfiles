@@ -2,6 +2,7 @@
 shopt -s nullglob globstar
 
 dmenu=dmenu
+[ "$(uname)" = "Darwin" ] && dmenu=/Applications/dmenu-mac.app/Contents/MacOS/dmenu-mac
 copy() {
   xclip -f | xclip -f -sel c
 }
