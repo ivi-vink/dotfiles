@@ -1,4 +1,4 @@
 export EDITOR=vis
 
-export PATH=$PATH:$HOME/go/bin:/usr/local/go/bin
-
+export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
+export PATH="$HOME/.local/bin:$PATH"
