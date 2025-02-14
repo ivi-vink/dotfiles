@@ -17,7 +17,7 @@ root=\$(pwd | cut -d'/' -f2- --output-delimiter '
 )\$(
 pwd | cut -d'/' -f2- --output-delimiter '
 ' | tail -n3 | paste -sd '/'
-)\$(prompt-git)\n jobs(\j) # "
+)\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
 eval "$(zoxide init posix --cmd cd --hook prompt)"

@@ -1,4 +1,4 @@
-[ -d .git ] && git status --porcelain=v1 | {
+git rev-parse --show-toplevel >/dev/null 2>&1 && git status --porcelain=v1 | {
 	while read tag file; do
 		case $tag in
 		M) modified=$(( modified + 1));;
@@ -8,5 +8,5 @@
 	printf '%s' " git($(git branch --show-current)"
 	[ 0 -lt "${modified:-0}" ] && printf '%s' ":M$modified"
 	[ 0 -lt "${untracked:-0}" ] && printf '%s' "|?$untracked"
-	echo ")"
+	printf '%s' ")"
 }

@@ -1,0 +1,3 @@
+#!/bin/sh
+branch="$(git branch -a | grep -v '*' | xargs -n1 | vis-menu)"
+[ -z "$branch" ] || git checkout "$branch"

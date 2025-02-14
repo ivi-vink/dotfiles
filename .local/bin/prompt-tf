@@ -1,0 +1,1 @@
+find . -mindepth 1 -maxdepth 1 -iname '*.tf' -o -iname '*.tfplan' -o -iname '.terraform' -o -iname '*.tfstate' | grep . >/dev/null 2>&1 && printf ' tf(%s)' "$(terraform workspace show)"
