@@ -19,8 +19,8 @@ format.formatters.terraform = format.stdio_formatter("terraform fmt -", {on_save
 vis.events.subscribe(vis.events.INIT, function()
   vis:command"set shell '/usr/bin/bash'"
   vis:command"set edconfhooks on"
-  vis:command"set change256colors off"
-  vis:command"set theme lemonsoda"
+  -- vis:command"set change256colors off"
+  vis:command"set theme gruber-darker"
 
   vis:map(m.NORMAL,      '<C-[>', ':cp<Enter>')
   vis:map(m.NORMAL,      '<C-]>', ':cn<Enter>')
