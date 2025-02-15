@@ -1,3 +1,5 @@
+..() { set -- ".." "$@"; for up; do cd $up; done; }
+
 lfcd () {
     tmp="$(mktemp -uq)"
     trap 'rm -f $tmp >/dev/null 2>&1 && trap - HUP INT QUIT TERM PWR EXIT' HUP INT QUIT TERM PWR EXIT
