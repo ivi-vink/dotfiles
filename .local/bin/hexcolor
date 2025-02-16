@@ -1,0 +1,7 @@
+show_colour() {
+  for i do
+    printf '\e]4;%d;%s\a\e[0;48;5;%dm%s\e[m\n' "$#" "$i" "$#" "$i"
+    shift
+  done
+}
+show_colour "$@"

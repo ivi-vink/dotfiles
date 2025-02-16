@@ -11,7 +11,7 @@ keybind = ctrl+zero=unbind
 keybind = ctrl+enter=unbind
 keybind = super+q=close_window
 keybind = super+r=reload_config
-theme=GruvboxLuke
+theme=gruber-darker
 window-decoration=false
 confirm-close-surface=false
 macos-option-as-alt=true
@@ -20,6 +20,5 @@ clipboard-read = allow
 clipboard-write = allow
 clipboard-paste-protection=false
 
-background-blur = true
-background-opacity = 0.9
 shell-integration = none
+cursor-style-blink=false
