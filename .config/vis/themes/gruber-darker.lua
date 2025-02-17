@@ -12,6 +12,7 @@ local gruber_darker = {
   ["bg+2"]      =        "#453d41",
   ["bg+3"]      =        "#484848",
   ["bg+4"]      =        "#52494e",
+  ["red-2"]     =        "#9a3200",
   ["red-1"]     =        "#c73c3f",
   ["red"]       =        "#f43841",
   ["red+1"]     =        "#ff4f58",
@@ -51,7 +52,7 @@ lexers.STYLE_IDENTIFIER         = lexers.STYLE_DEFAULT -- 'fore:'..gruber_darker
 
 lexers.STYLE_LINENUMBER         = 'fore:'..gruber_darker["bg+4"]
 lexers.STYLE_LINENUMBER_CURSOR  = 'fore:'..gruber_darker.yellow
-lexers.STYLE_CURSOR             = 'back:'..gruber_darker["yellow-1"]
+lexers.STYLE_CURSOR             = 'back:'..gruber_darker["red-2"]
 lexers.STYLE_CURSOR_PRIMARY     = 'back:'..gruber_darker["niagara-1"]
 lexers.STYLE_CURSOR_LINE        = 'back:'..gruber_darker["bg+1"]
 lexers.STYLE_COLOR_COLUMN       = 'back:'..gruber_darker["bg+1"]
