@@ -52,11 +52,11 @@ lexers.STYLE_IDENTIFIER         = lexers.STYLE_DEFAULT -- 'fore:'..gruber_darker
 
 lexers.STYLE_LINENUMBER         = 'fore:'..gruber_darker["bg+4"]
 lexers.STYLE_LINENUMBER_CURSOR  = 'fore:'..gruber_darker.yellow
-lexers.STYLE_CURSOR             = 'back:'..gruber_darker["red-2"]
+lexers.STYLE_CURSOR             = 'back:'..gruber_darker["yellow-1"]
 lexers.STYLE_CURSOR_PRIMARY     = 'back:'..gruber_darker["niagara-1"]
 lexers.STYLE_CURSOR_LINE        = 'back:'..gruber_darker["bg+1"]
 lexers.STYLE_COLOR_COLUMN       = 'back:'..gruber_darker["bg+1"]
-lexers.STYLE_SELECTION          = 'back:'..gruber_darker["yellow-1"]
+lexers.STYLE_SELECTION          = 'back:'..gruber_darker["red-1"]
 lexers.STYLE_STATUS             = 'fore:'..gruber_darker["fg"]..',back:'..gruber_darker["bg+1"]
 lexers.STYLE_STATUS_FOCUSED     = 'fore:'..gruber_darker["fg"]..',back:'..gruber_darker["bg+1"]..',bold'
 lexers.STYLE_SEPARATOR          = ''
