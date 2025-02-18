@@ -4,6 +4,7 @@ export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export PATH="$HOME/.local/bin:$PATH"
 
 alias g="git "
+alias s="git status --short --ahead-behind"
 alias d="docker "
 alias k="kubectl "
 alias t="terraform "
