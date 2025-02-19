@@ -1,6 +1,7 @@
 -- load standard vis module, providing parts of the Lua API
 require('vis')
 require('vis-editorconfig')
+require('vis-cursors')
 local quickfix = require('vis-quickfix')
 local format = require('vis-format')
 local m = vis.modes
