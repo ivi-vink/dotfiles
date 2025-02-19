@@ -62,3 +62,15 @@ lexers.STYLE_STATUS_FOCUSED     = 'fore:'..gruber_darker["fg"]..',back:'..gruber
 lexers.STYLE_SEPARATOR          = ''
 lexers.STYLE_INFO               = ''
 lexers.STYLE_EOF                = lexers.STYLE_LINENUMBER
+
+-- Markdown
+lexers.STYLE_HR = ''
+lexers.STYLE_HEADING =  'fore:'..gruber_darker["fg"] .. ',back:' .. gruber_darker["bg+3"]
+for i = 1,6 do lexers['STYLE_HEADING_H'..i] = lexers.STYLE_HEADING end
+lexers.STYLE_BOLD = 'bold'
+lexers.STYLE_ITALIC = 'italics'
+lexers.STYLE_LIST = lexers.STYLE_KEYWORD
+lexers.STYLE_LINK = lexers.STYLE_KEYWORD
+lexers.STYLE_REFERENCE = lexers.STYLE_KEYWORD
+lexers.STYLE_CODE = lexers.STYLE_COMMENT
+
