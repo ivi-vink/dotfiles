@@ -26,5 +26,6 @@ eval "$(zoxide init posix --cmd cd --hook prompt)"
 
 export HISTFILE="$HOME/.history"
 export HISTCONTROL=ignorespace
+export HISTSIZE=100000
 set -o emacs
 
