@@ -2,6 +2,7 @@
 require('vis')
 require('vis-editorconfig')
 require('vis-cursors')
+require('vis-compile-win')
 local quickfix = require('vis-quickfix')
 local format = require('vis-format')
 local m = vis.modes
