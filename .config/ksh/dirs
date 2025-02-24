@@ -92,6 +92,7 @@ function _cd
 function mcd
 {
     typeset dir="${PWD#$HOME/}"
+    integer i=0
     case $dir in
     $HOME)
         dir=\~
@@ -99,10 +100,14 @@ function mcd
     /*) ;;
     *)  dir=\~/$dir
     esac
-    PS3='Select by number or enter a name: '
-    select dir in "$dir" "${_push_stack[@]}"
-    do  if    _cd $REPLY
-        then  return
-        fi
+
+    REPLY=$(
+    {
+    echo "1) $dir"
+    while (( i < (_push_max - _push_top) ))
+    do echo "$(( i + 2 ))) ${_push_stack[_push_top + i]}"
+       i=i+1
     done
+    } | vis-menu -p 'Hoist:' | cut -d')' -f1)
+    [ -z "$REPLY" ] || _cd "$REPLY"
 }

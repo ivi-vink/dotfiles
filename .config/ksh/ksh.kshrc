@@ -9,7 +9,8 @@ lfcd () {
         [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir"
     fi
 }
-bind -m ^O=' lfcd^J'
+bind -m ^O=' mcd^J'
+bind -m ^X^F=' REPLY="$(vis-open .)"; [ -z "$REPLY" ] || cd "$REPLY"^J'
 
 # Emacs mode clear chops off multline prompts.
 export PS1="$(hostname):/\$(
@@ -22,10 +23,16 @@ pwd | cut -d'/' -f2- --output-delimiter '
 )\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
-eval "$(zoxide init posix --cmd cd --hook prompt)"
+# eval "$(zoxide init posix --cmd cd --hook prompt)"
 
 export HISTFILE="$HOME/.history"
 export HISTCONTROL=ignorespace
 export HISTSIZE=100000
+
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
+
 set -o emacs
 

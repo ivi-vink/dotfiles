@@ -93,11 +93,8 @@ local pcwd = function()
   return parent_cwd
 end
 
-vis:map(m.NORMAL, "<C-x>~", function()
+vis:map(m.NORMAL, "<C-x><C-d>", function()
   vis:command("cd " .. pcwd())
-  return true;
-end)
-vis:map(m.NORMAL, "<C-x>_", function()
   local code, result, err = vis:pipe("vis-open .")
   if result then
     vis:command("e " .. result)

@@ -13,3 +13,5 @@ alias s="{ git status --short ; git log --oneline @{push}.. ; }"
 alias d="docker "
 alias k="kubectl "
 alias t="terraform "
+
+[ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1
