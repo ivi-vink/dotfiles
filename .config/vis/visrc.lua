@@ -89,13 +89,13 @@ local pcwd = function()
     return "."
   end
   local parent_cwd = "/proc/" .. fields[4] .. "/cwd"
-  vis:info(parent_cwd)
+  -- vis:info(parent_cwd)
   return parent_cwd
 end
 
 vis:map(m.NORMAL, "<C-x><C-d>", function()
   vis:command("cd " .. pcwd())
-  local code, result, err = vis:pipe("vis-open .")
+  local code, result, err = vis:pipe("vis-open $(ls -A -1)")
   if result then
     vis:command("e " .. result)
   end

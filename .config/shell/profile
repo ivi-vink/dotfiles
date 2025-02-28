@@ -10,6 +10,8 @@ export PATH="$HOME/.local/bin:$PATH"
 
 alias g="git "
 alias s="{ git status --short ; git log --oneline @{push}.. ; }"
+alias ga="git add "
+alias gc="git commit "
 alias d="docker "
 alias k="kubectl "
 alias t="terraform "

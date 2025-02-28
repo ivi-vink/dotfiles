@@ -108,6 +108,6 @@ function mcd
     do echo "$(( i + 2 ))) ${_push_stack[_push_top + i]}"
        i=i+1
     done
-    } | vis-menu -p 'Hoist:' | cut -d')' -f1)
+    } | vis-menu -l 5 -p 'Hoist:' | cut -d')' -f1)
     [ -z "$REPLY" ] || _cd "$REPLY"
 }
