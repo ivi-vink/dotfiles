@@ -109,3 +109,10 @@ vis:map(m.NORMAL, "<C-x><C-f>", function()
   end
   return true;
 end)
+vis:map(m.NORMAL, "<C-w>o", function()
+  for win in vis:windows() do
+    if win ~= vis.win then
+    	win:close()
+    end
+  end
+end)
