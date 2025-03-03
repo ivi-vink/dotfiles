@@ -1,0 +1,2 @@
+#!/bin/sh
+grep -o 'image://.*$' | sed s,image://,, | xargs xdg-open
