@@ -4,6 +4,7 @@ export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 
 export EDITOR="kc s"
+export GIT_EDITOR="kak "
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export PATH="$HOME/.local/bin:$PATH"
