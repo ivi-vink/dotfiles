@@ -1,0 +1,4 @@
+colorscheme gruber-darker
+define-command -hidden ghostty-split -params 1 -docstring 'split the current window according to the param (vsplit / hsplit)' %sh{
+  ghostty kak -c $kak_session
+}
