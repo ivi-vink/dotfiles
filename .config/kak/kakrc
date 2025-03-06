@@ -1,4 +1,11 @@
 colorscheme gruber-darker
-define-command -hidden ghostty-split -params 1 -docstring 'split the current window according to the param (vsplit / hsplit)' %sh{
-  ghostty kak -c $kak_session
-}
+set-option global toolsclient t
+set-option global jumpclient j
+set-option global docsclient d
+
+map -docstring "Jump to next grep match"     global goto n <esc>:grep-next-match<ret>
+map -docstring "Jump to previous grep match" global goto p <esc>:grep-previous-match<ret>
+map -docstring "Jump to next make error"     global goto ] <esc>:make-next-error<ret>
+map -docstring "Jump to previous make error" global goto [ <esc>:make-previous-error<ret>
+
+# define-command -docstring "edit relative"  

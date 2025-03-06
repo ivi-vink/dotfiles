@@ -3,17 +3,9 @@ export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 
-export EDITOR=vis
+export EDITOR="kc s"
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export PATH="$HOME/.local/bin:$PATH"
-
-alias g="git "
-alias s="{ git status --short ; git log --oneline @{push}.. ; }"
-alias ga="git add "
-alias gc="git commit "
-alias d="docker "
-alias k="kubectl "
-alias t="terraform "
 
 [ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1

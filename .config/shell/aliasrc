@@ -1,2 +1,10 @@
 alias \
 	ref="shortcuts >/dev/null; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
+alias g="git "
+alias s="{ git status --short ; git log --oneline @{push}.. ; }"
+alias ga="git add "
+alias gc="git commit "
+alias d="docker "
+alias k="kak "
+alias kd='echo cd $PWD | kak -p s '
+alias t="terraform "
