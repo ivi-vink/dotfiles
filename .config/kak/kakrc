@@ -2,6 +2,7 @@ colorscheme gruber-darker
 set-option global toolsclient t
 set-option global jumpclient j
 set-option global docsclient d
+set-option global ui_options terminal_assistant=cat
 
 map -docstring "Jump to next grep match"     global goto n <esc>:grep-next-match<ret>
 map -docstring "Jump to previous grep match" global goto p <esc>:grep-previous-match<ret>

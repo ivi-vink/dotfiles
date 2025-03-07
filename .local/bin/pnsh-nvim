@@ -36,6 +36,6 @@ $" --volume=($env | default "/var/run" XDG_RUNTIME_DIR | get XDG_RUNTIME_DIR)/do
   --pnsh-host-bindfs-disabled
   --pnsh-docker-extra-args=$"($args)"
   --with-docker
-  --docker-image=oksh
+  --docker-image=okshnew
   --docker-tag=latest
 )
