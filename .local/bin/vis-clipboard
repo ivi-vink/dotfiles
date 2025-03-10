@@ -148,11 +148,11 @@ vc_xclip_paste() {
 }
 
 vc_osc_copy() {
-	osc copy
+	osc copy -d /dev/tty
 }
 
 vc_osc_paste() {
-	osc paste
+	osc paste -d /dev/tty
 }
 
 vc_mac_copy() {

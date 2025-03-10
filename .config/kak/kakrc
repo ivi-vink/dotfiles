@@ -9,4 +9,7 @@ map -docstring "Jump to previous grep match" global goto p <esc>:grep-previous-m
 map -docstring "Jump to next make error"     global goto ] <esc>:make-next-error<ret>
 map -docstring "Jump to previous make error" global goto [ <esc>:make-previous-error<ret>
 
-# define-command -docstring "edit relative"  
+# define-command -docstring "edit relative"
+hook global RegisterModified '"' %{ nop %sh{
+  printf %s "$kak_main_reg_dquote" | vis-clipboard --copy
+}}
