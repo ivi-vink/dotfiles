@@ -1,2 +1,2 @@
 #!/bin/sh
-kak -s "$@"
+kak -e 'daemonize-session' -s "$@"
