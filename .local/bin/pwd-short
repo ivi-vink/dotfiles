@@ -1,0 +1,25 @@
+#!/bin/sh
+printf '%s' $(
+IFS=/
+parts="$(
+for d in $(pwd); do
+    [ -z "$d" ] && continue
+    IFS=
+    echo "$d" | head -c3
+    echo
+done
+)"
+len="$(echo "$parts" | wc -l)"
+[ $len -gt 3 ] && {
+  printf '/'
+  echo "$parts" | tail -r | tail -n+4 | tail -r | paste -sd'/' -
+}
+
+printf '/'
+IFS=/
+for d in $(pwd); do
+    [ -z "$d" ] && continue
+    IFS=
+    echo "$d"
+done | tail -n3 | paste -sd'/' -
+)

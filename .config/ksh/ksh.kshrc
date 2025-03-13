@@ -13,14 +13,7 @@ bind -m ^O=' mcd^J'
 bind -m ^X^F=' REPLY="$(vis-open .)"; [ -z "$REPLY" ] || cd "$REPLY"^J'
 
 # Emacs mode clear chops off multline prompts.
-export PS1="$(hostname):/\$(
-root=\$(pwd | cut -d'/' -f2- --output-delimiter '
-' | head -n-3 | cut -c1-3 | paste -sd '/')
-[ -z \$root ] || echo "\${root}/"
-)\$(
-pwd | cut -d'/' -f2- --output-delimiter '
-' | tail -n3 | paste -sd '/'
-)\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "
+export PS1="$(hostname):\$(pwd-short)\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "
 bind -m ^L="^A^K clear^J"
 
 export HISTFILE="$HOME/.history"

@@ -1,0 +1,33 @@
+#!/bin/sh
+args="$(
+printf "%q " \
+"--init" \
+"--entrypoint=/usr/local/bin/oksh" \
+"--env=TERM=xterm-ghostty" \
+"--env=EDITOR=vis" \
+"--volume=$TERMINFO/78/xterm-ghostty:/usr/share/terminfo/x/xterm-ghostty" \
+"--env=_ZO_DATA_DIR=/hostfs/.local/share/zoxide" \
+"--volume=/etc/profiles/per-user/ivi/etc/profile.d:/etc/profiles/per-user/ivi/etc/profile.d" \
+"--env=SHELL=/usr/bin/nu" \
+"--env=DISPLAY" \
+"--env=XDG_RUNTIME_DIR" \
+"--volume=$HOME/.ssh/known_hosts:$HOME/.ssh/known_hosts" \
+"--volume=/run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm" \
+"--hostname=$(hostname)" \
+"--env=STARSHIP_CONFIG=/hostfs/.config/starship.toml" \
+"--env=HOME" \
+"--volume=${HOME}:${HOME}" \
+"--workdir=${PWD:-$HOME}" \
+"--volume=${HOME}/.ssh:/root/.ssh" \
+"--volume=${XDG_RUNTIME_DIR:-/var/run}/docker.sock:/var/run/docker.sock" \
+"--net=host"
+)"
+
+pnsh \
+  --pnsh-host-bindfs-disabled \
+  --pnsh-docker-extra-args="$args" \
+  --with-docker \
+  --docker-image=okshnew \
+  --docker-tag=latest \
+  -- -l -c "$*"
+

@@ -148,11 +148,17 @@ vc_xclip_paste() {
 }
 
 vc_osc_copy() {
-	osc copy -d /dev/tty
+	d="/dev/tty"
+	[ -n "$kak_client_pid" ] && d="/proc/$kak_client_pid/fd/0"
+	echo "$kak_client_pid" >> ~/logs
+	echo osc copy -d "$d" >> ~/logs
+	osc copy -d "$d"
 }
 
 vc_osc_paste() {
-	osc paste -d /dev/tty
+	d="/dev/tty"
+	[ -n "$kak_client_pid" ] && d="/proc/$kak_client_pid/fd/0"
+	osc paste -d "$d"
 }
 
 vc_mac_copy() {

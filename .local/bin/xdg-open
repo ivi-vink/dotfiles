@@ -1,5 +1,5 @@
 #!/bin/bash
 case "$(file --mime-type $1 | awk '{print $2}')" in
   text/*|application/json) exec "$EDITOR" "$@" ;;
-  *) printf '%q ' "$@" | nc 127.0.0.1 1994 ;;
+  *) printf '%s ' "$@" | nc 127.0.0.1 1994 ;;
 esac

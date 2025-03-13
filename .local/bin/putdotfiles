@@ -1,7 +1,8 @@
 #!/bin/sh
 if [ -d "$HOME/.local/src/dotfiles/.git" ]; then
-	cp -rfT \
-		"$HOME/.local/src/dotfiles" \
+	cd "$HOME/.local/src/dotfiles"
+	ls -A | xargs -I xxx cp -rvf \
+		"$HOME/.local/src/dotfiles/xxx" \
 		 "$HOME"
 else
 	putgitrepo \

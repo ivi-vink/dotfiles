@@ -1,0 +1,17 @@
+#!/bin/sh
+output=$(mktemp -d -t kak-temp-XXXXXXXX)/fifo
+mkfifo "${output}"
+echo "echo -to-file ${output} %val{client_list}" | kak -p s
+
+client_list=$(cat "${output}")
+for c in $client_list; do
+  echo "evaluate-commands -client $c %{ echo -to-file ${output} %val{client_pid} }" | kak -p s
+  result=$(cat "${output}")
+  ppid=$(ps -o ppid= $result)
+  [ $ppid = $PPID ] && {
+    echo "evaluate-commands -client $c %{ echo -to-file ${output} %val{buffile} }" | kak -p s
+    result=$(cat "${output}")
+    echo $(dirname $result)
+  }
+done
+rm -r $(dirname ${output})

@@ -1,6 +1,6 @@
-#!/usr/bin/env nu
-echo listening for open commands
-loop {
-  let line = nc -l 127.0.0.1 1994
-  try { bash -c $"open ($line)" }
-}
+#!/bin/sh
+while true; do
+  line="$(nc -l 127.0.0.1 1994 </dev/null | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  echo "$line"
+  open "$line"
+done
