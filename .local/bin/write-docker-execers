@@ -1,0 +1,2 @@
+#!/bin/sh
+ps Aeww | grep 'docker exec' | grep -o 'HOSTPID=\S*' | cut -d= -f2

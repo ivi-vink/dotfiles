@@ -18,3 +18,26 @@ hook global BufSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
     hook buffer -group format BufWritePost .* format
 }
+
+define-command delete-buffers-matching -params 1..2 %{
+	evaluate-commands %sh{
+		cmd=delete-buffer
+		if [ "$1" = -f ]
+		then cmd=delete-buffer!
+		     shift
+		fi
+
+		buffers_escaped=$(eval printf '%s\\n' "$kak_quoted_buflist" | grep "$@" | sed "s/'/''/g")
+		if [ -z "$buffers_escaped" ]
+		then echo fail no matching buffer
+		else {
+			nl=$(printf '\n.')
+			IFS=${nl%.}
+			printf '%s\n' "$buffers_escaped" |
+			while read bufname
+			do {
+				printf "$cmd '%s'\n" "$bufname"
+			}; done
+		} fi
+	}
+}

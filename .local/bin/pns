@@ -1,0 +1,2 @@
+#!/bin/sh
+oksh -c 'pn exec bootstrap-container &'

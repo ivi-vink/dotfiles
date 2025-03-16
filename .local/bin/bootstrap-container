@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "/Users/ivi/.okshnew/execers" | entr -n collect-docker-execers /_ &
+sleep infinity
