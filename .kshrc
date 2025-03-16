@@ -1,4 +1,4 @@
-[ -f "$HOME/.profile" ] && . "$HOME/.profile"
+# [ -f "$HOME/.profile" ] && . "$HOME/.profile"
 [ -f /etc/ksh.kshrc ] && . /etc/ksh.kshrc
 [ -f "$HOME/.config/ksh/dirs" ] && . "$HOME/.config/ksh/dirs"
 # [ -f "$HOME/.config/ksh/pushd" ] && . "$HOME/.config/ksh/pushd"

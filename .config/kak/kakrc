@@ -10,30 +10,11 @@ map -docstring "Jump to next make error"     global goto ] <esc>:make-next-error
 map -docstring "Jump to previous make error" global goto [ <esc>:make-previous-error<ret>
 
 hook global RegisterModified '"' %{ nop %sh{
-  export kak_client_pid="$kak_client_pid" 
+  export kak_client_pid="$kak_client_pid"
   printf %s "$kak_main_reg_dquote" | vis-clipboard --copy
 }}
-
-# define-command -docstring "Edit file relative to current buf" -params 1 edit-relative %{ edit "%sh{dirname ""${kak_buffile}""}/%arg{@}" }
-# alias global er edit-relative 
-# complete-command -menu edit-relative shell-script %{
-#     orig="$(realpath --relative-to . $(dirname "$kak_buffile"))"
-#     q="${1}"
-#     if [ "$(basename "$q")" = ".." ]; then
-#       d="$(realpath --relative-to . "$q")"
-#     elif [ "$(basename "$q")" = "." ]; then
-#       d="$(realpath --relative-to . "$q")"
-#     elif [ -n "$q" ]; then
-#       if [ "$(printf "$q" | tail -c 1)" = / ]; then
-#         d="$q"
-#       else
-#         d="$(dirname "$q")"
-#       fi
-#     else
-#       d="."
-#     fi
-#     # echo "orig:$orig"
-#     # echo "q:$q"
-#     # echo "d:$d"
-#     fdfind --base-directory "$orig" --full-path --hidden --exact-depth 1 -- . "$d" | fzf --filter "$q" 
-# }
+hook global WinCreate ^[^*]+$ %{editorconfig-load}
+hook global BufSetOption filetype=python %{
+    set-option buffer formatcmd 'ruff format -'
+    hook buffer -group format BufWritePost .* format
+}

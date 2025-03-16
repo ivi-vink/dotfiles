@@ -1,4 +1,13 @@
 #!/bin/sh
+parts="$(
+for d in $(pwd); do
+    [ -z "$d" ] && continue
+    IFS=
+    echo "$d" | head -c3
+    echo
+done
+)"
+
 printf '%s' $(
 IFS=/
 parts="$(

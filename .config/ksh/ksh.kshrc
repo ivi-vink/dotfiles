@@ -1,3 +1,8 @@
+if SOME_VARIABLE=`push.sh 2>/dev/null`
+then	eval "$SOME_VARIABLE"
+else	echo "push.sh not installed" >&2; exit 1
+fi
+
 ..() { set -- ".." "$@"; for up; do cd $up; done; }
 
 lfcd () {
@@ -26,4 +31,6 @@ export HISTSIZE=100000
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
 
 set -o emacs
-
+[ -f /run/.containerenv ] && [ -n "$PNSH_KAK_AUTOSTART" ] && {
+    ks s 2>&1 >/dev/null || kc s
+}

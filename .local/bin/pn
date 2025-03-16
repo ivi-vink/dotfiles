@@ -1,33 +1,41 @@
 #!/bin/sh
-args="$(
-printf "%q " \
-"--init" \
-"--entrypoint=/usr/local/bin/oksh" \
-"--env=TERM=xterm-ghostty" \
-"--env=EDITOR=vis" \
-"--volume=$TERMINFO/78/xterm-ghostty:/usr/share/terminfo/x/xterm-ghostty" \
-"--env=_ZO_DATA_DIR=/hostfs/.local/share/zoxide" \
-"--volume=/etc/profiles/per-user/ivi/etc/profile.d:/etc/profiles/per-user/ivi/etc/profile.d" \
-"--env=SHELL=/usr/bin/nu" \
-"--env=DISPLAY" \
-"--env=XDG_RUNTIME_DIR" \
-"--volume=$HOME/.ssh/known_hosts:$HOME/.ssh/known_hosts" \
-"--volume=/run/pcscd/pcscd.comm:/run/pcscd/pcscd.comm" \
-"--hostname=$(hostname)" \
-"--env=STARSHIP_CONFIG=/hostfs/.config/starship.toml" \
-"--env=HOME" \
-"--volume=${HOME}:${HOME}" \
-"--workdir=${PWD:-$HOME}" \
-"--volume=${HOME}/.ssh:/root/.ssh" \
-"--volume=${XDG_RUNTIME_DIR:-/var/run}/docker.sock:/var/run/docker.sock" \
-"--net=host"
-)"
+if SOME_VARIABLE=`push.sh 2>/dev/null`
+then	eval "$SOME_VARIABLE"
+else	echo "push.sh not installed" >&2; exit 1
+fi
 
-pnsh \
-  --pnsh-host-bindfs-disabled \
-  --pnsh-docker-extra-args="$args" \
-  --with-docker \
+# Append arguments that configure pnsh.
+da="--pnsh-docker-arg="
+Push args \
+  $da--init \
+  $da"--env=SHELL=/usr/local/bin/oksh" \
+  $da"--env=HOME" \
+  $da"--volume=${HOME}:${HOME}" \
+  $da"--volume=${HOME}/.ssh:/root/.ssh" \
+  $da"--workdir=${PWD:-$HOME}" \
+  $da"--hostname=pnsh" \
+  $da"--net=host" \
+  $da"--env=XDG_RUNTIME_DIR" \
+  $da"--env=TERM=xterm-ghostty" \
+  $da"--volume=$TERMINFO/78/xterm-ghostty:/usr/share/terminfo/x/xterm-ghostty" \
+  $da"--volume=${XDG_RUNTIME_DIR:-/var/run}/docker.sock:/var/run/docker.sock" \
+  $da"--workdir=${PWD:-$HOME}" \
+  --pnsh-shell=/usr/local/bin/oksh \
   --docker-image=okshnew \
   --docker-tag=latest \
-  -- -l -c "$*"
+  --with-docker
 
+my_name="$(basename "$0")"
+cmd=
+if [ $# -gt 0 ]
+then if [ x"$my_name" != x"pn" ]
+     then Push cmd "$my_name"
+     fi
+     Push cmd "$@"; Push args -- -l -c "$cmd"
+else if [ x"$my_name" != x"pn" ]
+     then Push cmd "$my_name"; Push args -- -l -c "$cmd"
+     fi
+fi
+
+eval "set -- $args"
+exec pnsh "$@"
