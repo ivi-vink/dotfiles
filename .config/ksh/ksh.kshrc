@@ -21,6 +21,7 @@ clear-screen-saving-contents-in-scrollback() {
 bind -m ^L="^E ^A^K clear-screen-saving-contents-in-scrollback^J^Y^B^D"
 bind -m ^O=' mcd^J'
 bind -m ^X^F=' REPLY="$(vis-open .)"; [ -z "$REPLY" ] || cd "$REPLY"^J'
+bind -m ^Z='kb^J'
 
 # Emacs mode clear chops off multline prompts.
 export PS1="$(hostname):\$(pwd-short)\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "

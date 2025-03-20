@@ -1,4 +1,6 @@
 colorscheme gruber-darker
+add-highlighter global/ number-lines -relative
+
 set-option global toolsclient t
 set-option global jumpclient j
 set-option global docsclient d
@@ -13,7 +15,13 @@ hook global RegisterModified '"' %{ nop %sh{
   export kak_client_pid="$kak_client_pid"
   printf %s "$kak_main_reg_dquote" | vis-clipboard --copy
 }}
-hook global WinCreate ^[^*]+$ %{editorconfig-load}
+
+hook global WinCreate ^[^*]+$ %{
+    editorconfig-load
+    map global insert <tab> '<a-;><a-gt>'
+    map global insert <s-tab> '<a-;><a-lt>'
+}
+
 hook global BufSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
     hook buffer -group format BufWritePost .* format

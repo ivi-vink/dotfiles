@@ -11,7 +11,7 @@ for c in $client_list; do
   [ $ppid = $PPID ] && {
     echo "evaluate-commands -client $c %{ echo -to-file ${output} %val{buffile} }" | kak -p s
     result=$(cat "${output}")
-    echo $(dirname $result)
+    echo "cd $(dirname $result)"
   }
 done
 rm -r $(dirname ${output})

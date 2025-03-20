@@ -10,6 +10,6 @@ if [ -d $HOME/.config/shell/profile.d ]; then
   unset i
 fi
 
-if [ -z $DISPLAY ] && [ $(tty) = /dev/tty1 ]; then
+if [ -z "$DISPLAY" ] && [ "$(tty)" = /dev/tty1 ]; then
   startx
 fi
