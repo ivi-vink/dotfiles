@@ -8,5 +8,8 @@ export GIT_EDITOR="kak "
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export PATH="$HOME/.local/bin:$PATH"
+if [ "$(uname -s)" = "Darwin" ]; then
+    export PATH="$HOME/.local/bin/macos.d:$PATH"
+fi
 
 [ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1
