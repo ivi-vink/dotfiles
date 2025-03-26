@@ -27,6 +27,21 @@ hook global BufSetOption filetype=python %{
     hook buffer -group format BufWritePost .* format
 }
 
+hook global BufSetOption filetype=terraform %{
+    set-option buffer formatcmd 'terraform fmt -'
+    hook buffer -group format BufWritePost .* format
+}
+
+hook global BufSetOption filetype=go %{
+    set-option buffer formatcmd 'gofumpt | goimports'
+    set-option global make_error_pattern '^\s*([^:\n]+):(\d+):?(?:(\d+):)? ?([^\n]+)?'
+    hook buffer -group format BufWritePost .* format
+}
+
+hook global BufSetOption filetype=sh %{
+    set-option window lintcmd "shellcheck -fgcc -Cnever"
+}
+
 define-command delete-buffers-matching -params 1..2 %{
 	evaluate-commands %sh{
 		cmd=delete-buffer
