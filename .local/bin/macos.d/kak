@@ -1,0 +1,2 @@
+#!/bin/sh
+eval "exec pn exec oksh -i -l -c 'PNSH_KAK_AUTOSTART=\"$@\" exec oksh -l'"
