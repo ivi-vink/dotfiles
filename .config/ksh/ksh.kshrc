@@ -29,7 +29,7 @@ export PS1="$(hostname):\$(pwd-short)\$(prompt-git)\$(prompt-tf)\n jobs(\j) # "
 export HISTFILE="$HOME/.history"
 export HISTCONTROL=ignorespace
 export HISTSIZE=100000
-export FCEDIT='c s'
+export FCEDIT='kak'
 
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"

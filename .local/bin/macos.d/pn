@@ -4,11 +4,19 @@ then	eval "$SOME_VARIABLE"
 else	echo "push.sh not installed" >&2; exit 1
 fi
 
+# Open host handler if not already exists
+if ! { ps ax | grep pnsh-host-handler | grep -v grep >/dev/null 2>&1 ; }
+then mkdir -p "$HOME/.cache/pnsh"
+     touch "$HOME/.cache/pnsh/open"
+     sh -c "find '$HOME/.cache/pnsh' | nohup entr -p pnsh-host-handler /_ &" >/dev/null 2>&1
+fi
+
 # Append arguments that configure pnsh.
 da="--pnsh-docker-arg="
 Push args \
   $da--init \
   $da"--env=SHELL=/usr/local/bin/oksh" \
+  $da"--entrypoint=/usr/local/bin/oksh" \
   $da"--env=HOME" \
   $da"--volume=${HOME}:${HOME}" \
   $da"--volume=${HOME}/.ssh:/root/.ssh" \
@@ -24,6 +32,10 @@ Push args \
   --docker-image=okshnew \
   --docker-tag=latest \
   --with-docker
+
+if [ "${1}" = "--targets" ]
+then shift; eval "set -- $args $@"; exec pnsh "$@"
+fi
 
 my_name="$(basename "$0")"
 cmd=
