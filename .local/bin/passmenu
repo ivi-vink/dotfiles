@@ -13,9 +13,7 @@ if [ "$(uname)" = "Darwin" ]; then
 fi
 
 (
-    export PASSWORD_STORE_DIR="$HOME/sync/password-store"
-    prefix="$PASSWORD_STORE_DIR"
-    echo "prefix: $prefix"
+    prefix="${PASSWORD_STORE_DIR:-$HOME/sync/password-store}"
     password_files=( "$prefix"/**/*.gpg )
     password_files=( "${password_files[@]#"$prefix"/}" )
     password_files=( "${password_files[@]%.gpg}" )
@@ -26,6 +24,5 @@ fi
 
     [[ -n $password ]] || exit
 
-    pass show "$password" | head -n1 | copy
+    pass show "$password" | head -n1 | vis-clipboard --copy
 ) >/tmp/debug 2>&1
-

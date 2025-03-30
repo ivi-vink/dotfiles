@@ -9,3 +9,4 @@ alias d="docker "
 alias d=' echo cd $PWD | kak -p s; eval "[ -n \"$(jobs)\" ] && fg" '
 alias b=' eval "$(cd-kak-buf)"'
 alias e='$EDITOR '
+alias z='zathura '
