@@ -6,13 +6,15 @@ export PASSWORD_STORE_DIR=$HOME/.local/share/password-store
 
 if ! [ -d "${XDG_RUNTIME_DIR}" ] && [ "$(uname -s)" = "Linux" ]
 then d="/run/user/$(id -u)"
-     sudo mkdir -p "$d"
-     sudo chown -R "$USER:$USER" "$d"
-     sudo chmod 700 "$d"
+  if command -v sudo >/dev/null 2>&1; then
+     mkdir -p "$d"
+     chown -R "$USER:$USER" "$d"
+     chmod 700 "$d"
      export XDG_RUNTIME_DIR="$d"
+  fi
 fi
 
-export EDITOR="c s"
+export EDITOR="cs"
 export GIT_EDITOR="kak "
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"

@@ -1,0 +1,7 @@
+if [ -f ~/.local.bashrc ]; then
+    . ~/.local.bashrc
+fi
+# clear screen and save scrollback
+clear() {
+    printf "\e[H\e[22J"
+}

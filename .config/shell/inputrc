@@ -1,0 +1,13 @@
+set bind-tty-special-chars off
+set show-all-if-ambiguous on
+set menu-complete-display-prefix on
+set colored-completion-prefix on
+set colored-stats on
+
+# next tab(s) will cycle through matches
+TAB: menu-complete
+# shift tab cycles backward
+"\e[Z": menu-complete-backward
+Control-l: 'clear\n'
+"\C-w": unix-filename-rubout
+"\C-x\C-w": unix-filename-rubout

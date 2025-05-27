@@ -7,8 +7,11 @@ keybind = alt+v=paste_from_clipboard
 # keybind = alt+shift+k=increase_font_size:1
 # keybind = alt+shift+j=decrease_font_size:1
 
+keybind = ctrl+l=unbind
+keybind = ctrl+w=unbind
 keybind = ctrl+zero=unbind
 keybind = ctrl+enter=unbind
+
 keybind = super+q=close_window
 keybind = super+r=reload_config
 theme=gruber-darker
