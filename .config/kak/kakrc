@@ -1,6 +1,8 @@
 colorscheme gruber-darker
 add-highlighter global/ number-lines -relative
 
+hook -once global KakBegin .* %{ require-module connect }
+
 set-option global toolsclient t
 set-option global jumpclient j
 set-option global docsclient d

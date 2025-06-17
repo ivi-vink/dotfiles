@@ -1,7 +1,18 @@
 if [ -f ~/.local.bashrc ]; then
     . ~/.local.bashrc
 fi
-# clear screen and save scrollback
-clear() {
-    printf "\e[H\e[22J"
-}
+if [ "$TERM" != "st-256color" ]; then
+    # clear screen and save scrollback
+    clear() {
+        printf "\e[H\e[22J"
+    }
+fi
+
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
+
+export PS1='\[\e]0;\w $(test "$IN_KAKOUNE_CONNECT" && printf '%s' "- $KAKOUNE_CLIENT@[$KAKOUNE_SESSION]")$(test "$TERM" && printf '%s' "- $TERM")\a\]\n\[\e[32m\]\u@\h \e[34m$(test "$IN_KAKOUNE_CONNECT" && printf '%s' "¶$KAKOUNE_SESSION") \[\e[33m\]\w\[\e[0m\]\n\[\e[1;36;1m\]λ\[\e[0m\] '
+export PROMPT_DIRTRIM=3
+export PROMPT_COMMAND='history -a'

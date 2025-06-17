@@ -1,0 +1,5 @@
+#!/bin/sh
+grep ^From |
+    sed -E 's/.*<(.*)>.*/\1/' |
+    sed -E 's/From:\s*//' |
+    xargs -I{} printf '%s\n' "macro index E L\"~f {}\"" >/tmp/mutt-limit-from

@@ -3,19 +3,22 @@ export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
 export XDG_STATE_HOME=$HOME/.local/state
 export PASSWORD_STORE_DIR=$HOME/.local/share/password-store
+export PASSWORD_STORE_GPG_OPTS="--no-throw-keyids"
 
 if ! [ -d "${XDG_RUNTIME_DIR}" ] && [ "$(uname -s)" = "Linux" ]
 then d="/run/user/$(id -u)"
   if command -v sudo >/dev/null 2>&1; then
-     mkdir -p "$d"
-     chown -R "$USER:$USER" "$d"
-     chmod 700 "$d"
+     sudo mkdir -p "$d"
+     sudo chown -R "$USER:$USER" "$d"
+     sudo chmod 700 "$d"
      export XDG_RUNTIME_DIR="$d"
   fi
 fi
 
-export EDITOR="cs"
-export GIT_EDITOR="kak "
+export TERMINAL="st"
+export EDITOR="e"
+export GIT_EDITOR="kak"
+export BROWSER="firefox"
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export PATH="$HOME/.local/bin:$PATH"

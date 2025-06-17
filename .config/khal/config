@@ -1,0 +1,11 @@
+[default]
+  default_calendar = home
+[calendars]
+  [[home]]
+    path = ~/Sync/pim/home
+    color = dark green
+    priority = 20
+  [[work]]
+    path = ~/Sync/pim/work
+    color = dark cyan
+    priority = 30

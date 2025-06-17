@@ -8,14 +8,38 @@ wmpid(){ # This function is needed if there are multiple instances of the window
 	echo "$(pidof dwm)"
 }
 
+sysact() {
+  sys_name="$(readlink /sbin/init)"
+  case "$1" in
+    reboot)
+      case "$sys_name" in
+          *runit*) sudo reboot -i ;;
+          *systemd*) $ctl reboot -i ;;
+      esac
+      ;;
+    shutdown)
+      case "$sys_name" in
+          *runit*) sudo poweroff -i ;;
+          *systemd*) $ctl poweroff -i ;;
+      esac
+      ;;
+    sleep)
+      case "$sys_name" in
+          *runit*) sudo zzz ;;
+          *systemd*) slock $ctl suspend -i ;;
+      esac
+      ;;
+  esac
+}
+
 case "$(printf "🔒 lock\n🚪 leave $WM\n♻️ renew $WM\n🐻 hibernate\n🔃 reboot\n🖥️shutdown\n💤 sleep\n📺 display off" | dmenu -i -p 'Action: ')" in
 	'🔒 lock') slock ;;
 	"🚪 leave $WM") kill -TERM "$(wmpid)" ;;
 	"♻️ renew $WM") kill -HUP "$(wmpid)" ;;
 	'🐻 hibernate') slock $ctl hibernate -i ;;
-	'💤 sleep') slock $ctl suspend -i ;;
-	'🔃 reboot') $ctl reboot -i ;;
-	'🖥️shutdown') $ctl poweroff -i ;;
+	'💤 sleep') sysact sleep ;;
+	'🔃 reboot') sysact reboot ;;
+	'🖥️shutdown') sysact shutdown ;;
 	'📺 display off') xset dpms force off ;;
 	*) exit 1 ;;
 esac

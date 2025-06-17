@@ -15,7 +15,7 @@ lfcd () {
     fi
 }
 clear-screen-saving-contents-in-scrollback() {
-    sh -c 'printf "\e[H\e[22J"'
+    oksh -c 'printf "\e[H\e[22J"'
 }
 # Loses kill buffer which is a bit sad.
 bind -m ^L="^E ^A^K clear-screen-saving-contents-in-scrollback^J^Y^B^D"

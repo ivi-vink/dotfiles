@@ -1,8 +1,9 @@
+$include /etc/inputrc
 set bind-tty-special-chars off
 set show-all-if-ambiguous on
 set menu-complete-display-prefix on
 set colored-completion-prefix on
-set colored-stats on
+set colored-stats off
 
 # next tab(s) will cycle through matches
 TAB: menu-complete

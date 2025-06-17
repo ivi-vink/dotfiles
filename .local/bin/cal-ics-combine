@@ -1,0 +1,10 @@
+#!/bin/sh
+dir="${1:-$(ls ~/Sync/calendars | dmenu -p "combine ics files for")}"
+file="${2:-combined.ics}"
+[ -z "$dir" ] && exit 0
+{
+    echo BEGIN:VCALENDAR
+    cat "$HOME/Sync/pim/$dir"/* |
+        grep -v -e END:VCALENDAR -e BEGIN:VCALENDAR; echo END:VCALENDAR
+} > "$file"
+echo "$file"

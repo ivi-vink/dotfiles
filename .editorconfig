@@ -8,7 +8,7 @@ root = true
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{yaml,yml,lua,md,tf,j2}]
+[*.{yaml,yml,lua,md,tf,j2,html,vto,sh,nix}]
 indent_style = space
 indent_size = 2
 
