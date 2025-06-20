@@ -1,13 +1,3 @@
-if [ -f ~/.local.bashrc ]; then
-    . ~/.local.bashrc
-fi
-if [ "$TERM" != "st-256color" ]; then
-    # clear screen and save scrollback
-    clear() {
-        printf "\e[H\e[22J"
-    }
-fi
-
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
