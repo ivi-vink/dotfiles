@@ -1,5 +1,6 @@
 #!/bin/sh
-if [ -n "$1" ]
-then kak-shell "" a "$@"
-else kak-shell ""
-fi
+$EDITOR "$@"
+#if [ -n "$1" ]
+#then kak-shell "" a "$@"
+#else kak-shell ""
+#fi

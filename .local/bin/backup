@@ -1,0 +1,4 @@
+#!/bin/sh
+backup-rsync-tm -p 22 \
+    /home ivi@192.168.178.22:/volume1/NetBackup/lemptop/homes \
+    "${XDG_CONFIG_HOME:-$HOME/.config}/backup/exclude.txt"

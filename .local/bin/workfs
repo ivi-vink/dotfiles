@@ -1,0 +1,8 @@
+#!/bin/sh
+dir="$HOME/workfs"
+if [ -d "dir" ]
+then
+    fusermount -u "$dir"
+else
+    sshfs "$WORKSSH" "$dir"
+fi

@@ -16,7 +16,7 @@ then d="/run/user/$(id -u)"
 fi
 
 export TERMINAL="st"
-export EDITOR="e"
+export EDITOR="kak-desktop"
 export GIT_EDITOR="kak"
 export BROWSER="firefox"
 
