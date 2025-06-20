@@ -2,6 +2,7 @@
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliasrc"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/bash/local.bashrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/zshnameddirrc"
 
 export PS1='\[\e]0;\w $(test "$IN_KAKOUNE_CONNECT" && printf '%s' "- $KAKOUNE_CLIENT@[$KAKOUNE_SESSION]")$(test "$TERM" && printf '%s' "- $TERM")\a\]\n\[\e[32m\]\u@\h \e[34m$(test "$IN_KAKOUNE_CONNECT" && printf '%s' "¶$KAKOUNE_SESSION") \[\e[33m\]\w\[\e[0m\]\n\[\e[1;36;1m\]λ\[\e[0m\] '
 export PROMPT_DIRTRIM=3
