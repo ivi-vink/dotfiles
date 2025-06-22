@@ -4,6 +4,7 @@ if [ -d "$HOME/.local/src/dotfiles/.git" ]; then
 	ls -A | xargs -I xxx cp -rvf \
 		"$HOME/.local/src/dotfiles/xxx" \
 		 "$HOME"
+        ln -sf "$HOME/.gnupg/gpg-agent.conf.$(uname -s)" "$HOME/.gnupg/gpg-agent.conf"
 else
 	putgitrepo \
 		https://github.com/ivi-vink/dotfiles.git \

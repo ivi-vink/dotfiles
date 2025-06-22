@@ -13,7 +13,7 @@ for program in $autostart; do
 	pidof -sx "$program" || "$program" &
 done >/dev/null 2>&1
 
-pidof -sx "redshift" || redshift -x -l 52.30487057853634:4.764923605516801 -b 1.0:0.8 &
+pidof -sx "redshift" || redshift -l 52.30487057853634:4.764923605516801 -b 1.0:0.8 &
 pidof -sx "unclutter" || unclutter -noevents &
 
 # Starts a gpg-agents and configures it as ssh-agent.

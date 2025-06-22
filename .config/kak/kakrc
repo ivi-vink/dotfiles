@@ -1,7 +1,39 @@
 colorscheme gruber-darker
 add-highlighter global/ number-lines -relative
 
-hook -once global KakBegin .* %{ require-module connect }
+hook -once global KakBegin .* %{
+    require-module connect
+    require-module dtach-repl
+
+    # Removed a sh -c.
+    define-command -override -docstring %{
+        dtach-repl [<arguments>]: create a new terminal window for repl interaction
+        All optional parameters are forwarded to the new terminal window
+    } \
+        -params .. \
+        dtach-repl %{ terminal sh -c %{
+            file="$(mktemp -u -t kak_dtach_repl.XXXXX)"
+            trap 'rm -f "${file}"' EXIT
+            printf "evaluate-commands -try-client $1 \
+                'set-option current dtach_repl_id ${file}'" | kak -p "$2"
+            shift 2
+            dtach -c "${file}" -E "${@:-$SHELL}"
+        } -- %val{client} %val{session} %arg{@}
+    }
+
+    # Added bracketed paste support.
+    define-command -override dtach-send-text -params 0..1 -docstring %{
+            dtach-send-text [text]: Send text to the REPL.
+            If no text is passed, then the selection is used
+            } %{
+        nop %sh{
+            printf "\033[200~%s\033[201~\n" "${@:-$kak_selection}" | dtach -p "$kak_opt_dtach_repl_id"
+        }
+    }
+
+    alias global repl-new dtach-repl
+    alias global repl-send-text dtach-send-text
+}
 
 set-option global toolsclient t
 set-option global jumpclient j

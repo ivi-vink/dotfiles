@@ -47,4 +47,5 @@ alias \
 	z="zathura"
 
 alias \
-	ref="shortcuts >/dev/null; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
+	ref="shortcuts >/dev/null; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" \
+	uc="use-context"
