@@ -1,8 +1,10 @@
 #!/bin/sh
 dir="$HOME/workfs"
-if [ -d "dir" ]
+if [ -d "$dir" ]
 then
     fusermount -u "$dir"
+    rmdir "$dir"
 else
-    sshfs "$WORKSSH" "$dir"
+    mkdir -p "$dir"
+    echo sshfs "$WORKSSH:/Users/$USER" "$dir"
 fi
