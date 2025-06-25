@@ -6,5 +6,5 @@ then
     rmdir "$dir"
 else
     mkdir -p "$dir"
-    echo sshfs "$WORKSSH:/Users/$USER" "$dir"
+    sshfs "$WORKSSH:/Users/$USER" "$dir"
 fi

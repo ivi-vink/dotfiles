@@ -17,7 +17,7 @@ hook -once global KakBegin .* %{
             printf "evaluate-commands -try-client $1 \
                 'set-option current dtach_repl_id ${file}'" | kak -p "$2"
             shift 2
-            dtach -c "${file}" -E "${@:-$SHELL}"
+            dtach -c "${file}" -Ez "${@:-$SHELL}"
         } -- %val{client} %val{session} %arg{@}
     }
 
