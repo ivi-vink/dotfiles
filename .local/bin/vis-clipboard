@@ -22,6 +22,11 @@ Options:
 }
 
 vc_determine_command() {
+	if command -v osc >/dev/null 2>&1; then
+		echo 'osc'
+		return 0
+	fi
+
 	if [ -n "$WAYLAND_DISPLAY" ]; then
 		for c in wl-copy wl-paste; do
 			if command -v "$c" >/dev/null 2>&1; then
@@ -49,11 +54,6 @@ vc_determine_command() {
 
 	if command -v pbcopy >/dev/null 2>&1; then
 		echo 'mac'
-		return 0
-	fi
-
-	if command -v osc >/dev/null 2>&1; then
-		echo 'osc'
 		return 0
 	fi
 
@@ -149,15 +149,37 @@ vc_xclip_paste() {
 
 vc_osc_copy() {
 	d="/dev/tty"
-	[ -n "$kak_client_pid" ] && d="/proc/$kak_client_pid/fd/0"
-	echo "$kak_client_pid" >> ~/logs
-	echo osc copy -d "$d" >> ~/logs
-	osc copy -d "$d"
+	if [ -n "$kak_client_pid" ]
+	then
+          if [ "$(uname -s)" = "Darwin" ]
+          then d="$(lsof -p "$kak_client_pid" |
+               while read -r cmd pid user fd type dev size node name
+               do if [ "$fd" = "0u" ]
+                  then
+                    echo "$name"
+                  fi
+               done)"
+          else d="/proc/$kak_client_pid/fd/0"
+          fi
+        fi
+        osc copy -d "$d"
 }
 
 vc_osc_paste() {
 	d="/dev/tty"
-	[ -n "$kak_client_pid" ] && d="/proc/$kak_client_pid/fd/0"
+	if [ -n "$kak_client_pid" ]
+	then
+          if [ "$(uname -s)" = "Darwin" ]
+          then d="$(lsof -p "$kak_client_pid" |
+               while read -r cmd pid user fd type dev size node name
+               do if [ "$fd" = "0u" ]
+                  then
+                    echo "$name"
+                  fi
+               done)"
+          else d="/proc/$kak_client_pid/fd/0"
+          fi
+        fi
 	osc paste -d "$d"
 }
 
