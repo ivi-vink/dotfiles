@@ -22,7 +22,7 @@ Options:
 }
 
 vc_determine_command() {
-	if command -v osc >/dev/null 2>&1; then
+	if command -v osc >/dev/null 2>&1 && [ -t 1 ]; then
 		echo 'osc'
 		return 0
 	fi

@@ -17,10 +17,6 @@ done >/dev/null 2>&1
 pidof -sx "redshift" || redshift -l -8.703101934543335:115.17989920854698 -b 1.0:0.8 &
 pidof -sx "unclutter" || unclutter -noevents &
 
-# Starts a gpg-agents and configures it as ssh-agent.
-export GPG_TTY="$(tty)"
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-gpgconf --launch gpg-agent &
 gpg-connect-agent updatestartuptty /bye > /dev/null &
 
 # Ensure that xrdb has finished running before moving on to start the WM/DE.

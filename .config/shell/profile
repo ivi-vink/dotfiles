@@ -15,8 +15,14 @@ then d="/run/user/$(id -u)"
   fi
 fi
 
+# Starts a gpg-agents and configures it as ssh-agent.
+eval $(gpg-agent --daemon 2>/dev/null)
+export GPG_TTY="$(tty)"
+export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+
 export TERMINAL="st"
 export EDITOR="kak-desktop"
+export BLOCKING_EDITOR="kak"
 export GIT_EDITOR="kak"
 export BROWSER="firefox"
 

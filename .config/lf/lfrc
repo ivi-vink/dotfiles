@@ -125,7 +125,7 @@ cmd bulkrename ${{
 
     echo "$fs" > "$tmpfile_old"
     echo "$fs" > "$tmpfile_new"
-    $EDITOR "$tmpfile_new"
+    ${BLOCKING_EDITOR:-kak} "$tmpfile_new"
 
     [ "$(wc -l < "$tmpfile_old")" -eq "$(wc -l < "$tmpfile_new")" ] || { rm -f "$tmpfile_old" "$tmpfile_new"; exit 1; }
 
@@ -160,7 +160,7 @@ map gh
 map g top
 map D delete
 map E extract
-map C copyto
+# map C copyto
 map M moveto
 map <c-n> push :mkdir<space>""<left>
 map <c-r> reload
@@ -172,7 +172,8 @@ map o &mimeopen "$f"
 map O $mimeopen --ask "$f"
 
 map A :rename; cmd-end # at the very end
-map c push A<c-u> # new rename
+# map c push A<c-u> # new rename
+map c push &:cd!<enter>
 map I :rename; cmd-home # at the very beginning
 map i :rename # before extension
 map a :rename; cmd-right # after extension
@@ -187,3 +188,5 @@ map V push :!nvim<space>
 map W $setsid -f $TERMINAL >/dev/null 2>&1
 
 map Y $printf "%s" "$fx" | xclip -selection clipboard
+
+source "~/.config/lf/shortcutrc"

@@ -4,14 +4,18 @@
 # When clicked, brings up `newsboat`.
 
 case $BLOCK_BUTTON in
-    1) setsid -f pomodoro start >/dev/null ;;
-    2) setsid -f pomodoro finish >/dev/null ;;
+    1) setsid -f pomodoro start >/dev/null ; pkill -RTMIN+26 dwmblocks ;;
+    2)
+       setsid -f pomodoro finish >/dev/null
+       sh -c 'pomodoro break >/dev/null; notify-send -t 100000 "Breaktime over" "Fight against time compression. Build psychic depth. Remember."' &
+       pkill -RTMIN+26 dwmblocks
+       ;;
     3) notify-send "🍅 Pomodoro module" "\- Shows current pomodoro status
 - Shows ⏱  if a Pomodoro is running
 - Left click starts a new Pomodoro
 - Middle click finishes a Pomodoro early
-- Shift click opens ~/.pomodoro in editor" ;;
-    6) "$TERMINAL" -e "$EDITOR" "$HOME/.pomodoro" ;;
+- Shift click opens ~/.pomodoro in editor" ; pkill -RTMIN+26 dwmblocks ;;
+    6) "$TERMINAL" -e "lf" "$HOME/.pomodoro" ;;
 esac
 
 if ! status=$(pomodoro status); then
@@ -25,7 +29,8 @@ if [ -z "$status" ]; then
     msg="$daily_completed/$daily_total🍅"
     if [ "$daily_completed" -ne "0" ]; then
         seconds_since_last_started="$(( $(date +%s -u) - $(tail -n1 ~/.pomodoro/history | cut -f1 -d' ' | xargs -I{} date -d"{}" +%s -u) ))"
-        seconds_since_last="$(( "$seconds_since_last_started" - 60*$(tail -n1 ~/.pomodoro/history | cut -f2 -d' ' | cut -f2 -d'=')))"
+        duration="$(tail -n1 ~/.pomodoro/history | cut -f2 -d' ' | cut -f2 -d'=')"
+        seconds_since_last="$(( "$seconds_since_last_started" - 60*${duration:-0} ))"
         if [ "$seconds_since_last" -lt 0 ]; then
             seconds_since_last=0
         fi

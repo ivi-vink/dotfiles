@@ -20,7 +20,7 @@ esac
 
 case $BLOCK_BUTTON in
 	1) notify-send "This Month" "$(cal --color=always | sed "s/..7m/<b><span color=\"cyan\">/;s|..0m|</span></b>|")" && {
-	   msg="$(khal list now 14d -f "{calendar-color} {start-time} {title} {status} {description}
+	   msg="$(khal list now 14d -f "{calendar-color} {start-time} {title} {status} {title}
 " | sed "s/..7m/<b><span color=\"cyan\">/;s|..0m|</span></b>|")"
            [ -n "$msg" ] && notify-send -t 100000 "$msg"
 }
