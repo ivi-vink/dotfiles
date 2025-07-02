@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# Usage:
+#
+# kak-shell [session] [commands]
+#
+# Example – Basic:
+#
+# kak-shell
+#
+# Example – Connect to a session from the command-line and attach:
+#
+# kak-shell kanto :attach
+#
+# Example – Connect to a session interactively and attach:
+#
+# kak-shell '' :attach
+main() {
+  # Session
+  session=$1
+  shift
+
+  # Shell commands
+  commands=$@
+
+  # Prompt for a Kakoune session
+  if test -z "$session"; then
+    prompt_kakoune_session
+    [ "$text" ] || exit 1
+    session=$text
+  fi
+
+  # Connect to the given session and execute the shell commands
+  connect "$session" "$@"
+}
+
+connect() {
+  session=$1
+  shift
+  setsid kak -s "$session" -d < /dev/null > /dev/null 2>&1 &
+  wait_for_session "$session"
+
+  if SOME_VARIABLE=`push.sh 2>/dev/null`
+  then eval "$SOME_VARIABLE"
+       # Encode arguments as strings with posix shell push.sh magic.
+       Push -c args connect-detach "$@"
+       kak -c "$session" -e "$args"
+  else echo "push.sh not installed" >&2
+       kak -c "$session" -e "connect-detach $@"
+  fi
+  sh connect.sh
+}
+
+prompt_kakoune_session() {
+  kak_session_list=$(kak -l | sort)
+  kak_session=$(echo "$kak_session_list" | dmenu -p 'kakoune session')
+  text=$kak_session
+}
+
+wait_for_session() {
+  session=$1
+
+  # Wait for session
+  # Grep in quiet mode with fixed strings and whole line switches
+  while ! kak -l | grep -q -F -x "$session"; do
+    sleep 0.1
+  done
+}
+
+# Utility functions ────────────────────────────────────────────────────────────
+
+is_number() {
+  test "$1" -eq "$1" 2> /dev/null
+}
+
+number_lines() {
+  awk '{ print NR, $0 }'
+}
+
+get_line() {
+  sed "${1}q;d"
+}
+
+main "$@"
