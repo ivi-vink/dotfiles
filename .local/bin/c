@@ -1,2 +1,3 @@
 #!/bin/sh
-exec kak -c "$@"
+echo "$KAKOUNE_SESSION: $(:pwd) -> $PWD"
+:cd!

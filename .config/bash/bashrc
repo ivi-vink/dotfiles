@@ -1,4 +1,4 @@
-if [[ ! $- == *i* ]]; then
+if [[ ! $- == *l* ]]; then
         . /etc/profile
         . ~/.profile
 fi
@@ -13,3 +13,4 @@ export PS1='\[\e]0;\w $(test "$IN_KAKOUNE_CONNECT" && printf '%s' "- $KAKOUNE_CL
 export PROMPT_DIRTRIM=3
 export PROMPT_COMMAND='history -a'
 export HISTSIZE=100000
+export HISTCONTROL=ignorespace:erasedups

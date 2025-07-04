@@ -109,12 +109,6 @@ alias global bf buffer-first
 alias global bl buffer-last
 alias global bo buffer-only
 alias global bo! buffer-only-force
-define-command -override el %{
-    execute-keys %sh{
-        printf "%s" "<esc>:e ${kak_buffile%/*}/"
-    }
-}
-map global user e "<esc>:el<ret>"
 define-command -override -params 1 C %{
     execute-keys %sh{
         printf "%s" "<esc>:cd "
@@ -122,4 +116,17 @@ define-command -override -params 1 C %{
         printf "%s" "<ret>"
     }
 }
-map global user c "<esc>:C "
+map global user C "<esc>:C "
+define-command -override el %{
+    execute-keys %sh{
+        printf "%s" "<esc>:e $(realpath --relative-to "$PWD" "${kak_buffile%/*}")/"
+    }
+}
+map global user e "<esc>:el<ret>"
+define-command -override cdl %{
+    execute-keys %sh{
+        printf "%s" "<esc>:cd $(realpath --relative-to "$PWD" "${kak_buffile%/*}")/"
+    }
+}
+map global user c "<esc>:cdl<ret>"
+map global user f "<esc>:> lf<ret>"

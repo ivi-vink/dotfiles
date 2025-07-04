@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "${1:?need a bookmark name} $PWD" >> "${XDG_CONFIG_HOME}/shell/bm-dirs.d/local"
+shortcuts >/dev/null; . /Users/ivi/.config/shell/shortcutrc ; . /Users/ivi/.config/shell/shortcutenvrc

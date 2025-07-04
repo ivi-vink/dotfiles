@@ -1,4 +1,3 @@
-export ENV=$HOME/.kshrc
 [ -f "$HOME/.config/shell/profile" ] && . "$HOME/.config/shell/profile"
 
 if [ -d $HOME/.config/shell/profile.d ]; then
