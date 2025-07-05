@@ -112,8 +112,9 @@ alias global bo! buffer-only-force
 define-command -override -params 1 C %{
     execute-keys %sh{
         printf "%s" "<esc>:cd "
-        printenv "${@}"
-        printf "%s" "<ret>"
+        d=$(printenv "${@}")
+        printf "%s" "$d<ret>"
+        printf "%s" "<esc>:info %[cd'd into ${d}]<ret>"
     }
 }
 map global user C "<esc>:C "
@@ -125,7 +126,8 @@ define-command -override el %{
 map global user e "<esc>:el<ret>"
 define-command -override cdl %{
     execute-keys %sh{
-        printf "%s" "<esc>:cd $(realpath --relative-to "$PWD" "${kak_buffile%/*}")/"
+        d=$(realpath --relative-to "$PWD" "${kak_buffile%/*}")
+        printf "%s" "<esc>:cd $d/"
     }
 }
 map global user c "<esc>:cdl<ret>"
