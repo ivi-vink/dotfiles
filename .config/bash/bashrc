@@ -1,4 +1,4 @@
-if [[ ! $- == *l* ]]; then
+if [[ ! $- == *i* ]]; then
         . /etc/profile
         . ~/.profile
 fi

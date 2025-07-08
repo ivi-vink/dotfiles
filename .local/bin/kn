@@ -1,0 +1,12 @@
+#!/bin/sh
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc"
+context="${XDG_STATE_HOME:-$HOME/.local/state}/context"
+if ! [ -d "${context}" ]
+then notify-send "kn" "${context} is not a dir!"; exit 1
+fi
+
+if [ -f "${context}/name" ]
+then exec kak-shell "$(cat "${context}/name")"
+else notify-send "kn" "Context has no name!"; exit 1
+fi

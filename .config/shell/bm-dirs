@@ -12,3 +12,4 @@ sc  $HOME/.local/bin
 src $HOME/.local/src
 vv  ${XDG_VIDEOS_DIR:-$HOME/Videos}
 pro  $HOME/Programming
+ctx ${XDG_STATE_HOME}/context

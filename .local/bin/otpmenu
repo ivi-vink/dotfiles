@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+shopt -s nullglob globstar
+
+dmenu=dmenu
+[ "$(uname)" = "Darwin" ] && dmenu=/Applications/dmenu-mac.app/Contents/MacOS/dmenu-mac
+copy() {
+  xclip -f | xclip -f -sel c
+}
+if [ "$(uname)" = "Darwin" ]; then
+    copy() {
+      pbcopy
+    }
+fi
+
+prefix="${PASSWORD_STORE_DIR:-$HOME/sync/password-store}/otp"
+password_files=( "$prefix"/**/*.gpg )
+password_files=( "${password_files[@]#"$prefix"/}" )
+password_files=( "${password_files[@]%.gpg}" )
+
+password="$(printf '%s\n' "${password_files[@]}" | "$dmenu" "$@")"
+
+[[ -n $password ]] || exit
+
+pass otp "otp/$password" | head -n1 | vis-clipboard --copy

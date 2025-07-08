@@ -1,0 +1,38 @@
+#!/bin/sh
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
+contexts_dir="$state_dir/contexts"
+mkdir -p "$contexts_dir"
+
+new_context() {
+  echo new_context 1>&2
+  : "${1:?I require a context name}"
+  dir="${contexts_dir}/${1}"
+  if [ -d "${dir}" ]
+  then notify-send "ctx" "${dir} already exists!"
+  else mkdir -p "${dir}"
+       echo "$1" > "${dir}/name"
+       ln -nsf "${dir}" "${state_dir}/context"
+  fi
+}
+set_context() {
+  echo set_context 1>&2
+  : "${1:?I require a context name}"
+  dir="${contexts_dir}/${1}"
+  if [ -d "${dir}" ]
+  then ln -nsf "${dir}" "${state_dir}/context"
+  else notify-send "ctx" "${dir} does not exists!"
+  fi
+}
+
+{
+if [ "$1" ]
+then echo "$1"
+else ls "$contexts_dir" | dmenu -p "switch to contex: " -l 20
+fi
+} |
+  while read -r context
+  do case "$context" in
+    +*) new_context "${context#+}" ;;
+    *[![:space:]]*) set_context "$context" ;;
+  esac
+  done
