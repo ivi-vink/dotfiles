@@ -92,17 +92,19 @@ automatically-unhide-macos-hidden-apps = true
     cmd-shift-d = 'exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" passmenu'
     cmd-f = 'fullscreen'
     cmd-d = 'exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" /Applications/dmenu-mac.app/Contents/MacOS/dmenu-mac'
-    cmd-enter = ['''exec-and-forget osascript -e '
-    tell application "System Events"
-        if exists application process "Kitty" then
-            tell application process "Kitty"
-                click menu item "New Window" of menu "Shell" of menu bar 1
-            end tell
-        else
-            tell application "Kitty" to activate
-        end if
-    end tell'
-    ''']
+    # cmd-enter = ['''exec-and-forget osascript -e '
+    # tell application "System Events"
+    #     if exists application process "Kitty" then
+    #         tell application process "Kitty"
+    #             click menu item "New Window" of menu "Shell" of menu bar 1
+    #         end tell
+    #     else
+    #         tell application "Kitty" to activate
+    #     end if
+    # end tell'
+    # ''']
+    cmd-enter = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME"''']
+    cmd-n = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec kn'''']
 
     cmd-w = '''exec-and-forget osascript -e '
     tell application "System Events"

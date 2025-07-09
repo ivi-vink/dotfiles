@@ -1,4 +1,9 @@
 export PATH="$HOME/.local/bin:$PATH"
+if [ "$(uname -s)" = "Darwin" ]; then
+    export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
+    export PATH="$HOME/.local/bin/macos.d:$PATH"
+fi
+
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
@@ -18,9 +23,4 @@ export GIT_EDITOR="kak"
 export BROWSER="firefox"
 
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
-if [ "$(uname -s)" = "Darwin" ]; then
-    export PATH="$HOME/.local/bin/macos.d:$PATH"
-    export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
-fi
-
 [ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1

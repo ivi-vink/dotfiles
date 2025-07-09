@@ -3,6 +3,10 @@ state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
 contexts_dir="$state_dir/contexts"
 mkdir -p "$contexts_dir"
 
+link() {
+  ln -nsf "${1:?}" "${2:?}"
+}
+
 new_context() {
   echo new_context 1>&2
   : "${1:?I require a context name}"
@@ -11,7 +15,7 @@ new_context() {
   then notify-send "ctx" "${dir} already exists!"
   else mkdir -p "${dir}"
        echo "$1" > "${dir}/name"
-       ln -nsf "${dir}" "${state_dir}/context"
+       link "${dir}" "${state_dir}/context"
   fi
 }
 set_context() {
@@ -19,7 +23,7 @@ set_context() {
   : "${1:?I require a context name}"
   dir="${contexts_dir}/${1}"
   if [ -d "${dir}" ]
-  then ln -nsf "${dir}" "${state_dir}/context"
+  then link "${dir}" "${state_dir}/context"
   else notify-send "ctx" "${dir} does not exists!"
   fi
 }

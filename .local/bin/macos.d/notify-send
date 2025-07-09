@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ "$2" ]
+then osascript -e 'display notification "'"${2:?require message body}"'" with title "'"$1"'"'
+else osascript -e 'display notification "'"${1:?require message body}"'"'
+fi
