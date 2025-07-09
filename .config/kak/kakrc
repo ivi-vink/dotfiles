@@ -35,8 +35,6 @@ hook -once global KakBegin .* %{
     alias global repl-send-text dtach-send-text
 }
 
-require-module x11
-set-option global windowing_modules 'x11'
 set-option global toolsclient t
 set-option global jumpclient j
 set-option global docsclient d
