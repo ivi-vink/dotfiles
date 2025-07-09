@@ -94,12 +94,12 @@ automatically-unhide-macos-hidden-apps = true
     cmd-d = 'exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" /Applications/dmenu-mac.app/Contents/MacOS/dmenu-mac'
     cmd-enter = ['''exec-and-forget osascript -e '
     tell application "System Events"
-        if exists application process "Ghostty" then
-            tell application process "Ghostty"
-                click menu item "New Window" of menu "File" of menu bar 1
+        if exists application process "Kitty" then
+            tell application process "Kitty"
+                click menu item "New Window" of menu "Shell" of menu bar 1
             end tell
         else
-            tell application "Ghostty" to activate
+            tell application "Kitty" to activate
         end if
     end tell'
     ''']
