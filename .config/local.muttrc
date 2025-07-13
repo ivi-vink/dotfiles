@@ -1,0 +1,14 @@
+source ~/.config/subscriptions.muttrc
+
+macro index \\ "|mutt-limit-from\n:source /tmp/mutt-limit-from\nE"
+set use_threads=yes
+set sort=reverse-last-date
+set pager_stop=yes
+set index_format="%2C %Z %?X?A& ? %D %-15.15L %s (%-4.4c)"
+bind index,pager + entire-thread
+set nm_default_url = "notmuch://$HOME/.local/share/mail"
+set nm_query_type = "threads"
+
+# Contrast for default indicator is bad...
+# color indicator black white
+color indicator bold black brightwhite
