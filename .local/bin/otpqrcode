@@ -1,0 +1,3 @@
+#!/bin/sh
+zbarimg -q --raw "${1:?I require a qr code image file name}" |
+  pass otp insert "${2:?I require a pass name to store the otp secret}"
