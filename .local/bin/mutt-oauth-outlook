@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+email="$1"
+shift
+/usr/share/neomutt/oauth2/mutt_oauth2.py \
+    -v \
+    -t \
+    --authorize \
+    --client-id "9e5f94bc-e8a4-4e73-b8be-63364c29d753" \
+    --client-secret "" \
+    --email "$email" \
+    --provider microsoft \
+    $HOME/email-token
+echo $HOME/email-token
