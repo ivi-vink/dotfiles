@@ -105,6 +105,7 @@ automatically-unhide-macos-hidden-apps = true
     # ''']
     cmd-enter = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME"''']
     cmd-n = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec kn'''']
+    cmd-e = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec neomutt'''']
 
     cmd-w = '''exec-and-forget osascript -e '
     tell application "System Events"
