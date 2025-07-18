@@ -42,7 +42,6 @@ alias \
 	sdn="shutdown -h now" \
 	e='$EDITOR' \
 	v='$EDITOR' \
-	p="pacman" \
 	xi="xbps-install" \
 	xr="xbps-remove -R" \
 	xq="xbps-query" \

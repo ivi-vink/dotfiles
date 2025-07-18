@@ -1,4 +1,7 @@
+stty discard undef
+
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
 export XDG_DATA_HOME=$HOME/.local/share
@@ -6,24 +9,27 @@ export XDG_STATE_HOME=$HOME/.local/state
 export PASSWORD_STORE_DIR=$HOME/.local/share/password-store
 export PASSWORD_STORE_GPG_OPTS="--no-throw-keyids"
 
-# Starts a gpg-agents and configures it as ssh-agent.
-eval $(gpg-agent --daemon 2>/dev/null)
-export GPG_TTY="$(tty)"
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-
 export TERMINAL="st"
 export EDITOR="kak-desktop"
 export BLOCKING_EDITOR="kak"
 export GIT_EDITOR="kak"
 export BROWSER="firefox"
 
-export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
-stty discard undef
-[ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1
-
 if [ "$(uname -s)" = "Darwin" ]; then
-    export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
-    export PATH="$HOME/.local/bin/macos.d:$PATH"
+    export LANG=en_US.UTF-8
     export BROWSER="open"
-    export SASL_PATH=/opt/homebrew/opt/cyrus-sasl/lib/sasl2:/opt/homebrew/opt/cyrus-sasl-xoauth2/lib/sasl2
+
+    brewpath="$(brew --prefix)"
+    export PATH="/usr/local/bin:$brewpath/bin:$PATH"
+    export PATH="$brewpath/opt/findutils/libexec/gnubin:$PATH"
+    export PATH="$brewpath/opt/util-linux/bin:$brewpath/opt/util-linux/sbin:$PATH"
+    export PATH="$HOME/.local/bin/macos.d:$PATH"
+    export SASL_PATH="$brewpath/opt/cyrus-sasl/lib/sasl2:$brewpath/opt/cyrus-sasl-xoauth2/lib/sasl2"
 fi
+
+# Starts a gpg-agents and configures it as ssh-agent.
+eval $(gpg-agent --daemon 2>/dev/null)
+export GPG_TTY="$(tty)"
+export SSH_AUTH_SOCK="$(gpgconf --list-dirs agent-ssh-socket)"
+
+[ ! -f "$XDG_CONFIG_HOME/shell/shortcutrc" ] && setsid -f shortcuts >/dev/null 2>&1
