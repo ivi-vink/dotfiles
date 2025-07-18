@@ -1,4 +1,4 @@
-stty discard undef
+[ -t 0 ] && stty discard undef
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$PATH:$HOME/go/bin:/usr/local/go/bin"
@@ -19,7 +19,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
     export LANG=en_US.UTF-8
     export BROWSER="open"
 
-    brewpath="$(brew --prefix)"
+    brewpath="/opt/homebrew"
     export PATH="/usr/local/bin:$brewpath/bin:$PATH"
     export PATH="$brewpath/opt/findutils/libexec/gnubin:$PATH"
     export PATH="$brewpath/opt/util-linux/bin:$brewpath/opt/util-linux/sbin:$PATH"
