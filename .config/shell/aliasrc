@@ -33,10 +33,9 @@ alias \
 alias \
 	ka="killall" \
 	g="git" \
-	s="{ git status --short ; git log --oneline @{push}.. ; }" \
-        ga="git add " \
-        gc="git commit " \
 	d="docker" \
+  ga="git add " \
+  gc="git commit " \
 	trem="transmission-remote" \
 	YT="youtube-viewer" \
 	sdn="shutdown -h now" \
