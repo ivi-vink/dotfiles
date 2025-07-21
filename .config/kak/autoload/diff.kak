@@ -11,7 +11,7 @@ diff-selections %{
           result="$dir/result.diff"
           printf "%s" "$1" > "$a"
           printf "%s" "$2" > "$b"
-          diff -uw "$a" "$b" > "$result"
+          diff -U10000 -w "$a" "$b" > "$result"
           [ "$3" ] && $3 "$result"
           printf %s\\n "evaluate-commands -try-client '$kak_opt_toolsclient' %{
               edit -readonly ${result}
@@ -62,9 +62,9 @@ diff-selections %{
 
           put_original_files() {
             result="${1:?require result file}"
-            sed --in-place 's/^@@.*@@/'"$diff_lines"'/g' "${result}" >/dev/null
-            sed --in-place 's,^--- .*/a\s,--- '"$file_name_a"'	,g' "${result}" >/dev/null
-            sed --in-place 's,^+++ .*/b\s,+++ '"$file_name_b"'	,g' "${result}" >/dev/null
+            sed -i.bak 's/^@@.*@@/'"$diff_lines"'/g' "${result}" >/dev/null
+            sed -i.bak 's,^--- .*/a,--- '"$file_name_a"',g' "${result}" >/dev/null
+            sed -i.bak 's,^+++ .*/b,+++ '"$file_name_b"',g' "${result}" >/dev/null
           }
           diff_dance "$selection_content" "$1" put_original_files
         fi
