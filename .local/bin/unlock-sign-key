@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "dummy" | gpg --sign --batch -o /dev/null

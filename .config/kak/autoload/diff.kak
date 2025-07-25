@@ -89,3 +89,8 @@ enter-diff-mode %{
 map global user d ':enter-diff-mode<ret>' -docstring 'Mappings for interacting with diffs!'
 map global diff s ':diff-selections<ret>' -docstring 'diff on selections or selection and reg_d'
 map global diff t ':diff-this<ret>' -docstring 'diff on selections or selection and reg_d'
+
+hook global WinSetOption filetype=diff %{
+    map buffer normal <ret> :diff-jump<ret>
+    map buffer normal - %[:diff-jump -<ret>]
+}
