@@ -19,6 +19,9 @@ if [ "$(uname -s)" = "Darwin" ]; then
     export LANG=en_US.UTF-8
     export BROWSER="open"
 
+    # defaults delete -g NSWindowShouldDragOnGesture
+    defaults write -g NSWindowShouldDragOnGesture -bool true
+
     brewpath="/opt/homebrew"
     export PATH="/usr/local/bin:$brewpath/bin:$PATH"
     export PATH="$brewpath/share/google-cloud-sdk/bin:$PATH"
