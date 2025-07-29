@@ -1,1 +1,1 @@
-. "${HOME}/.profile"
+.config/zsh/profile
