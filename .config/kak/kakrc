@@ -56,20 +56,27 @@ hook global WinCreate ^[^*]+$ %{
     map global insert <s-tab> '<a-;><a-lt>'
 }
 
+define-command -override -docstring %{
+  Format the contents of the buffer, but also write it.
+} format-but-write %{
+  format
+  write
+}
+
 hook global BufSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
-    hook buffer -group format BufWritePost .* format
+    hook buffer -group format BufWritePost .* format-but-write
 }
 
 hook global BufSetOption filetype=terraform %{
     set-option buffer formatcmd 'terraform fmt -'
-    hook buffer -group format BufWritePost .* format
+    hook buffer -group format BufWritePost .* format-but-write
 }
 
 hook global BufSetOption filetype=go %{
     set-option buffer formatcmd 'gofumpt | goimports'
     set-option global make_error_pattern '^\s*([^:\n]+):(\d+):?(?:(\d+):)? ?([^\n]+)?'
-    hook buffer -group format BufWritePost .* format
+    hook buffer -group format BufWritePost .* format-but-write
 }
 
 hook global BufSetOption filetype=sh %{

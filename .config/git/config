@@ -1,3 +1,14 @@
+[core]
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true  # use n and N to move between diff sections
+    dark = true      # or light = true, or omit for auto-detection
+    side-by-side = true
+
 [commit]
 	gpgsign = false
 
@@ -5,10 +16,7 @@
 	format = "ssh"
 
 [merge]
-	tool = "fugitive"
-
-[mergetool "fugitive"]
-	cmd = "vim -f -c \"Gdiff\" \"$MERGED\""
+  conflictStyle = zdiff3
 
 [user]
 	email = "ivi@vinkies.net"
