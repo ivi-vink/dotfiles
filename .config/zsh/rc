@@ -86,4 +86,11 @@ lfcd () {
         [ -d "$dir" ] && [ "$dir" != "$(pwd)" ] && cd "$dir" && c
     fi
 }
-bindkey -s '^o' '^ulfcd\n'
+bindkey -s '^o' 'y\n'
+
+autoload -z edit-command-line
+my-edit-command-line() {
+  EDITOR=kak edit-command-line
+}
+zle -N my-edit-command-line
+bindkey '^X^E' my-edit-command-line

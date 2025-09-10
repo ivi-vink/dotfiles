@@ -44,7 +44,8 @@ alias \
 	xi="xbps-install" \
 	xr="xbps-remove -R" \
 	xq="xbps-query" \
-	z="zathura"
+	z="zathura" \
+	fzl="fuzzy-links"
 
 alias \
 	ref="shortcuts >/dev/null; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" \

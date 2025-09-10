@@ -1,6 +1,27 @@
-colorscheme gruber-darker
-add-highlighter global/ number-lines -relative
+colorscheme gruvbox-dark
+set-option global makecmd 'make -j8'
+set-option global grepcmd 'rg --vimgrep --hidden'
+add-highlighter global/ show-matching -previous
+set-face global CurSearch +u
+set-face global CurWord +b
+hook global WinCreate ^[^*]+$ %{ add-highlighter window/ number-lines -hlcursor -relative }
 
+# Enable editor config
+# ────────────────────
+hook global BufOpenFile .* %{ editorconfig-load }
+hook global BufNewFile .* %{ editorconfig-load }
+
+hook global BufSetOption indentwidth=[1-9] %{
+  hook buffer InsertChar \t %{ try %{
+    execute-keys -draft "h<a-h><a-k>\A\h+\z<ret><a-;>;%opt{indentwidth}@"
+  }}
+  hook buffer InsertDelete ' ' %{ try %{
+    execute-keys -draft 'h<a-h><a-k>\A\h+\z<ret>i<space><esc><lt>'
+  }}
+}
+
+# Workaround to not use tmux, but dtach and window manager
+# ────────────────────
 hook -once global KakBegin .* %{
     require-module connect
     require-module dtach-repl
@@ -35,27 +56,69 @@ hook -once global KakBegin .* %{
     alias global repl-send-text dtach-send-text
 }
 
-set-option global toolsclient t
-set-option global jumpclient j
-set-option global docsclient d
+# Ide / connect
+# ────────────────────
+set-option global toolsclient tools
+set-option global jumpclient main
+set-option global docsclient docs
+define-command ide -params 0..1 %{
+    try %{ rename-session %arg{1} }
+
+    rename-client main
+    new rename-client tools
+    new rename-client docs
+}
 set-option global ui_options terminal_assistant=cat
+map global normal '#' :comment-line<ret>
 
-map -docstring "Jump to next grep match"     global goto n <esc>:grep-next-match<ret>
-map -docstring "Jump to previous grep match" global goto p <esc>:grep-previous-match<ret>
-map -docstring "Jump to next make error"     global goto ] <esc>:make-next-error<ret>
-map -docstring "Jump to previous make error" global goto [ <esc>:make-previous-error<ret>
+define-command -override -params 1 shell-bookmark %{
+    execute-keys %sh{
+        printf "%s" "<esc>:cd "
+        d=$(printenv "${@}")
+        printf "%s" "$d<ret>"
+        printf "%s" "<esc>:info %[cd'd into ${d}]<ret>"
+    }
+}
+map global user C "<esc>:shell-bookmark "
+define-command -override relative-edit %{
+    execute-keys %sh{
+        printf "%s" "<esc>:e $(realpath --relative-to "$PWD" "${kak_buffile%/*}")/"
+    }
+}
+map global user e "<esc>:relative-edit<ret>"
+define-command -override relative-cd %{
+    execute-keys %sh{
+        d=$(realpath --relative-to "$PWD" "${kak_buffile%/*}")
+        printf "%s" "<esc>:cd $d/"
+    }
+}
+map global user c "<esc>:relative-cd<ret>"
+map global user f "<esc>:> yazi<ret>"
+define-command find -params 1 %{ edit %arg{1} }
+complete-command -menu find shell-script-candidates %{ fd --type=f --hidden --exclude='.git**' }
 
+# Goto jump next grep, lint, compile
+# ────────────────────
+hook global -always BufOpenFifo '\*grep\*' %{
+  map global normal <minus> ': grep-next-match<ret>'
+  map global normal = ': grep-previous-match<ret>'
+}
+hook global -always BufOpenFifo '\*make\*' %{
+  map global normal <minus> ': make-next-match<ret>'
+  map global normal = ': make-previous-match<ret>'
+}
+map global user -docstring 'next lint error' n ':lint-next-error<ret>'
+map global normal <c-p> :lint<ret>
+
+# System clipboard
+# ────────────────────
 hook global RegisterModified '"' %{ nop %sh{
   export kak_client_pid="$kak_client_pid"
   printf %s "$kak_main_reg_dquote" | vis-clipboard --copy
 }}
 
-hook global WinCreate ^[^*]+$ %{
-    editorconfig-load
-    map global insert <tab> '<a-;><a-gt>'
-    map global insert <s-tab> '<a-;><a-lt>'
-}
-
+# Filetype specific hooks
+# ───────────────────────
 define-command -override -docstring %{
   Format the contents of the buffer, but also write it.
 } format-but-write %{
@@ -63,26 +126,28 @@ define-command -override -docstring %{
   write
 }
 
-hook global BufSetOption filetype=python %{
+hook global WinSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
     hook buffer -group format BufWritePost .* format-but-write
 }
 
-hook global BufSetOption filetype=terraform %{
+hook global WinSetOption filetype=terraform %{
     set-option buffer formatcmd 'terraform fmt -'
     hook buffer -group format BufWritePost .* format-but-write
 }
 
-hook global BufSetOption filetype=go %{
+hook global WinSetOption filetype=go %{
     set-option buffer formatcmd 'gofumpt | goimports'
     set-option global make_error_pattern '^\s*([^:\n]+):(\d+):?(?:(\d+):)? ?([^\n]+)?'
     hook buffer -group format BufWritePost .* format-but-write
 }
 
-hook global BufSetOption filetype=sh %{
-    set-option window lintcmd "shellcheck -fgcc -Cnever"
+hook global WinSetOption filetype=sh %{
+    set-option buffer lintcmd "shellcheck -fgcc -Cnever"
 }
 
+# Buffers
+# ───────────────────────
 define-command delete-buffers-matching -params 1..2 %{
 	evaluate-commands %sh{
 		cmd=delete-buffer
@@ -109,33 +174,8 @@ define-command delete-buffers-matching -params 1..2 %{
 map global user b ':enter-buffers-mode<ret>'              -docstring 'buffers…'
 map global user B ':enter-user-mode -lock buffers<ret>'   -docstring 'buffers (lock)…'
 
-# Suggested aliases
-
 alias global bd delete-buffer
 alias global bf buffer-first
 alias global bl buffer-last
 alias global bo buffer-only
 alias global bo! buffer-only-force
-define-command -override -params 1 C %{
-    execute-keys %sh{
-        printf "%s" "<esc>:cd "
-        d=$(printenv "${@}")
-        printf "%s" "$d<ret>"
-        printf "%s" "<esc>:info %[cd'd into ${d}]<ret>"
-    }
-}
-map global user C "<esc>:C "
-define-command -override el %{
-    execute-keys %sh{
-        printf "%s" "<esc>:e $(realpath --relative-to "$PWD" "${kak_buffile%/*}")/"
-    }
-}
-map global user e "<esc>:el<ret>"
-define-command -override cdl %{
-    execute-keys %sh{
-        d=$(realpath --relative-to "$PWD" "${kak_buffile%/*}")
-        printf "%s" "<esc>:cd $d/"
-    }
-}
-map global user c "<esc>:cdl<ret>"
-map global user f "<esc>:> lf<ret>"
