@@ -104,10 +104,10 @@ automatically-unhide-macos-hidden-apps = true
     #     end if
     # end tell'
     # ''']
-    cmd-enter = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME"''']
-    cmd-n = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec kn'''']
-    cmd-e = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec neomutt'''']
-    cmd-r = ['''exec-and-forget kitty --single-instance --detach --working-directory "$HOME" sh --login -c 'exec htop'''']
+    cmd-enter = ['''exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" TERMCMD_PWD="$HOME" termcmd''']
+    cmd-n = ['''exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" TERMCMD_PWD="$HOME" termcmd exec kn''']
+    cmd-e = ['''exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" TERMCMD_PWD="$HOME" termcmd exec neomutt''']
+    cmd-r = ['''exec-and-forget source /etc/profile; PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH" TERMCMD_PWD="$HOME" termcmd exec htop''']
 
     cmd-w = '''exec-and-forget osascript -e '
     tell application "System Events"

@@ -104,10 +104,10 @@ hook global -always BufOpenFifo '\*grep\*' %{
   map global normal = ': grep-previous-match<ret>'
 }
 hook global -always BufOpenFifo '\*make\*' %{
-  map global normal <minus> ': make-next-match<ret>'
-  map global normal = ': make-previous-match<ret>'
+  map global normal <minus> ': make-next-error<ret>'
+  map global normal = ': make-previous-error<ret>'
 }
-map global user -docstring 'next lint error' n ':lint-next-error<ret>'
+map global user -docstring 'next lint error' n ':lint-next-message<ret>'
 map global normal <c-p> :lint<ret>
 
 # System clipboard
