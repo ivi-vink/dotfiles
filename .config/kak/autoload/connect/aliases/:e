@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Open files.
+#
+# Usage:
+#
+# :edit <file>
+# :edit +<line> <file>
+# :edit +<line>:<column> <file>
+# [files] | :edit
+#
+# Note: Order matters.
+
+. "$KAKOUNE_PRELUDE"
+
+# Read files from stdin when a terminal is available.
+# Reason: kak-desktop
+if [ ! -t 0 -a -t 1 ]; then
+  while read file; do
+    set -- "$file" "$@"
+  done
+fi
+
+# Skip options
+[ "$1" = '--' ] && shift
+
+# Open files at the given position (line and column) if specified (before or after the file).
+commands=$(
+  while [ "$1" ]; do
+    case "$1" in
+      ('+'*':'*)
+        line=${1#+}; line=${line%:*}
+        column=${1#*:}
+        file=$(realpath "$2")
+        shift 2
+        kak_escape edit "$file" "$line" "$column"
+        ;;
+      ('+'*)
+        line=${1#+}
+        file=$(realpath "$2")
+        shift 2
+        kak_escape edit "$file" "$line"
+        ;;
+      (*)
+        file=$(realpath "$1")
+        shift
+        case "$1" in
+          ('+'*':'*)
+            line=${1#+}; line=${line%:*}
+            column=${1#*:}
+            shift
+            kak_escape edit "$file" "$line" "$column"
+            ;;
+          ('+'*)
+            line=${1#+}
+            shift
+            kak_escape edit "$file" "$line"
+            ;;
+          (*)
+            kak_escape edit "$file"
+            ;;
+        esac
+        ;;
+    esac
+  done
+)
+
+:send "$commands"
+
+# Focus back the client
+:send focus

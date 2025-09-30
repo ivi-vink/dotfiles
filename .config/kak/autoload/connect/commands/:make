@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$KAKOUNE_PRELUDE"
+
+key="$1"
+shift
+
+
+kak_escape map pistarchio "$key" "$*" | kak -p "$KAKOUNE_SESSION"
+# kak_escape evaluate-commands -try-client t "$@" | kak -p "$KAKOUNE_SESSION"

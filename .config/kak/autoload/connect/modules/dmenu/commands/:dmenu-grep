@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# dmenu
+# https://tools.suckless.org/dmenu/
+
+# Dependencies:
+# – ripgrep (https://github.com/BurntSushi/ripgrep)
+
+rg --column --with-filename '.+' "$@" |
+dmenu -l 20 -i -p 'Open files (search by content)' |
+:edit-search

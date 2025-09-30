@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Wofi
+# https://hg.sr.ht/~scoopta/wofi
+
+# Dependencies:
+# – ripgrep (https://github.com/BurntSushi/ripgrep)
+
+rg --column --with-filename '.+' "$@" |
+wofi --dmenu --prompt 'Open files (search by content)' |
+:edit-search

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Get the current buffer path.
+:get %val{buffile}

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Rofi
+# https://github.com/davatorium/rofi
+
+# Dependencies:
+# – ripgrep (https://github.com/BurntSushi/ripgrep)
+
+rg --column --with-filename '.+' "$@" |
+rofi -dmenu -i -p 'Open files (search by content)' |
+:edit-search

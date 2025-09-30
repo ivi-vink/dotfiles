@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# fzy
+# https://github.com/jhawthorn/fzy
+
+# Dependencies:
+# – ripgrep (https://github.com/BurntSushi/ripgrep)
+
+rg --column --with-filename '.+' "$@" |
+fzy --prompt='(g)>' |
+:edit-search

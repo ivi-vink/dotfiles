@@ -126,6 +126,17 @@ define-command -override -docstring %{
   write
 }
 
+# https://sourceforge.net/p/skim-app/wiki/TeX_and_PDF_Synchronization/
+# /Applications/Skim.app/Contents/SharedSupport/displayline -b -g -- 1 build/default/default.pdf src/index.tex
+set-option global snippets_auto_expand false
+hook global WinSetOption filetype=latex %{
+  try source ~/.config/kak/snippets.kak
+  hook global BufWritePost .*.tex %{
+    echo "snippets written"
+    try source ~/.config/kak/snippets.kak
+  }
+}
+
 hook global WinSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
     hook buffer -group format BufWritePost .* format-but-write
