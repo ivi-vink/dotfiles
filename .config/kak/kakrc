@@ -130,10 +130,10 @@ define-command -override -docstring %{
 # /Applications/Skim.app/Contents/SharedSupport/displayline -b -g -- 1 build/default/default.pdf src/index.tex
 set-option global snippets_auto_expand false
 hook global WinSetOption filetype=latex %{
-  try source ~/.config/kak/snippets.kak
+  try %{ source ~/.config/kak/snippets.kak }
   hook global BufWritePost .*.tex %{
     echo "snippets written"
-    try source ~/.config/kak/snippets.kak
+    try %{ source ~/.config/kak/snippets.kak }
   }
 }
 
