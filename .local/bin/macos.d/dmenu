@@ -1,2 +1,2 @@
 #!/bin/sh
-exec vis-menu "$@"
+exec dmenu_raycast "$@"

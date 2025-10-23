@@ -1,0 +1,2 @@
+#!/bin/sh
+setsid sh -c 'pomodoro start -w >/dev/null 2>&1 && notify-send "Pomodoro" "Break time!"' &

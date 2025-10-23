@@ -1,0 +1,4 @@
+#!/bin/sh
+choice="$(ls ~/Wallpapers | dmenu)" || exit 1
+sed -i.bak 's,\(.*wallpaper": "\)\(.*\)\(".*\),\1'"$HOME/Wallpapers/$choice"'\3,' ~/.config/wal/colorschemes/dark/default.json
+wal --theme default

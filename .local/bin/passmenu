@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 shopt -s nullglob globstar
 
-dmenu=dmenu
-[ "$(uname)" = "Darwin" ] && dmenu=/Applications/dmenu-mac.app/Contents/MacOS/dmenu-mac
-copy() {
-  xclip -f | xclip -f -sel c
-}
 if [ "$(uname)" = "Darwin" ]; then
     copy() {
       pbcopy
@@ -19,7 +14,7 @@ fi
     password_files=( "${password_files[@]%.gpg}" )
     echo "password_files: ${password_files[*]}"
 
-    password="$(printf '%s\n' "${password_files[@]}" | "$dmenu" "$@")"
+    password="$(printf '%s\n' "${password_files[@]}" | dmenu "$@")"
     echo "password: $password"
 
     [[ -n $password ]] || exit

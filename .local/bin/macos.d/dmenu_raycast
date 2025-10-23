@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import asyncio
+import subprocess
+import json
+import sys
+from urllib.parse import urlencode, quote
+
+EXTENSION = "irth/dmenu"
+COMMAND = "index"
+HOST = "127.0.0.1"
+PORT = 8888
+
+SHUTDOWN_EVENT = asyncio.Event()
+
+elements = [el for el in list(sys.stdin) if not el.isspace()]
+
+async def handle_echo(reader, writer):
+    if not SHUTDOWN_EVENT.is_set():
+        data_len = f"{len(elements)}\n".encode("utf-8")
+        writer.write(data_len)
+        for el in elements:
+            data_line = f"{el.strip()}\n".encode("utf-8")
+            writer.write(data_line)
+        await writer.drain()
+
+        selection = await reader.read()
+
+        writer.close()
+        await writer.wait_closed()
+
+        sys.stdout.write(selection.decode())
+
+        SHUTDOWN_EVENT.set()
+
+
+async def main():
+    server = await asyncio.start_server(handle_echo, HOST, PORT)
+
+    addrs = ", ".join(str(sock.getsockname()) for sock in server.sockets)
+
+    async with server:
+        asyncio.create_task(server.serve_forever())
+
+        arguments = {
+            "host": HOST,
+            "port": str(PORT),
+        }
+        query = urlencode({"arguments": json.dumps(arguments)}, quote_via=quote)
+        url = f"raycast://extensions/{EXTENSION}/{COMMAND}?{query}"
+        await asyncio.create_subprocess_shell(f"open -g {url}")
+
+        await SHUTDOWN_EVENT.wait()
+
+
+asyncio.run(main())

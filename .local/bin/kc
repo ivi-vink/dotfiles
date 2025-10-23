@@ -1,3 +1,3 @@
 #!/bin/sh
-ctx="$(nu --commands "open ${KUBECONFIG:-$HOME/.kube/config} | from yaml | get contexts.name | to text" | vis-menu)"
+ctx="$(nu --commands "open ${KUBECONFIG:-$HOME/.kube/config} | from yaml | get contexts.name | to text" | $PICKER)"
 [ -z "$ctx" ] || kubectl config use-context "$ctx"

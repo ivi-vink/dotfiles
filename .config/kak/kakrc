@@ -61,12 +61,26 @@ hook -once global KakBegin .* %{
 set-option global toolsclient tools
 set-option global jumpclient main
 set-option global docsclient docs
+define-command main %{
+    rename-client main
+}
+define-command tools %{
+    new rename-client tools
+}
+define-command docs %{
+    new rename-client docs
+}
 define-command ide -params 0..1 %{
     try %{ rename-session %arg{1} }
 
     rename-client main
     new rename-client tools
     new rename-client docs
+    evaluate-commands %sh{
+      case "$kak_opt_filetype" in
+        python) echo "repl-new"; echo "map global user <ret> %{:repl-send-text \"python %val{buffile}\"<ret>}" ;;
+      esac
+    }
 }
 set-option global ui_options terminal_assistant=cat
 map global normal '#' :comment-line<ret>
@@ -136,6 +150,19 @@ hook global WinSetOption filetype=latex %{
     try %{ source ~/.config/kak/snippets.kak }
   }
 }
+
+hook -group kakrc-python-flat-lint global WinSetOption filetype=python %{
+    set-option buffer lintcmd %{parallel "mypy --show-column-numbers {}" :::}
+}
+
+define-command -override python-package-lint-file -params 1..2 %{
+  evaluate-commands %sh{
+    printf '%s\n' "set-option buffer lintcmd %{parallel 'mypy --show-column-numbers ${1:?} | grep ${2:-$kak_reg_percent}; :' :::}"
+  }
+}
+# hook -group kakrc-python-package-lint global WinSetOption filetype=python %{
+#     set-option buffer lintcmd %{parallel "mypy --show-column-numbers {}" :::}
+# }
 
 hook global WinSetOption filetype=python %{
     set-option buffer formatcmd 'ruff format -'
