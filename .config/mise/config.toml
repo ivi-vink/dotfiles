@@ -1,0 +1,130 @@
+
+[settings]
+experimental = true
+
+[env]
+_.python.venv = { path = "~/.local/share/mise-global-python", create = true }
+MISE_TOOL_COMPLETIONS = { required = true }
+QUICKSTART_REPO = { required = true }
+PISTARCHIO_STACKS_DIR = "{{env.QUICKSTART_REPO}}/stacks"
+PISTARCHIO_LIBRARY_DIR = "{{env.QUICKSTART_REPO}}/library"
+PISTARCHIO_VENDOR_DESTINATION_DIR = "{{env.QUICKSTART_REPO}}/../clients"
+
+[tools]
+usage = "latest"
+uv = "latest"
+python = "3.14"
+go = "1.24.4"
+jq = "latest"
+yq = "latest"
+pre-commit = "latest"
+
+"github:BurntSushi/ripgrep" = { version = "latest", postinstall = """
+dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh-completions"
+mkdir -p "${dir}"
+ln -sf "${MISE_TOOL_INSTALL_PATH}/complete/_rg" "${dir}/_rg"
+""" }
+
+"github:sharkdp/fd" = { version = "latest", postinstall = """
+dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh-completions"
+mkdir -p "${dir}"
+ln -sf "${MISE_TOOL_INSTALL_PATH}/autocomplete/_fd" "${dir}/_fd"
+""" }
+
+"github:cli/cli" = { version = "latest", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+. <(gh completion --shell zsh)
+COMPLETION
+} | tee "${dir}/gh"
+""" }
+
+"github:pionative/pistarchio" = { version = "latest", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+. <(pistarchio completion zsh)
+COMPLETION
+} | tee "${dir}/pistarchio"
+""" }
+
+terraform = { version = "1.5.7", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C $MISE_TOOL_INSTALL_PATH/terraform terraform
+COMPLETION
+} | tee "${dir}/terraform"
+""" }
+
+opentofu = { version = "latest", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C $MISE_TOOL_INSTALL_PATH/tofu tofu
+COMPLETION
+} | tee "${dir}/tofu"
+""" }
+
+"pipx:azure-cli" = { version = "latest", uvx_args = "--prerelease=allow", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+PATH="$MISE_TOOL_INSTALL_PATH/azure-cli/bin:$PATH" ZSH_VERSION= . az.completion.sh
+COMPLETION
+} | tee "${dir}/az"
+""" }
+
+gcloud = { version = "latest", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+. "${MISE_TOOL_INSTALL_PATH}/path.zsh.inc"
+. "${MISE_TOOL_INSTALL_PATH}/completion.zsh.inc"
+COMPLETION
+} | tee "${dir}/gcloud"
+""" }
+
+aws-cli = { version ="latest", postinstall = """
+dir="${MISE_TOOL_COMPLETIONS}"
+mkdir -p "$dir"
+{
+cat <<COMPLETION
+complete -C aws_completer aws
+COMPLETION
+} | tee "${dir}/aws"
+""" }
+"github:akavel/up" = "latest"
+
+[tasks.use_as_user_mise_config]
+run = """
+global_mise_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/mise"
+mkdir -p "$global_mise_config_dir"
+
+echo "add this to your ~/.zshrc ( works for me :D ):"
+echo
+echo 'export QUICKSTART_REPO="{{ env.QUICKSTART_REPO }}"
+export MISE_TOOL_COMPLETIONS="{{ env.MISE_TOOL_COMPLETIONS }}"
+export PATH="${QUICKSTART_REPO}/scripts:$PATH"
+export PICKER=fzf
+export GITHUB_TOKEN="$(mise exec github:cli/cli -- gh auth token)"
+. <(mise activate)
+
+# Completions
+export FPATH="${XDG_DATA_HOME:-${HOME}/.local/share}/zsh-completions:${FPATH}"
+autoload -Uz compinit && compinit
+autoload -Uz bashcompinit && bashcompinit
+for tool in "${MISE_TOOL_COMPLETIONS}"/*
+do hash "$(basename "$tool")" && . "${tool}"
+done
+'
+"""
