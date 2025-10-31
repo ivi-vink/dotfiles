@@ -43,17 +43,19 @@ hook -once global KakBegin .* %{
     }
 
     # Added bracketed paste support.
-    define-command -override dtach-send-text -params 0..1 -docstring %{
+    define-command -override dtach-send-bracketed-text -params 0..1 -docstring %{
             dtach-send-text [text]: Send text to the REPL.
             If no text is passed, then the selection is used
             } %{
         nop %sh{
-            printf "\033[200~%s\033[201~\n" "${@:-$kak_selection}" | dtach -p "$kak_opt_dtach_repl_id"
+            { printf '\033[200~'; printf '%s' "${@:-$kak_selection}"; printf '\033[201~'; } | dtach -p "$kak_opt_dtach_repl_id"
+            { printf '\n'; } | dtach -p "$kak_opt_dtach_repl_id"
         }
     }
 
     alias global repl-new dtach-repl
-    alias global repl-send-text dtach-send-text
+    alias global repl-send-text dtach-send-bracketed-text
+    alias global / dtach-send-bracketed-text
 }
 
 # Ide / connect
@@ -107,7 +109,7 @@ define-command -override relative-cd %{
     }
 }
 map global user c "<esc>:relative-cd<ret>"
-map global user f "<esc>:> yazi<ret>"
+map global user f "<esc>:evaluate-commands -try-client main %{ > yazi }<ret>"
 define-command find -params 1 %{ edit %arg{1} }
 complete-command -menu find shell-script-candidates %{ fd --type=f --hidden --exclude='.git**' }
 
@@ -151,22 +153,33 @@ hook global WinSetOption filetype=latex %{
   }
 }
 
-hook -group kakrc-python-flat-lint global WinSetOption filetype=python %{
+hook -group kakrc-python-lint global WinSetOption filetype=python %{
     set-option buffer lintcmd %{parallel "mypy --show-column-numbers {}" :::}
 }
 
 define-command -override python-package-lint-file -params 1..2 %{
+  remove-hooks global kakrc-python-lint
+  set-option buffer lintcmd "parallel 'mypy --show-column-numbers %arg{1} | grep %reg{percent}; :' :::"
   evaluate-commands %sh{
-    printf '%s\n' "set-option buffer lintcmd %{parallel 'mypy --show-column-numbers ${1:?} | grep ${2:-$kak_reg_percent}; :' :::}"
+cat <<HOOK
+  hook -group kakrc-python-lint global WinSetOption filetype=python %{
+    set-option buffer lintcmd "parallel 'mypy --show-column-numbers $1 | grep $kak_reg_percent; :' :::"
+  }
+HOOK
   }
 }
-# hook -group kakrc-python-package-lint global WinSetOption filetype=python %{
-#     set-option buffer lintcmd %{parallel "mypy --show-column-numbers {}" :::}
-# }
 
 hook global WinSetOption filetype=python %{
+    map buffer user r %|<esc>:repl-send-text "b %val{buffile}:%val{cursor_line} ;; continue ;; clear -1 ;; f self.kind()"<ret>|
+
     set-option buffer formatcmd 'ruff format -'
     hook buffer -group format BufWritePost .* format-but-write
+    map buffer user r %|<esc>:repl-send-text "b %val{cursor_line} ;; continue ;; clear -1"<ret>|
+    try %{ source ~/.config/kak/snippets.python.kak }
+    hook global BufWritePost snippets.python.kak %{
+      echo "snippets written"
+      try %{ source ~/.config/kak/snippets.python.kak }
+    }
 }
 
 hook global WinSetOption filetype=terraform %{

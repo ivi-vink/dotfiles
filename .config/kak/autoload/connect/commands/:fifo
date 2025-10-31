@@ -3,7 +3,7 @@
 # Edit fifo buffer in a client
 mkfifo buffer.fifo
 trap 'rm buffer.fifo' EXIT
-:send edit! -fifo "$PWD/buffer.fifo" '*fifo*'
+:send evaluate-commands -try-client tools %{edit! -fifo "$PWD/buffer.fifo" '*fifo*'}
 
 # Send to fifo buffer the output of the given command,
 # or read from stdin if available.

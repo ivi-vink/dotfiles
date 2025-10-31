@@ -1,0 +1,7 @@
+alias edit import os; os.system(f"$EDITOR {$_frame.f_code.co_filename} +{$_frame.f_lineno}")
+alias e edit
+alias s step ;; edit
+alias n next ;; edit
+alias r return ;; edit
+alias c continue ;; edit
+alias f import subprocess as sub; import json; sub.run("jq | :f", shell=True, input=json.dumps(%1).encode())
