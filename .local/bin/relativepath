@@ -1,0 +1,42 @@
+#!/bin/sh
+relativepath() (
+  # both $1 and $2 are absolute paths beginning with /
+  # returns relative path to $2 from $1
+  source="$1"
+  target="$2"
+
+  commonPart="$source"
+  result=""
+
+  while [ "${target#"$commonPart"}" = "${target}" ]; do
+    # no match, means that candidate common part is not correct
+    # go up one level (reduce common part)
+    commonPart="$(dirname "$commonPart")"
+    # and record that we went back, with correct / handling
+    if [ -z $result ]; then
+      result=".."
+    else
+      result="../$result"
+    fi
+  done
+
+  if [ "$commonPart" = "/" ]; then
+    # special case for root (no common path)
+    result="$result/"
+  fi
+
+  # since we now have identified the common part,
+  # compute the non-common part
+  forwardPart="${target#"$commonPart"}"
+
+  # and now stick all parts together
+  if [ -n "$result" ] && [ -n "$forwardPart" ]; then
+    result="$result$forwardPart"
+  elif [ -n "$forwardPart" ]; then
+    # extra slash removal
+    result="${forwardPart#/}"
+  fi
+
+  echo "$result"
+)
+relativepath "$@"

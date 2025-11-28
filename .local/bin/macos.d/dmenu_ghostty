@@ -1,0 +1,38 @@
+#!/bin/sh
+dir="${TMPDIR:-/tmp}/dmenu_ghostty"
+mkdir -p "${dir}"
+[ -p "${dir}/in" ] || mkfifo "${dir}/in"
+[ -p "${dir}/out" ] || mkfifo "${dir}/out"
+
+osa='
+on runCommandInteractively(theCommand)
+  tell application "System Events"
+    keystroke return using {command down, shift down}
+    delay 0.2
+		keystroke ("fzf <'"\${TMPDIR}/dmenu_ghostty/in"' >'"\${TMPDIR}/dmenu_ghostty/out"' && '"osascript -e 'tell application \\\"System Events\\\"' -e 'keystroke return using {command down, shift down}' -e 'end tell'"'" as text)
+		keystroke return
+  end tell
+
+end runCommandInteractively
+
+on run args
+if class of args is list then -- arguments passed come in as a list
+		set quotedArgs to {}
+		repeat with arg in args
+			-- set end of quotedArgs to "'"'"'" & arg & "'"'"'"
+			set end of quotedArgs to "" & arg
+		end repeat
+
+    set AppleScript'"'"'s text item delimiters to " "
+		set joinedArgs to quotedArgs as string
+    set AppleScript'"'"'s text item delimiters to ""
+
+		runCommandInteractively(joinedArgs)
+end if
+end run
+'
+echo "$osa"
+osascript -e "$osa" -- "$@"
+
+cat >"${dir}/in"
+cat "${dir}/out"
