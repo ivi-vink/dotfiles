@@ -6,6 +6,8 @@ if ! [ -d "${context}" ]
 then notify-send "kn" "${context} is not a dir!"; exit 1
 fi
 
+export PATH="${context}/bin:${PATH}"
+
 if [ -f "${context}/name" ]
 then exec kak-shell "$(cat "${context}/name")"
 else notify-send "kn" "Context has no name!"; exit 1
