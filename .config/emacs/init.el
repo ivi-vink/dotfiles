@@ -1,218 +1,333 @@
-;; do autoload stuff here
+(require 'package) ;; Emacs builtin
+(setq ring-bell-function 'ignore)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+
+;; set package.el repositories
+(add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
+
+;; initialize built-in package management
 (package-initialize)
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+
+;; This overrides the default mark-in-region with a prettier-looking one,
+;; and provides a couple extra commands
+(use-package visual-regexp)
+
+;; Emacs incremental search doesn't work with multiple cursors, but this fixes that
+(use-package phi-search
+  :bind (("C-s" . phi-search)
+         ("C-r" . phi-search-backward)))
+
+;; Probably the first thing you'd miss is undo and redo, which requires an extra package
+;; to work like it does in kakoune (and almost every other editor).
+(use-package undo-tree
+  :config
+  (setq undo-tree-auto-save-history nil)
+  (global-undo-tree-mode))
+
+;; Enable Vertico.
+(use-package vertico
+  :custom
+  ;; (vertico-scroll-margin 0) ;; Different scroll margin
+  (vertico-count 20) ;; Show more candidates
+  (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
+  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
+  :init
+  (vertico-mode))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+;; Emacs minibuffer configurations.
+(use-package emacs
+  :custom
+  ;; TAB cycle if there are only few candidates
+  ;; (completion-cycle-threshold 3)
+
+  ;; Enable indentation+completion using the TAB key.
+  ;; `completion-at-point' is often bound to M-TAB.
+  (tab-always-indent 'complete)
+
+  ;; Emacs 30 and newer: Disable Ispell completion function.
+  ;; Try `cape-dict' as an alternative.
+  (text-mode-ispell-word-completion nil)
+
+  ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+  ;; commands are hidden, since they are not used via M-x. This setting is
+  ;; useful beyond Corfu.
+  (read-extended-command-predicate #'command-completion-default-include-p)
+
+  ;; Enable context menu. `vertico-multiform-mode' adds a menu in the minibuffer
+  ;; to switch display modes.
+  (context-menu-mode t)
+  ;; Support opening new minibuffers from inside existing minibuffers.
+  (enable-recursive-minibuffers t)
+  ;; Hide commands in M-x which do not work in the current mode.  Vertico
+  ;; commands are hidden in normal buffers. This setting is useful beyond
+  ;; Vertico.
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (minibuffer-prompt-properties
+   '(read-only t cursor-intangible t face minibuffer-prompt)))
+
+;; Optionally use the `orderless' completion style.
+(use-package orderless
+  :custom
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch))
+  ;; (orderless-component-separator #'orderless-escapable-split-on-space)
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-category-defaults nil) ;; Disable defaults, use our settings
+  (completion-pcm-leading-wildcard t)) ;; Emacs 31: partial-completion behaves like substring
+
+(use-package corfu
+  ;; TAB-and-Go customizations
+  :custom
+  (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
+  (corfu-preselect 'prompt) ;; Always preselect the prompt
+  (global-corfu-minibuffer nil)
+  :init
+  (global-corfu-mode)
+  :config
+  (define-key corfu-map [remap next-line] nil)
+  (define-key corfu-map [remap previous-line] nil))
+
+(setq corfu-auto        t
+      corfu-auto-delay  0  ;; TOO SMALL - NOT RECOMMENDED!
+      corfu-auto-prefix 0) ;; TOO SMALL - NOT RECOMMENDED!
+
+(add-hook
+  'corfu-mode-hook
+  (lambda ()
+    ;; Settings only for Corfu
+    (setq-local
+      completion-styles '(basic)
+      completion-category-overrides nil
+      completion-category-defaults nil)))
+
+(defun my-capf-prepend-cape-dabbrev ()
+  "Make `cape-dabbrev` the first CAPF in this buffer."
+  (setq-local completion-at-point-functions
+              (cons #'cape-dabbrev
+                    (remove #'cape-dabbrev completion-at-point-functions))))
+(add-hook 'after-change-major-mode-hook #'my-capf-prepend-cape-dabbrev)
+
+;; Use Dabbrev with Corfu!
+(use-package dabbrev
+  ;; Swap M-/ and C-M-/
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand))
+  :config
+  (add-to-list 'dabbrev-ignored-buffer-regexps "\\` ")
+  (add-to-list 'dabbrev-ignored-buffer-modes 'authinfo-mode)
+  (add-to-list 'dabbrev-ignored-buffer-modes 'doc-view-mode)
+  (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode)
+  (add-to-list 'dabbrev-ignored-buffer-modes 'tags-table-mode))
+
+(use-package yaml-pro :ensure t)
+(setq treesit-extra-load-path '("/usr/local/lib"))
+(add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+(add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+(add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
+;; Example configuration for Consult
+(use-package consult
+  ;; Replace bindings. Lazily loaded by `use-package'.
+  :bind (;; C-c bindings in `mode-specific-map'
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c k" . consult-kmacro)
+         ("C-c m" . consult-man)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
+         ;; C-x bindings in `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ;; M-g bindings in `goto-map'
+         ("M-g e" . consult-compile-error)
+         ("M-g r" . consult-grep-match)
+         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings in `search-map'
+         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s c" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Isearch integration
+         ("M-s e" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+
+  ;; The :init configuration is always executed (Not lazy)
+  :init
+
+  ;; Tweak the register preview for `consult-register-load',
+  ;; `consult-register-store' and the built-in commands.  This improves the
+  ;; register formatting, adds thin separator lines, register sorting and hides
+  ;; the window mode line.
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
+
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
+
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep consult-man
+   consult-bookmark consult-recent-file consult-xref
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
+   ;; :preview-key "M-."
+   :preview-key '(:debounce 0.4 any))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<") ;; "C-+"
+
+  ;; Optionally make narrowing help available in the minibuffer.
+  ;; You may want to use `embark-prefix-help-command' or which-key instead.
+  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+)
+
+(unless (display-graphic-p)
+  (add-hook 'after-make-frame-functions
+  '(lambda
+     ;; Take advantage of iterm2's CSI u support (https://gitlab.com/gnachman/iterm2/-/issues/8382).
+     (xterm--init-modify-other-keys)
+
+     ;; Courtesy https://emacs.stackexchange.com/a/13957, modified per
+     ;; https://gitlab.com/gnachman/iterm2/-/issues/8382#note_365264207
+     (defun character-apply-modifiers (c &rest modifiers)
+       "Apply modifiers to the character C.
+MODIFIERS must be a list of symbols amongst (meta control shift).
+Return an event vector."
+       (if (memq 'control modifiers) (setq c (if (and (<= ?a c) (<= c ?z))
+                                                 (logand c ?\x1f)
+                                               (logior (lsh 1 26) c))))
+       (if (memq 'meta modifiers) (setq c (logior (lsh 1 27) c)))
+       (if (memq 'shift modifiers) (setq c (logior (lsh 1 25) c)))
+       (vector c))
+     (when (and (boundp 'xterm-extra-capabilities) (boundp 'xterm-function-map))
+       (let ((c 32))
+         (while (<= c 126)
+           (mapc (lambda (x)
+                   (define-key xterm-function-map (format (car x) c)
+                     (apply 'character-apply-modifiers c (cdr x))))
+                 '(;; with ?.VT100.formatOtherKeys: 0
+                   ("\e\[27;3;%d~" meta)
+                   ("\e\[27;5;%d~" control)
+                   ("\e\[27;6;%d~" control shift)
+                   ("\e\[27;7;%d~" control meta)
+                   ("\e\[27;8;%d~" control meta shift)
+                   ;; with ?.VT100.formatOtherKeys: 1
+                   ("\e\[%d;3u" meta)
+                   ("\e\[%d;5u" control)
+                   ("\e\[%d;6u" control shift)
+                   ("\e\[%d;7u" control meta)
+                   ("\e\[%d;8u" control meta shift)))
+           (setq c (1+ c)))))
+     )))
+
+(keymap-global-set "C-\\" 'undo-tree-undo)
+(keymap-global-set "C-|" 'undo-tree-redo)
+(add-hook 'before-save-hook #'gofmt-before-save)
+
+(use-package dap-dlv-go)
+
+(defun dap-exec-with-args (cmd)
+  (interactive "scmd: ")
+  (dap-register-debug-template
+    "exec"
+    (list
+      :type "go"
+      :request "launch"
+      :name "Launch Executable"
+      :mode "exec"
+      :program nil
+      :args (split-string-shell-command cmd)
+      :env nil)))
 
 
-(defvar rc/package-contents-refreshed nil)
 
-(defun rc/package-refresh-contents-once ()
-  (when (not rc/package-contents-refreshed)
-    (setq rc/package-contents-refreshed t)
-    (package-refresh-contents)))
-
-(defun rc/require-one-package (package)
-  (when (not (package-installed-p package))
-    (rc/package-refresh-contents-once)
-    (package-install package)))
-
-
-(defun rc/require (&rest packages)
-  (dolist (package packages)
-    (rc/require-one-package package)))
-
-(defun rc/require-theme (theme)
-  (let ((theme-package (intern (concat (symbol-name theme) "-theme"))))
-    (rc/require theme-package)
-    (load-theme theme t)))
-
-(defun rc/get-default-font ()
-  (cond
-   ((eq system-type 'windows-nt) "Consolas-13")
-   (t "mono-13")))
-(add-to-list 'default-frame-alist `(font . ,(rc/get-default-font)))
-
-(defun meow-setup ()
-  (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
-  (meow-motion-define-key
-   '("j" . meow-next)
-   '("k" . meow-prev)
-   '("<escape>" . ignore))
-  (meow-leader-define-key
-   ;; Use SPC (0-9) for digit arguments.
-   '("1" . meow-digit-argument)
-   '("2" . meow-digit-argument)
-   '("3" . meow-digit-argument)
-   '("4" . meow-digit-argument)
-   '("5" . meow-digit-argument)
-   '("6" . meow-digit-argument)
-   '("7" . meow-digit-argument)
-   '("8" . meow-digit-argument)
-   '("9" . meow-digit-argument)
-   '("0" . meow-digit-argument)
-   '("/" . meow-keypad-describe-key)
-   '("?" . meow-cheatsheet))
-  (meow-normal-define-key
-   '("0" . meow-expand-0)
-   '("9" . meow-expand-9)
-   '("8" . meow-expand-8)
-   '("7" . meow-expand-7)
-   '("6" . meow-expand-6)
-   '("5" . meow-expand-5)
-   '("4" . meow-expand-4)
-   '("3" . meow-expand-3)
-   '("2" . meow-expand-2)
-   '("1" . meow-expand-1)
-   '("-" . negative-argument)
-   '(";" . meow-reverse)
-   '("," . meow-inner-of-thing)
-   '("." . meow-bounds-of-thing)
-   '("[" . meow-beginning-of-thing)
-   '("]" . meow-end-of-thing)
-   '("a" . meow-append)
-   '("A" . meow-open-below)
-   '("b" . meow-back-word)
-   '("B" . meow-back-symbol)
-   '("c" . meow-change)
-   '("d" . meow-delete)
-   '("D" . meow-backward-delete)
-   '("e" . meow-next-word)
-   '("E" . meow-next-symbol)
-   '("f" . meow-find)
-   '("g" . meow-cancel-selection)
-   '("G" . meow-grab)
-   '("h" . meow-left)
-   '("H" . meow-left-expand)
-   '("i" . meow-insert)
-   '("I" . meow-open-above)
-   '("j" . meow-next)
-   '("J" . meow-next-expand)
-   '("k" . meow-prev)
-   '("K" . meow-prev-expand)
-   '("l" . meow-right)
-   '("L" . meow-right-expand)
-   '("m" . meow-join)
-   '("n" . meow-search)
-   '("o" . meow-block)
-   '("O" . meow-to-block)
-   '("p" . meow-yank)
-   '("q" . meow-quit)
-   '("Q" . meow-goto-line)
-   '("r" . meow-replace)
-   '("R" . meow-swap-grab)
-   '("s" . meow-kill)
-   '("t" . meow-till)
-   '("u" . meow-undo)
-   '("U" . meow-undo-in-selection)
-   '("v" . meow-visit)
-   '("w" . meow-mark-word)
-   '("W" . meow-mark-symbol)
-   '("x" . meow-line)
-   '("X" . meow-goto-line)
-   '("y" . meow-save)
-   '("Y" . meow-sync-grab)
-   '("z" . meow-pop-selection)
-   '("'" . repeat)
-   '("<escape>" . ignore)))
-(rc/require 'meow)
-(require 'meow)
-(meow-setup)
-(meow-global-mode 1)
-
-(rc/require 'ido 'ido-completing-read+ 'smex 'corfu)
-(ido-mode t)
-(ido-everywhere t)
-(ido-ubiquitous-mode t)
-(global-corfu-mode)
-
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
-;; This is your old M-x. p
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
-
-(tool-bar-mode 0)
-(menu-bar-mode 0)
-(scroll-bar-mode 0)
-(column-number-mode 1)
-(show-paren-mode 1)
-(setq split-width-threshold 9999)
-
-(setq-default inhibit-splash-screen t
-              make-backup-files nil
-              tab-width 4
-              indent-tabs-mode nil
-              compilation-scroll-output t
-              visible-bell (equal system-type 'windows-nt))
-
-(global-set-key (kbd "M-J") 'text-scale-decrease)
-(global-set-key (kbd "M-K") 'text-scale-increase)
-
-(global-display-line-numbers-mode)
-(setq next-line-add-newlines t)
-(setq display-line-numbers-type 'relative)
-
-(rc/require 'direnv 'editorconfig)
-(editorconfig-mode 1)
-
-(rc/require 'cl-lib 'magit)
-(setq magit-auto-revert-mode nil)
-(global-set-key (kbd "C-c m s") 'magit-status)
-(global-set-key (kbd "C-c m l") 'magit-log)
-
-(require 'dired-x)
-(setq dired-omit-files
-      (concat dired-omit-files "\\|^\\..+$"))
-(setq-default dired-dwim-target t)
-(setq dired-listing-switches "-alh")
-
-(setq completion-auto-select 'second-tab)
-(setq completions-format 'one-column)
-(setq completions-max-height 20)
-(define-key completion-in-region-mode-map (kbd "M-p") #'minibuffer-previous-completion)
-(define-key completion-in-region-mode-map (kbd "M-n") #'minibuffer-next-completion)
-
-
-(rc/require-theme 'gruber-darker)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(gruber-darker))
  '(custom-safe-themes
-    '("ba4ab079778624e2eadbdc5d9345e6ada531dc3febeb24d257e6d31d5ed02577"
-       "a9dc7790550dcdb88a23d9f81cc0333490529a20e160a8599a6ceaf1104192b5"
-       "5f128efd37c6a87cd4ad8e8b7f2afaba425425524a68133ac0efd87291d05874"
-       "5b9a45080feaedc7820894ebbfe4f8251e13b66654ac4394cb416fef9fdca789"
-       "9013233028d9798f901e5e8efb31841c24c12444d3b6e92580080505d56fd392"
-       "6adeb971e4d5fe32bee0d5b1302bc0dfd70d4b42bad61e1c346599a6dc9569b5"
-       "8d3ef5ff6273f2a552152c7febc40eabca26bae05bd12bc85062e2dc224cde9a"
-       "75b2a02e1e0313742f548d43003fcdc45106553af7283fb5fad74359e07fe0e2"
-       "b9761a2e568bee658e0ff723dd620d844172943eb5ec4053e2b199c59e0bcc22"
-       "9d29a302302cce971d988eb51bd17c1d2be6cd68305710446f658958c0640f68"
-       "f053f92735d6d238461da8512b9c071a5ce3b9d972501f7a5e6682a90bf29725"
-       "dc8285f7f4d86c0aebf1ea4b448842a6868553eded6f71d1de52f3dcbc960039"
-       "38c0c668d8ac3841cb9608522ca116067177c92feeabc6f002a27249976d7434"
-       "162201cf5b5899938cfaec99c8cb35a2f1bf0775fc9ccbf5e63130a1ea217213"
-       "ff24d14f5f7d355f47d53fd016565ed128bf3af30eb7ce8cae307ee4fe7f3fd0"
-       "da75eceab6bea9298e04ce5b4b07349f8c02da305734f7c0c8c6af7b5eaa9738"
-       "e3daa8f18440301f3e54f2093fe15f4fe951986a8628e98dcd781efbec7a46f2"
-       "631c52620e2953e744f2b56d102eae503017047fb43d65ce028e88ef5846ea3b"
-       "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e"
-       "dfb1c8b5bfa040b042b4ef660d0aab48ef2e89ee719a1f24a4629a0c5ed769e8"
-       "e13beeb34b932f309fb2c360a04a460821ca99fe58f69e65557d6c1b10ba18c7"
+    '("c5975101a4597094704ee78f89fb9ad872f965a84fb52d3e01b9102168e8dc40"
+       "6bf350570e023cd6e5b4337a6571c0325cec3f575963ac7de6832803df4d210a"
+       "0adcffc4894e2dd21283672da7c3d1025b5586bcef770fdc3e2616bdb2a771cd"
+       "5e39e95c703e17a743fb05a132d727aa1d69d9d2c9cde9353f5350e545c793d4"
+       "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd"
        default))
  '(package-selected-packages
-    '(auctex corfu direnv doom-themes editorconfig go-mode
-       gruber-darker-theme ido-completing-read+ lsp-ui magit meow
-       multiple-cursors nix-mode rust-mode smex yaml-pro)))
+    '(## async auctex cape consult corfu counsel dap-mode dash-functional
+       direnv eat embark embark-consult go-mode gruber-darker-theme
+       helm ido-completing-read+ ivy kakoune lsp-mode magit marginalia
+       meow modus-themes multiple-cursors nix-mode orderless
+       phi-search rust-mode smex spacious-padding terraform-mode
+       treemacs undo-tree vertico visual-regexp visual-regexp-steroids
+       vterm yaml-mode yaml-pro)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.

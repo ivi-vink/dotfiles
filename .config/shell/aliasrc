@@ -33,6 +33,7 @@ alias \
 alias \
 	ka="killall" \
 	g="git" \
+	t="tofu" \
 	d="docker" \
   ga="git add " \
   gc="git commit " \
