@@ -1,0 +1,16 @@
+mv /Users/ivi/.config/broot/conf.hjson
+mv /Users/ivi/.config/broot/files
+mv /Users/ivi/.config/broot/shortcutrc.hjson
+mv /Users/ivi/.config/broot/verbs.hjson
+mv /Users/ivi/.config/broot/skins/catppuccin-macchiato.hjson
+mv /Users/ivi/.config/broot/launcher/installed-v4
+mv /Users/ivi/.config/broot/skins/catppuccin-mocha.hjson
+mv /Users/ivi/.config/broot/skins/dark-blue.hjson
+mv /Users/ivi/.config/broot/skins/dark-gruvbox.hjson
+mv /Users/ivi/.config/broot/skins/dark-orange.hjson
+mv /Users/ivi/.config/broot/skins/native-16.hjson
+mv /Users/ivi/.config/broot/skins/solarized-dark.hjson
+mv /Users/ivi/.config/broot/skins/solarized-light.hjson
+mv /Users/ivi/.config/broot/skins/white.hjson
+mv /Users/ivi/.config/broot/launcher/bash/br
+mv /Users/ivi/.config/broot/launcher/nushell/br
