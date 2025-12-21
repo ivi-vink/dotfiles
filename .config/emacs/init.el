@@ -2,6 +2,9 @@
 (setq ring-bell-function 'ignore)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
+(setq backup-by-copying t)
+
 
 ;; set package.el repositories
 (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/"))
@@ -298,7 +301,8 @@ Return an event vector."
 (keymap-global-set "C-|" 'undo-tree-redo)
 (add-hook 'before-save-hook #'gofmt-before-save)
 
-(use-package dap-dlv-go)
+(use-package dap-mode
+  :ensure t)
 
 (defun dap-exec-with-args (cmd)
   (interactive "scmd: ")
@@ -313,16 +317,29 @@ Return an event vector."
       :args (split-string-shell-command cmd)
       :env nil)))
 
-
-(add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
-
-(global-set-key (kbd "M-n") 'mc/mark-next-like-this)
-(global-set-key (kbd "M-p") 'mc/mark-previous-like-this)
-(global-set-key (kbd "M-N") 'mc/skip-to-next-like-this)
-(global-set-key (kbd "M-P") 'mc/skip-to-previous-like-this)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C-c s") 'vr/mc-mark)
-(global-set-key (kbd "C-c C-,") 'mc/remove-current-cursor)
+(repeat-mode)
+(use-package multiple-cursors
+  :ensure t
+  :config
+  (defvar-keymap my/mc/repeat
+    :repeat t
+    "n" #'mc/mark-next-like-this
+    "p" #'mc/mark-previous-like-this
+    "N" #'mc/skip-to-next-like-this
+    "P" #'mc/skip-to-previous-like-this
+    "," #'mc/remove-current-cursor
+    "(" #'mc/cycle-backward
+    ")" #'mc/cycle-forward)
+  (add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
+  (global-set-key (kbd "C-c n") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-c p") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c N") 'mc/skip-to-next-like-this)
+  (global-set-key (kbd "C-c P") 'mc/skip-to-previous-like-this)
+  (global-set-key (kbd "C-c M-s") 'mc/edit-lines)
+  (global-set-key (kbd "C-c s") 'vr/mc-mark)
+  (global-set-key (kbd "C-c ,") 'mc/remove-current-cursor)
+  (global-set-key (kbd "C-c (") 'mc/cycle-backward)
+  (global-set-key (kbd "C-c )") 'mc/cycle-forward))
 
 (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
 (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
@@ -384,6 +401,36 @@ Return an event vector."
   :config
   (transient-append-suffix 'magit-commit "c" '("I" "Issue commit" my/issue-commit)))
 
+(use-package paredit
+  :ensure t)
+
+(use-package latex)
+(use-package auctex
+  :ensure t
+  :config
+  (setq TeX-engine-alist '((default
+                             "Tectonic"
+                             "tectonic -X compile -f plain %T"
+                             "tectonic -X watch"
+                             nil)))
+  (setq LaTeX-command-style '(("" "%(latex)")))
+  (setq TeX-process-asynchronous t
+    TeX-check-TeX nil
+    TeX-engine 'default)
+
+  (let ((tex-list (assoc "TeX" TeX-command-list))
+         (latex-list (assoc "LaTeX" TeX-command-list)))
+    (setf (cadr tex-list) "%(tex)"
+      (cadr latex-list) "%l"))
+  (TeX-source-correlate-mode)
+
+  (when (executable-find "zathura")
+    (add-to-list 'TeX-view-program-selection
+      '(output-pdf "Zathura")))
+  (when (executable-find "sioyek")
+    (add-to-list 'TeX-view-program-selection
+      '(output-pdf "Sioyek")))
+  )
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -401,17 +448,12 @@ Return an event vector."
        "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd"
        default))
  '(package-selected-packages
-    '(## async auctex cape consult corfu counsel dap-dlv-go dap-mode
-       dash-functional direnv doom-themes eat embark embark-consult
-       flycheck go-mode gruber-darker-theme helm ido-completing-read+
-       ivy kakoune lsp-mode magit marginalia mc-extras meow
-       modus-themes multiple-cursors nix-mode orderless phi-search
-       rust-mode smex spacious-padding terraform-mode treemacs
-       undo-tree vertico visual-regexp visual-regexp-steroids vterm
-       yaml-mode yaml-pro)))
+    '(auctex consult corfu dap-mode doom-themes magit orderless paredit
+       phi-search undo-tree vertico visual-regexp yaml-pro yasnippet))
+ '(safe-local-variable-directories '("/home/ivi/")))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(mc/cursor-face ((t (:background "steel blue")))))
