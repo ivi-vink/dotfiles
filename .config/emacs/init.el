@@ -1,10 +1,10 @@
-(require 'package) ;; Emacs builtin
+(require 'package)
 (setq ring-bell-function 'ignore)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
 (setq backup-by-copying t)
-
+(setq treesit-extra-load-path '("/usr/local/lib"))
 
 ;; set package.el repositories
 (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/"))
@@ -12,29 +12,24 @@
 (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
 (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
 
-;; initialize built-in package management
 (package-initialize)
 
-;; This overrides the default mark-in-region with a prettier-looking one,
-;; and provides a couple extra commands
 (use-package visual-regexp
   :ensure t)
 
-;; Emacs incremental search doesn't work with multiple cursors, but this fixes that
 (use-package phi-search
   :ensure t
   :bind (("C-s" . phi-search)
           ("C-r" . phi-search-backward)))
 
-;; Probably the first thing you'd miss is undo and redo, which requires an extra package
-;; to work like it does in kakoune (and almost every other editor).
 (use-package undo-tree
   :ensure t
   :config
-  (setq undo-tree-auto-save-history nil)
+  (keymap-global-set "C-\\" 'undo-tree-undo)
+  (keymap-global-set "C-|" 'undo-tree-redo)
+  (setq undo-tree-history-directory-alist '(("." . "~/.config/emacs/undo-tree")))
   (global-undo-tree-mode))
 
-;; Enable Vertico.
 (use-package vertico
   :ensure t
   :custom
@@ -84,7 +79,6 @@
   (minibuffer-prompt-properties
     '(read-only t cursor-intangible t face minibuffer-prompt)))
 
-;; Optionally use the `orderless' completion style.
 (use-package orderless
   :ensure t
   :custom
@@ -103,31 +97,23 @@
   (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
   (corfu-preselect 'prompt) ;; Always preselect the prompt
   (global-corfu-minibuffer nil)
-  :init
-  (global-corfu-mode)
   :config
   (define-key corfu-map [remap next-line] nil)
-  (define-key corfu-map [remap previous-line] nil))
+  (define-key corfu-map [remap previous-line] nil)
+  (setq corfu-auto        t
+    corfu-auto-delay  0  ;; TOO SMALL - NOT RECOMMENDED!
+    corfu-auto-prefix 0) ;; TOO SMALL - NOT RECOMMENDED!
+  (add-hook
+    'corfu-mode-hook
+    (lambda ()
+      ;; Settings only for Corfu
+      (setq-local
+        completion-styles '(basic)
+        completion-category-overrides nil
+        completion-category-defaults nil)))
+  (global-corfu-mode))
 
-(setq corfu-auto        t
-  corfu-auto-delay  0  ;; TOO SMALL - NOT RECOMMENDED!
-  corfu-auto-prefix 0) ;; TOO SMALL - NOT RECOMMENDED!
 
-(add-hook
-  'corfu-mode-hook
-  (lambda ()
-    ;; Settings only for Corfu
-    (setq-local
-      completion-styles '(basic)
-      completion-category-overrides nil
-      completion-category-defaults nil)))
-
-(defun my-capf-prepend-cape-dabbrev ()
-  "Make `cape-dabbrev` the first CAPF in this buffer."
-  (setq-local completion-at-point-functions
-    (cons #'cape-dabbrev
-      (remove #'cape-dabbrev completion-at-point-functions))))
-(add-hook 'after-change-major-mode-hook #'my-capf-prepend-cape-dabbrev)
 
 ;; Use Dabbrev with Corfu!
 (use-package dabbrev
@@ -140,13 +126,20 @@
   (add-to-list 'dabbrev-ignored-buffer-modes 'authinfo-mode)
   (add-to-list 'dabbrev-ignored-buffer-modes 'doc-view-mode)
   (add-to-list 'dabbrev-ignored-buffer-modes 'pdf-view-mode)
-  (add-to-list 'dabbrev-ignored-buffer-modes 'tags-table-mode))
+  (add-to-list 'dabbrev-ignored-buffer-modes 'tags-table-mode)
+  (defun my-capf-prepend-cape-dabbrev ()
+    "Make `cape-dabbrev` the first CAPF in this buffer."
+    (setq-local completion-at-point-functions
+      (cons #'cape-dabbrev
+        (remove #'cape-dabbrev completion-at-point-functions))))
+  (add-hook 'after-change-major-mode-hook #'my-capf-prepend-cape-dabbrev))
 
-(use-package yaml-pro :ensure t)
-(setq treesit-extra-load-path '("/usr/local/lib"))
-(add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-(add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-(add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+(use-package yaml-pro
+  :ensure t
+  :config
+  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100))
 
 (use-package editorconfig
   :ensure t
@@ -297,9 +290,12 @@ Return an event vector."
              (setq c (1+ c)))))
        )))
 
-(keymap-global-set "C-\\" 'undo-tree-undo)
-(keymap-global-set "C-|" 'undo-tree-redo)
-(add-hook 'before-save-hook #'gofmt-before-save)
+
+(use-package go-mode
+  :ensure t
+  :config
+  (add-hook 'before-save-hook #'gofmt-before-save))
+
 
 (use-package dap-mode
   :ensure t)
@@ -338,8 +334,8 @@ Return an event vector."
   (global-set-key (kbd "C-c M-s") 'mc/edit-lines)
   (global-set-key (kbd "C-c s") 'vr/mc-mark)
   (global-set-key (kbd "C-c ,") 'mc/remove-current-cursor)
-  (global-set-key (kbd "C-c (") 'mc/cycle-backward)
-  (global-set-key (kbd "C-c )") 'mc/cycle-forward))
+  (global-set-key (kbd "C-c M-(") 'mc/cycle-backward)
+  (global-set-key (kbd "C-c M-)") 'mc/cycle-forward))
 
 (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
 (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
@@ -428,9 +424,91 @@ Return an event vector."
     (add-to-list 'TeX-view-program-selection
       '(output-pdf "Zathura")))
   (when (executable-find "sioyek")
+
     (add-to-list 'TeX-view-program-selection
       '(output-pdf "Sioyek")))
   )
+
+(defun without-flags (args-list)
+  (seq-filter (lambda (args) (not (string-match "\\-" args))) args-list))
+
+(defun without-flags-other (args-list)
+  (cond
+    ((seq-filter (lambda (args) (string-match "\\-" args)) args-list)
+      (append (seq-filter (lambda (args) (not (string-match "\\-" args))) args-list) '("")))
+    (args-list)))
+
+(defun pcomplete/pistarchio ()
+  (let*
+    ((cmd (without-flags-other pcomplete-args))
+      (args (string-join (butlast cmd)  " "))
+      (subcmds (cdr (pcomplete-from-help (concat args " --help") :margin "^  " :argument "[a-z]+" :narrow-start "\n\n"))))
+    (while (not (member (car (last cmd)) subcmds))
+      (message (concat args " group: " (car (last cmd))))
+
+      (pcomplete-here* (completion-table-merge
+		        subcmds
+		        (pcomplete-from-help (concat args " --help"))
+		        )))
+    (let ((subcmd (pcomplete-arg -1)))
+      (message (concat args " subcmd: " subcmd))
+      (if (pcomplete-match "\\`-" 0)
+        (pcomplete-here (pcomplete-from-help
+                          (concat args " --help"))
+          (pcomplete-here (pcomplete-entries)))
+        ))))
+
+(defun y/auto-update-theme ()
+  "depending on time use different theme"
+  ;; very early => gruvbox-light, solarized-light, nord-light
+  (let* ((hour (nth 2 (decode-time (current-time))))
+         (theme (cond ((<= 7 hour 8)   'doom-gruvbox-light)
+                      ((= 9 hour)      'doom-solarized-light)
+                      ((<= 10 hour 16) 'doom-nord-light)
+                      ((<= 17 hour 18) 'doom-gruvbox-light)
+                      ((<= 19 hour 22) 'doom-oceanic-next)
+                      (t               'doom-laserwave))))
+    (when (not (equal (car custom-enabled-themes) theme))
+      (load-theme theme t))
+    ;; run that function again next hour
+    (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
+(y/auto-update-theme)
+
+(use-package org
+  :config
+  (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s")))
+
+(setq org-startup-with-inline-images t)
+(defun my/org-create-and-open-drawing ()
+  "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
+  (interactive)
+  (let* ((dir "drawings/")
+         (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
+         (fullpath (expand-file-name filename dir)))
+    ;; Ensure drawings dir exists
+    (unless (file-directory-p dir)
+      (make-directory dir))
+    ;; Create minimal SVG if it doesn't exist
+    (unless (file-exists-p fullpath)
+      (with-temp-file fullpath
+        (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
+                "</svg>")))
+    ;; Insert link in org buffer
+    (insert (format "[[file:%s]]\n" fullpath))
+    (org-display-inline-images)
+    ;; Open in Inkscape
+    (start-process "inkscape" nil "/Applications/Inkscape.app/Contents/MacOS/inkscape" fullpath)))
+
+(global-set-key (kbd "C-c d") 'my/org-create-and-open-drawing)
+
+(defun my/postcommand()
+  (cond
+    ((equal this-command 'org-ctrl-c-ctrl-c)
+      (org-display-inline-images))))
+
+(add-hook 'post-command-hook #'my/postcommand t)
+(setq org-startup-folded t)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -438,7 +516,8 @@ Return an event vector."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-    '("0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
+    '("dd4582661a1c6b865a33b89312c97a13a3885dc95992e2e5fc57456b4c545176"
+       "0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
        "4990532659bb6a285fee01ede3dfa1b1bdf302c5c3c8de9fad9b6bc63a9252f7"
        "f1e8339b04aef8f145dd4782d03499d9d716fdc0361319411ac2efc603249326"
        "c5975101a4597094704ee78f89fb9ad872f965a84fb52d3e01b9102168e8dc40"
@@ -447,13 +526,23 @@ Return an event vector."
        "5e39e95c703e17a743fb05a132d727aa1d69d9d2c9cde9353f5350e545c793d4"
        "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd"
        default))
+ '(org-babel-load-languages '((dot . t) (shell . t) (emacs-lisp . t)))
  '(package-selected-packages
-    '(auctex consult corfu dap-mode doom-themes magit orderless paredit
-       phi-search undo-tree vertico visual-regexp yaml-pro yasnippet))
- '(safe-local-variable-directories '("/home/ivi/")))
+    '(## async auctex cape consult corfu counsel dap-dlv-go dap-mode
+       dash-functional direnv doom-themes eat embark embark-consult
+       flycheck go-mode graphviz-dot-mode gruber-darker-theme helm
+       ido-completing-read+ ivy kakoune lsp-mode magit marginalia
+       mc-extras meow modus-themes multiple-cursors nix-mode orderless
+       paredit phi-search rust-mode smex spacious-padding
+       terraform-mode treemacs undo-tree vertico visual-regexp
+       visual-regexp-steroids vterm yaml-mode yaml-pro))
+ '(safe-local-variable-values
+    '((tex-indent-basic . 2) (tex-indent-item . 2) (tex-indent-arg . 4)
+       (TeX-brace-indent-level . 2) (LaTeX-indent-level . 2)
+       (LaTeX-item-indent . -2))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(mc/cursor-face ((t (:background "steel blue")))))
+ )
