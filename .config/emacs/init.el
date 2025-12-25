@@ -528,14 +528,17 @@ Return an event vector."
        default))
  '(org-babel-load-languages '((dot . t) (shell . t) (emacs-lisp . t)))
  '(package-selected-packages
-    '(## async auctex cape consult corfu counsel dap-dlv-go dap-mode
-       dash-functional direnv doom-themes eat embark embark-consult
-       flycheck go-mode graphviz-dot-mode gruber-darker-theme helm
-       ido-completing-read+ ivy kakoune lsp-mode magit marginalia
-       mc-extras meow modus-themes multiple-cursors nix-mode orderless
-       paredit phi-search rust-mode smex spacious-padding
-       terraform-mode treemacs undo-tree vertico visual-regexp
-       visual-regexp-steroids vterm yaml-mode yaml-pro))
+    '(## async auctex cape claude-code consult corfu counsel dap-dlv-go
+       dap-mode dash-functional direnv doom-themes eat embark
+       embark-consult flycheck go-mode graphviz-dot-mode
+       gruber-darker-theme helm ido-completing-read+ inheritenv ivy
+       kakoune lsp-mode magit marginalia mc-extras meow modus-themes
+       multiple-cursors nix-mode orderless ox-hugo paredit phi-search
+       rust-mode smex spacious-padding terraform-mode treemacs
+       undo-tree vertico visual-regexp visual-regexp-steroids vterm
+       yaml-mode yaml-pro))
+ '(package-vc-selected-packages
+    '((claude-code :url "https://github.com/stevemolitor/claude-code.el")))
  '(safe-local-variable-values
     '((tex-indent-basic . 2) (tex-indent-item . 2) (tex-indent-arg . 4)
        (TeX-brace-indent-level . 2) (LaTeX-indent-level . 2)
