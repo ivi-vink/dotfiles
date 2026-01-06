@@ -3,6 +3,7 @@
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
+(setq auto-save-file-name-transforms `((".*" "~/.config/emacs/auto-saves/" t)))
 (setq backup-by-copying t)
 (setq treesit-extra-load-path '("/usr/local/lib"))
 
@@ -139,7 +140,50 @@
   :config
   (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
   (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100))
+  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+
+  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+
+  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+
+  (defvar-keymap my/yaml-pro/tree-repeat-mapo
+    :repeat t
+    "n" #'yaml-pro-ts-next-subtree
+    "p" #'yaml-pro-ts-prev-subtree
+    "u" #'yaml-pro-ts-up-level
+    "d" #'yaml-pro-ts-down-level
+    "m" #'yaml-pro-ts-mark-subtree
+    "k" #'yaml-pro-ts-kill-subtree
+    "a" #'yaml-pro-ts-first-sibling
+    "e" #'yaml-pro-ts-last-sibling
+    "SPC" #'my/yaml-pro/set-mark
+    "f" #'yaml-pro-fold-at-point
+    "o" #'yaml-pro-unfold-at-point
+    )
+
+  (defun my/yaml-pro/set-mark ()
+    (interactive)
+    (my/region/set-mark 'my/yaml-pro/set-mark))
+
+  (defun my/region/set-mark (command-name)
+    (if (eq last-command command-name)
+      (if (region-active-p)
+        (progn
+          (deactivate-mark)
+          (message "Mark deactivated"))
+        (activate-mark)
+        (message "Mark activated"))
+      (set-mark-command nil))))
 
 (use-package editorconfig
   :ensure t
@@ -291,6 +335,12 @@ Return an event vector."
        )))
 
 
+(use-package terraform-mode
+  :ensure t
+  :config
+  (setq terraform-format-on-save t)
+  (add-hook 'terraform-mode-hook 'terraform-format-on-save-mode 100))
+
 (use-package go-mode
   :ensure t
   :config
@@ -336,42 +386,6 @@ Return an event vector."
   (global-set-key (kbd "C-c ,") 'mc/remove-current-cursor)
   (global-set-key (kbd "C-c M-(") 'mc/cycle-backward)
   (global-set-key (kbd "C-c M-)") 'mc/cycle-forward))
-
-(keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-(keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-(keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-(keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-(keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-(keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-(keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-(keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
-
-(defvar-keymap my/yaml-pro/tree-repeat-map
-  :repeat t
-  "n" #'yaml-pro-ts-next-subtree
-  "p" #'yaml-pro-ts-prev-subtree
-  "u" #'yaml-pro-ts-up-level
-  "d" #'yaml-pro-ts-down-level
-  "m" #'yaml-pro-ts-mark-subtree
-  "k" #'yaml-pro-ts-kill-subtree
-  "a" #'yaml-pro-ts-first-sibling
-  "e" #'yaml-pro-ts-last-sibling
-  "SPC" #'my/yaml-pro/set-mark)
-
-(defun my/yaml-pro/set-mark ()
-  (interactive)
-  (my/region/set-mark 'my/yaml-pro/set-mark))
-
-(defun my/region/set-mark (command-name)
-  (if (eq last-command command-name)
-    (if (region-active-p)
-      (progn
-        (deactivate-mark)
-        (message "Mark deactivated"))
-      (activate-mark)
-      (message "Mark activated"))
-    (set-mark-command nil)))
-
 
 (defun my/pick-line-from-shell (command)
   "Run COMMAND, prompt user to pick one output line, return the chosen line."
@@ -509,6 +523,10 @@ Return an event vector."
 
 (add-hook 'post-command-hook #'my/postcommand t)
 (setq org-startup-folded t)
+(setq org-directory "~/Sync/my/notes")
+(setq org-default-notes-file (concat org-directory "/notes.org"))
+
+(global-display-line-numbers-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -516,7 +534,8 @@ Return an event vector."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-    '("dd4582661a1c6b865a33b89312c97a13a3885dc95992e2e5fc57456b4c545176"
+    '("7235b77f371f46cbfae9271dce65f5017b61ec1c8687a90ff30c6db281bfd6b7"
+       "dd4582661a1c6b865a33b89312c97a13a3885dc95992e2e5fc57456b4c545176"
        "0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
        "4990532659bb6a285fee01ede3dfa1b1bdf302c5c3c8de9fad9b6bc63a9252f7"
        "f1e8339b04aef8f145dd4782d03499d9d716fdc0361319411ac2efc603249326"
@@ -539,6 +558,8 @@ Return an event vector."
        yaml-mode yaml-pro))
  '(package-vc-selected-packages
     '((claude-code :url "https://github.com/stevemolitor/claude-code.el")))
+ '(safe-local-variable-directories
+    '("/Users/ivi/Programming/Pionative/quickstart/" "/Users/ivi/"))
  '(safe-local-variable-values
     '((tex-indent-basic . 2) (tex-indent-item . 2) (tex-indent-arg . 4)
        (TeX-brace-indent-level . 2) (LaTeX-indent-level . 2)
