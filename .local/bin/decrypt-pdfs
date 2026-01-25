@@ -1,0 +1,2 @@
+#!/bin/sh
+xargs -Iin.pdf qpdf --decrypt --password="${PASSWORD:?}" --replace-input in.pdf
