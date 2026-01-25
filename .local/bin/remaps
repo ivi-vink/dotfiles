@@ -6,6 +6,12 @@ xset r rate 300 50
 # Map the caps lock key to super, and map the menu key to right super.
 setxkbmap -option ctrl:swapcaps,altwin:menu_win
 # When caps lock is pressed only once, treat it as escape.
-killall xcape 2>/dev/null ; xcape -e 'Control_L=Escape'
+xmodmap -e 'keycode 36 = Return'
+xmodmap -e 'remove control = Control_R'
+xmodmap -e 'keycode 36 = Control_R'
+xmodmap -e 'add control = Control_R'
+xmodmap -e 'keycode 105 = Return'
+killall xcape 2>/dev/null ; xcape -e 'Control_L=Escape;Control_R=Return'
+
 # Turn off caps lock if on since there is no longer a key for it.
 xset -q | grep -q "Caps Lock:\s*on" && xdotool key Caps_Lock
