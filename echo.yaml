@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+spec:
+  selector:
+    app: echo
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: echo
+  labels:
+    app: echo
+spec:
+  containers:
+    - name: echo-container
+      image: python:3.9
+      ports:
+      - name: http
+        containerPort: 8000
+      env:
+      - name: PYTHONUNBUFFERED
+        value: "1"
+      command: ["python", "-c"]
+      args:
+      - |
+          import http.server
+          import json
+
+          class Handler(http.server.SimpleHTTPRequestHandler):
+              def _headers_dict(self):
+                  # Convert headers (email.message.Message) to a plain dict
+                  # If a header appears multiple times, join values with ", "
+                  out = {}
+                  for k, v in self.headers.items():
+                      if k in out:
+                          out[k] = f"{out[k]}, {v}"
+                      else:
+                          out[k] = v
+                  return out
+
+              def _send_json(self, obj, status=http.server.HTTPStatus.OK):
+                  payload = json.dumps(obj).encode("utf-8")
+                  self.send_response(status)
+                  self.send_header("Content-Type", "application/json; charset=utf-8")
+                  self.send_header("Content-Length", str(len(payload)))
+                  self.end_headers()
+                  self.wfile.write(payload)
+
+              def do_GET(self):
+                  self._send_json({
+                      "method": self.command,
+                      "path": self.path,
+                      "request_version": self.request_version,
+                      "client": {"ip": self.client_address[0], "port": self.client_address[1]},
+                      "headers": self._headers_dict(),
+                  })
+
+              def do_POST(self):
+                  length = int(self.headers.get("Content-Length", "0"))
+                  body_bytes = self.rfile.read(length)
+
+                  # Try to decode as UTF-8 for convenience; fall back to base64-ish representation
+                  try:
+                      body_text = body_bytes.decode("utf-8")
+                      body = {"raw": body_text}
+                  except UnicodeDecodeError:
+                      body = {"raw_bytes": list(body_bytes)}  # simple/portable, not efficient
+
+                  self._send_json({
+                      "method": self.command,
+                      "path": self.path,
+                      "request_version": self.request_version,
+                      "client": {"ip": self.client_address[0], "port": self.client_address[1]},
+                      "headers": self._headers_dict(),
+                      "body": body,
+                  })
+
+
+          def run(
+              server_class=http.server.HTTPServer,
+              handler_class=http.server.BaseHTTPRequestHandler,
+          ):
+              server_address = ("", 8000)
+              httpd = server_class(server_address, handler_class)
+              httpd.serve_forever()
+
+
+          if __name__ == "__main__":
+              print("start")
+              run(handler_class=Handler)

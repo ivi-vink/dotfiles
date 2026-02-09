@@ -4,6 +4,8 @@
 (menu-bar-mode -1)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.config/emacs/auto-saves/" t)))
+(setq lock-file-name-transforms
+  '((".*" "~/.config/emacs/lock" t)))
 (setq backup-by-copying t)
 (setq treesit-extra-load-path '("/usr/local/lib"))
 
@@ -47,9 +49,26 @@
   :init
   (savehist-mode))
 
+(defun my/code ()
+  "Go to VScode"
+  (interactive)
+  (start-process
+    "code" nil "code" "--goto"
+    (string-join
+      (list (buffer-file-name) (int-to-string (line-number-at-pos))) ":")))
+
+(defun my/open () (interactive) (start-process "open" nil "f"))
+
 ;; Emacs minibuffer configurations.
 (use-package emacs
   :ensure t
+  :bind
+  (("C-c f" . find-file-at-point)
+    ("C-c c" . my/code)
+    ("C-c o" . my/open))
+  :config
+  (setenv "PICKER" "dmenu.emacs")
+  (column-number-mode)
   :custom
   ;; TAB cycle if there are only few candidates
   ;; (completion-cycle-threshold 3)
@@ -334,7 +353,6 @@ Return an event vector."
              (setq c (1+ c)))))
        )))
 
-
 (use-package terraform-mode
   :ensure t
   :config
@@ -345,7 +363,6 @@ Return an event vector."
   :ensure t
   :config
   (add-hook 'before-save-hook #'gofmt-before-save))
-
 
 (use-package dap-mode
   :ensure t)
@@ -393,13 +410,26 @@ Return an event vector."
           (lines (split-string out "\n" t)))
     (completing-read "Pick: " lines nil t)))
 
+(defun my/issue ()
+  "Get issue number."
+
+  (interactive)
+  (let ((issue
+          (my/pick-line-from-shell "{ echo 000; gh issue list --assignee='ivi-vink'; }")))
+    (save-match-data (when (string-match "\\([0-9]+\\).*" issue) (match-string 1 issue)))))
+
+(defun my/issue-insert ()
+  "Get issue number."
+
+  (interactive)
+  (insert (string-join (list "issue:" (string-join (list "#" (my/issue)) "")) " ")))
+
 (defun my/issue-commit ()
   "Make a commit with a message starting with ISSUE-ID."
 
   (interactive)
-  (let*
-    ((issue (my/pick-line-from-shell "gh issue list --assignee='ivi-vink'"))
-      (id (save-match-data (when (string-match "\\([0-9]+\\).*" issue) (match-string 1 issue)))))
+  (let
+    ((id (my/issue)))
     (magit-commit-create
       (append
         (list "-e" (format "--trailer=issue:#%s" id))
@@ -410,9 +440,6 @@ Return an event vector."
   :ensure t
   :config
   (transient-append-suffix 'magit-commit "c" '("I" "Issue commit" my/issue-commit)))
-
-(use-package paredit
-  :ensure t)
 
 (use-package latex)
 (use-package auctex
@@ -473,7 +500,7 @@ Return an event vector."
         ))))
 
 (defun y/auto-update-theme ()
-  "depending on time use different theme"
+  "Depending on time use different theme."
   ;; very early => gruvbox-light, solarized-light, nord-light
   (let* ((hour (nth 2 (decode-time (current-time))))
          (theme (cond ((<= 7 hour 8)   'doom-gruvbox-light)
@@ -483,50 +510,142 @@ Return an event vector."
                       ((<= 19 hour 22) 'doom-oceanic-next)
                       (t               'doom-laserwave))))
     (when (not (equal (car custom-enabled-themes) theme))
+      (mapc #'disable-theme custom-enabled-themes)
       (load-theme theme t))
     ;; run that function again next hour
     (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
 (y/auto-update-theme)
 
 (use-package org
+  :bind (("C-c a" . org-agenda) ("C-c o d" . my/goto-today-journal-entry))
   :config
-  (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s")))
+  (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s"))
+  (setq org-startup-with-inline-images t)
+  (defun my/org-create-and-open-drawing ()
+    "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
+    (interactive)
+    (let* ((dir "drawings/")
+            (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
+            (fullpath (expand-file-name filename dir)))
+      ;; Ensure drawings dir exists
+      (unless (file-directory-p dir)
+        (make-directory dir))
+      ;; Create minimal SVG if it doesn't exist
+      (unless (file-exists-p fullpath)
+        (with-temp-file fullpath
+          (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
+            "</svg>")))
+      ;; Insert link in org buffer
+      (insert (format "[[file:%s]]\n" fullpath))
+      (org-display-inline-images)
+      ;; Open in Inkscape
+      (start-process "inkscape" nil "/Applications/Inkscape.app/Contents/MacOS/inkscape" fullpath)))
 
-(setq org-startup-with-inline-images t)
-(defun my/org-create-and-open-drawing ()
-  "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
-  (interactive)
-  (let* ((dir "drawings/")
-         (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
-         (fullpath (expand-file-name filename dir)))
-    ;; Ensure drawings dir exists
-    (unless (file-directory-p dir)
-      (make-directory dir))
-    ;; Create minimal SVG if it doesn't exist
-    (unless (file-exists-p fullpath)
-      (with-temp-file fullpath
-        (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
-                "</svg>")))
-    ;; Insert link in org buffer
-    (insert (format "[[file:%s]]\n" fullpath))
-    (org-display-inline-images)
-    ;; Open in Inkscape
-    (start-process "inkscape" nil "/Applications/Inkscape.app/Contents/MacOS/inkscape" fullpath)))
+  (global-set-key (kbd "C-c d") 'my/org-create-and-open-drawing)
 
-(global-set-key (kbd "C-c d") 'my/org-create-and-open-drawing)
+  (defun my/postcommand()
+    (cond
+      ((equal this-command 'org-ctrl-c-ctrl-c)
+        (org-display-inline-images))))
 
-(defun my/postcommand()
-  (cond
-    ((equal this-command 'org-ctrl-c-ctrl-c)
-      (org-display-inline-images))))
+  (add-hook 'post-command-hook #'my/postcommand t)
+  (setq org-directory "~/Sync/my/notes")
+  (setq org-agenda-files (list org-directory))
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-startup-folded t)
+  (setq org-default-notes-file (concat org-directory "/notes.org"))
+  (setq org-datetree-add-timestamp t)
+  (setq org-capture-templates
+    '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+        "* %?\n  Entered on %U\n  %c\n  %i\n  %a")))
+  (defun my/goto-today-journal-entry ()
+    "Go to today's journal entry in the datetree and narrow to subtree."
+    (interactive)
+    (find-file "~/Sync/my/notes/notes.org")
+    (widen)
+    (org-datetree-find-date-create (calendar-current-date))
+    (org-narrow-to-subtree)))
 
-(add-hook 'post-command-hook #'my/postcommand t)
-(setq org-startup-folded t)
-(setq org-directory "~/Sync/my/notes")
-(setq org-default-notes-file (concat org-directory "/notes.org"))
+
 
 (global-display-line-numbers-mode)
+
+(use-package lsp-pyright
+  :ensure t
+  :custom
+  (lsp-pyright-langserver-command "pyright")
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))  ; or lsp-deferred
+
+(use-package auth-source-pass
+  :ensure t
+  :config
+  (auth-source-pass-enable))
+
+(defun uv-activate ()
+  "Activate Python environment managed by uv based on current project directory.
+Looks for .venv directory in project root and activates the Python interpreter."
+  (interactive)
+  (let* ((project-root default-directory)
+         (venv-path (expand-file-name ".venv" project-root))
+         (python-path (expand-file-name
+                       (if (eq system-type 'windows-nt)
+                           "Scripts/python.exe"
+                         "bin/python")
+                       venv-path)))
+    (if (file-exists-p python-path)
+        (progn
+          ;; Set Python interpreter path
+          (setq python-shell-interpreter python-path)
+
+          ;; Update exec-path to include the venv's bin directory
+          (let ((venv-bin-dir (file-name-directory python-path)))
+            (setq exec-path (cons venv-bin-dir
+                                  (remove venv-bin-dir exec-path))))
+
+          ;; Update PATH environment variable
+          (setenv "PATH" (concat (file-name-directory python-path)
+                                 path-separator
+                                 (getenv "PATH")))
+
+          ;; Update VIRTUAL_ENV environment variable
+          (setenv "VIRTUAL_ENV" venv-path)
+
+          ;; Remove PYTHONHOME if it exists
+          (setenv "PYTHONHOME" nil)
+
+          (message "Activated UV Python environment at %s" venv-path))
+      (error "No UV Python environment found in %s" project-root))))
+
+(use-package paredit
+  :ensure t
+  :hook (lisp-interaction-mode . paredit-mode)
+  :config
+  (add-hook 'lisp-interaction-mode-hook
+    (lambda ()
+      (local-set-key (kbd "C-c C-j") #'eval-print-last-sexp))))
+
+(use-package claude-code-ide
+  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+  :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
+  :config
+  (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
+
+(defun my/remove-labels ()
+  (dolist (topic (forge--list-topics
+                  (forge--topics-spec :type 'issue :state 'open)
+                  (forge-get-repository "https://github.com/pionative/quickstart")))
+    (let* ((labels (oref topic labels))
+           (filtered (seq-remove
+                      (lambda (label)
+			(member (cadr label) '("infra-as-code" "business-administratie" "meerwerk")))
+                      labels)))
+      (when (< (length filtered) (length labels))
+	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -534,7 +653,9 @@ Return an event vector."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-    '("7235b77f371f46cbfae9271dce65f5017b61ec1c8687a90ff30c6db281bfd6b7"
+    '("0f1341c0096825b1e5d8f2ed90996025a0d013a0978677956a9e61408fcd2c77"
+       "b754d3a03c34cfba9ad7991380d26984ebd0761925773530e24d8dd8b6894738"
+       "7235b77f371f46cbfae9271dce65f5017b61ec1c8687a90ff30c6db281bfd6b7"
        "dd4582661a1c6b865a33b89312c97a13a3885dc95992e2e5fc57456b4c545176"
        "0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
        "4990532659bb6a285fee01ede3dfa1b1bdf302c5c3c8de9fad9b6bc63a9252f7"
@@ -545,19 +666,28 @@ Return an event vector."
        "5e39e95c703e17a743fb05a132d727aa1d69d9d2c9cde9353f5350e545c793d4"
        "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd"
        default))
+ '(org-agenda-files
+    '("/Users/ivi/Sync/my/notes/notes.org"
+       "/Users/ivi/Sync/my/notes/pionative.org"))
+ '(org-agenda-time-grid
+    '((daily today require-timed remove-match)
+       (800 1000 1200 1400 1600 1800 2000) " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
  '(org-babel-load-languages '((dot . t) (shell . t) (emacs-lisp . t)))
  '(package-selected-packages
-    '(## async auctex cape claude-code consult corfu counsel dap-dlv-go
-       dap-mode dash-functional direnv doom-themes eat embark
-       embark-consult flycheck go-mode graphviz-dot-mode
-       gruber-darker-theme helm ido-completing-read+ inheritenv ivy
-       kakoune lsp-mode magit marginalia mc-extras meow modus-themes
-       multiple-cursors nix-mode orderless ox-hugo paredit phi-search
-       rust-mode smex spacious-padding terraform-mode treemacs
-       undo-tree vertico visual-regexp visual-regexp-steroids vterm
-       yaml-mode yaml-pro))
+    '(## async auctex cape claude-code-ide consult corfu counsel
+       dap-dlv-go dap-mode dash-docs dash-functional direnv
+       doom-themes eat embark embark-consult flycheck forge go-mode
+       graphviz-dot-mode gruber-darker-theme helm ido-completing-read+
+       inheritenv ivy kakoune lsp-mode lsp-pyright magit marginalia
+       mc-extras meow modus-themes multiple-cursors nix-mode orderless
+       ox-hugo paredit phi-search rust-mode smex spacious-padding
+       terraform-mode treemacs undo-tree vertico visual-regexp
+       visual-regexp-steroids vterm yaml-mode yaml-pro yasnippet))
  '(package-vc-selected-packages
-    '((claude-code :url "https://github.com/stevemolitor/claude-code.el")))
+    '((claude-code-ide :url
+        "https://github.com/manzaltu/claude-code-ide.el")
+       (claude-code :url
+         "https://github.com/stevemolitor/claude-code.el")))
  '(safe-local-variable-directories
     '("/Users/ivi/Programming/Pionative/quickstart/" "/Users/ivi/"))
  '(safe-local-variable-values
