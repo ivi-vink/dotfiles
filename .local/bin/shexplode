@@ -1,0 +1,2 @@
+#!/bin/sh
+sol -l -p -r -s -a -b -c -w 0

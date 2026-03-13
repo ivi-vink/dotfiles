@@ -1,0 +1,84 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: echo
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+  - websecure
+  tls: {}
+  routes:
+  - match: HostSNI(`echo.local`)
+    services:
+    - name: echo
+      port: tcp
+      proxyProtocol:
+        version: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+spec:
+  selector:
+    app: echo
+  ports:
+    - name: tcp
+      protocol: TCP
+      port: 12345
+      targetPort: tcp
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: echo
+  labels:
+    app: echo
+spec:
+  containers:
+    - name: echo-container
+      image: python:3.9
+      ports:
+      - name: tcp
+        containerPort: 12345
+      env:
+      - name: PYTHONUNBUFFERED
+        value: "1"
+      command: ["python", "-c"]
+      args:
+      - |
+          import socket
+          import threading
+
+          HOST = "0.0.0.0"
+          PORT = 12345
+
+          def handle_client(conn, addr):
+              print(f"client connected: {addr}", flush=True)
+              conn.sendall(b"Echo server ready\r\n")
+              try:
+                  while True:
+                      data = conn.recv(4096)
+                      if not data:
+                          break
+                      print(f"recv {addr}: {data!r}", flush=True)
+                      conn.sendall(data)
+              finally:
+                  conn.close()
+                  print(f"client disconnected: {addr}", flush=True)
+
+          def main():
+              s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+              s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+              s.bind((HOST, PORT))
+              s.listen()
+              print(f"listening on {HOST}:{PORT}", flush=True)
+
+              while True:
+                  conn, addr = s.accept()
+                  threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
+
+          if __name__ == "__main__":
+              main()
