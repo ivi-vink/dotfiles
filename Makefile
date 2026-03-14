@@ -10,8 +10,8 @@ to-disk: bootable.img
 	IMAGE_NAME=${IMAGE_NAME} IMAGE_TAG=${IMAGE_TAG} bootc install to-disk --allow-missing-verity --composefs-backend --via-loopback /data/bootable.img --filesystem ${FILESYSTEM} --wipe --bootloader systemd
 
 virt-install:
-	virt-install \
-		--name verity-bootc \
+	sudo virt-install \
+		--name arch-bootc \
 		--cpu host \
 		--vcpus 6 \
 		--memory 7920 \
