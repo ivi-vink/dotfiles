@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+#
+# Velox
+make -C /home/ivi/.local/src/wl/wld install
+make -C /home/ivi/.local/src/wl/swc install
+make -C /home/ivi/.local/src/wl/velox install
+make -C /home/ivi/.local/src/wl/st install
+#
+# timezone
+ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
+#
+# Enable using ssh
+systemctl enable sshd.service
+#
+# Make the system stateful until the next build.
+systemctl enable ostree-state-overlay@opt.service
+systemctl enable ostree-state-overlay@usr.service
