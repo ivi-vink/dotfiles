@@ -12,3 +12,4 @@ libxkbcommon
 libxcb
 xcb-util-wm
 libinput
+ttf-liberation

@@ -10,5 +10,8 @@ if [ -d $HOME/.config/shell/profile.d ]; then
 fi
 
 if [ -z "$DISPLAY" ] && [ "$(tty)" = /dev/tty1 ]; then
-  startx
+  if command -v velox >/dev/null
+  then swc-launc velox
+  else startx
+  fi
 fi
