@@ -6,10 +6,10 @@ include config.mk
 bootable.img:
 	fallocate -l 100G "./bootable.img"
 
-to-disk: bootable.img
+to-disk: bootable.img .local/src/bootc/arch/build
 	IMAGE_NAME=${IMAGE_NAME} IMAGE_TAG=${IMAGE_TAG} bootc install to-disk --allow-missing-verity --composefs-backend --via-loopback /data/bootable.img --filesystem ${FILESYSTEM} --wipe --bootloader systemd
 
-virt-install:
+virt-install: to-disk
 	sudo virt-install \
 		--name arch-bootc \
 		--cpu host \

@@ -3,10 +3,10 @@ set -e
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 #
 # Velox
-make -C /home/ivi/.local/src/wl/wld install
-make -C /home/ivi/.local/src/wl/swc install
-make -C /home/ivi/.local/src/wl/velox install
-make -C /home/ivi/.local/src/wl/st install
+make -C /var/home/ivi/.local/src/wl/wld install
+make -C /var/home/ivi/.local/src/wl/swc install
+make -C /var/home/ivi/.local/src/wl/velox install
+make -C /var/home/ivi/.local/src/wl/st install
 #
 # timezone
 ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
