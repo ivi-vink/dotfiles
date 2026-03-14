@@ -1,0 +1,160 @@
+From f9f397dafad26e7e38bd5aa9bb226b572df93386 Mon Sep 17 00:00:00 2001
+From: Rahul Martim Juliato <rahul.juliato@gmail.com>
+Date: Wed, 22 Jan 2025 20:46:41 -0300
+Subject: [PATCH] feat(icomplete): markers and vertical alignment
+
+Add two enhancements to icomplete-mode:
+
+- Vertical alignment when using icomplete-vertical-mode with
+  in-buffer completion, so candidates are aligned with
+  the column where the cursor was when completion started.
+
+- Customizable markers to icomplete-vertical-mode, providing
+  each candidate a prefix if currently selected and another
+  prefix for the rest of the list. Faces can also be customized.
+---
+ lisp/icomplete.el | 89 +++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 86 insertions(+), 3 deletions(-)
+
+diff --git a/lisp/icomplete.el b/lisp/icomplete.el
+index d1d1d4a9d81..d9b26950d44 100644
+--- a/lisp/icomplete.el
++++ b/lisp/icomplete.el
+@@ -115,6 +115,18 @@ icomplete-section
+   "Face used by `icomplete-vertical-mode' for the section title."
+   :version "28.1")
+
++(defface icomplete-vertical-selected-prefix-face
++  '((t :inherit font-lock-keyword-face :weight bold :foreground "cyan"))
++  "Face used for the prefix set by `icomplete-vertical-selected-prefix-marker'."
++  :group 'icomplete
++  :version "31")
++
++(defface icomplete-vertical-unselected-prefix-face
++  '((t :inherit font-lock-keyword-face :weight normal :foreground "gray"))
++  "Face used for the prefix set by `icomplete-vertical-unselected-prefix-marker'."
++  :group 'icomplete
++  :version "31")
++
+ ;;;_* User Customization variables
+ (defcustom icomplete-prospects-height 2
+   ;; We used to compute how many lines 100 characters would take in
+@@ -166,6 +178,47 @@ icomplete-minibuffer-setup-hook
+ icompletion is occurring."
+   :type 'hook)
+
++(defcustom icomplete-vertical-in-buffer-adjust-list t
++  "Control whether in-buffer completion should align the cursor position.
++If this is t and `icomplete-in-buffer' is t, and `icomplete-vertical-mode'
++is activated, the in-buffer vertical completions are shown aligned to the
++cursor position when the completion started, not on the first column, as
++the default behaviour."
++  :type 'boolean
++  :group 'icomplete
++  :version "31")
++
++(defcustom icomplete-vertical-render-prefix-marker t
++  "Control whether a marker is added as a prefix to each candidate.
++If this is t and `icomplete-vertical-mode' is activated, a marker,
++controlled by `icomplete-vertical-selected-prefix-marker' is shown
++as a prefix to the current under selection candidate, while the
++remaining of the candidates will receive the marker controlled
++by `icomplete-vertical-unselected-prefix-marker'."
++  :type 'boolean
++  :group 'icomplete
++  :version "31")
++
++(defcustom icomplete-vertical-selected-prefix-marker "» "
++  "Prefix string used to mark the selected completion candidate.
++If `icomplete-vertical-render-prefix-marker' is t, the string
++setted here is used as a prefix of the currently selected entry in the
++list.  It can be further customized by the face
++`icomplete-vertical-selected-prefix-face'."
++  :type 'string
++  :group 'icomplete
++  :version "31")
++
++(defcustom icomplete-vertical-unselected-prefix-marker "  "
++  "Prefix string used on the unselected completion candidates.
++If `icomplete-vertical-render-prefix-marker' is t, the string
++setted here is used as a prefix for all unselected entries in the list.
++list.  It can be further customized by the face
++`icomplete-vertical-unselected-prefix-face'."
++  :type 'string
++  :group 'icomplete
++  :version "31")
++
+
+ ;;;_* Initialization
+
+@@ -828,6 +881,32 @@ icomplete--augment
+                  else collect (list tr prefix suffix ))
+       annotated)))
+
++(defun icomplete-vertical--adjust-lines-for-column (lines buffer data)
++  "Adjust the LINES to align with the column in BUFFER based on DATA."
++  (if icomplete-vertical-in-buffer-adjust-list
++      (let ((column
++             (with-current-buffer buffer
++               (save-excursion
++                 (goto-char (car data))
++                 (current-column)))))
++        (dolist (l lines)
++          (add-text-properties
++           0 1 `(display ,(concat (make-string column ?\s) (substring l 0 1)))
++           l))
++        lines)
++    lines))
++
++(defun icomplete-vertical--add-marker-to-selected (comp)
++  "Add markers to the selected/unselected COMP completions."
++  (if (and icomplete-vertical-render-prefix-marker
++           (get-text-property 0 'icomplete-selected comp))
++      (concat (propertize icomplete-vertical-selected-prefix-marker
++                          'face 'icomplete-vertical-selected-prefix-face)
++              comp)
++    (concat (propertize icomplete-vertical-unselected-prefix-marker
++                        'face 'icomplete-vertical-unselected-prefix-face)
++            comp)))
++
+ (cl-defun icomplete--render-vertical
+     (comps md &aux scroll-above scroll-below
+            (total-space ; number of mini-window lines available
+@@ -843,7 +922,7 @@ icomplete--render-vertical
+   ;; - both nil, there is no manual scroll;
+   ;; - both non-nil, there is a healthy manual scroll that doesn't need
+   ;;   to be readjusted (user just moved around the minibuffer, for
+-  ;;   example)l
++  ;;   example);
+   ;; - non-nil and nil, respectively, a refiltering took place and we
+   ;;   may need to readjust them to the new filtered `comps'.
+   (when (and icomplete-scroll
+@@ -903,13 +982,14 @@ icomplete--render-vertical
+      when section
+      collect (propertize section 'face 'icomplete-section) into lines-aux
+      and count 1 into nsections-aux
++     for comp = (icomplete-vertical--add-marker-to-selected comp)
+      when (get-text-property 0 'icomplete-selected comp)
+      do (add-face-text-property 0 (length comp)
+                                 'icomplete-selected-match 'append comp)
+      collect (concat prefix
+-                     (make-string (- max-prefix-len (length prefix)) ? )
++                     (make-string (max 0 (- max-prefix-len (length prefix))) ? )
+                      (completion-lazy-hilit comp)
+-                     (make-string (- max-comp-len (length comp)) ? )
++                     (make-string (max 0 (- max-comp-len (length comp))) ? )
+                      suffix)
+      into lines-aux
+      finally (setq lines lines-aux
+@@ -924,6 +1004,9 @@ icomplete--render-vertical
+                  ((> (length scroll-above) (length scroll-below)) nsections)
+                  (t (min (ceiling nsections 2) (length scroll-above))))
+            lines))
++    (when icomplete--in-region-buffer
++      (setq lines (icomplete-vertical--adjust-lines-for-column
++                   lines icomplete--in-region-buffer completion-in-region--data)))
+     ;; At long last, render final string return value.  This may still
+     ;; kick out lines at the end.
+     (concat " \n"
+--
+2.39.5
