@@ -11,7 +11,7 @@ fi
 
 if [ -z "$DISPLAY" ] && [ "$(tty)" = /dev/tty1 ]; then
   if command -v velox >/dev/null
-  then swc-launc velox
+  then swc-launch velox
   else startx
   fi
 fi
