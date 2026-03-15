@@ -13,3 +13,4 @@ libxcb
 xcb-util-wm
 libinput
 ttf-liberation
+xorg-xwayland
