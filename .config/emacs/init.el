@@ -1,7 +1,10 @@
+;; -*- lexical-binding: t; -*-
 (require 'package)
 (setq ring-bell-function 'ignore)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(setq custom-file "~/.config/emacs/custom.el")
+(load custom-file)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
 (setq auto-save-file-name-transforms `((".*" "~/.config/emacs/auto-saves/" t)))
 (setq lock-file-name-transforms
@@ -33,16 +36,6 @@
   (setq undo-tree-history-directory-alist '(("." . "~/.config/emacs/undo-tree")))
   (global-undo-tree-mode))
 
-(use-package vertico
-  :ensure t
-  :custom
-  ;; (vertico-scroll-margin 0) ;; Different scroll margin
-  (vertico-count 20) ;; Show more candidates
-  (vertico-resize t) ;; Grow and shrink the Vertico minibuffer
-  (vertico-cycle t) ;; Enable cycling for `vertico-next/previous'
-  :init
-  (vertico-mode))
-
 ;; Persist history over Emacs restarts. Vertico sorts by history position.
 (use-package savehist
   :ensure t
@@ -59,6 +52,11 @@
 
 (defun my/open () (interactive) (start-process "open" nil "f"))
 
+(use-package clipetty
+  :ensure t
+  :config
+  (global-clipetty-mode))
+
 ;; Emacs minibuffer configurations.
 (use-package emacs
   :ensure t
@@ -69,7 +67,10 @@
   :config
   (setenv "PICKER" "dmenu.emacs")
   (column-number-mode)
+  (repeat-mode)
+  (global-display-line-numbers-mode)
   :custom
+  (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
   ;; TAB cycle if there are only few candidates
   ;; (completion-cycle-threshold 3)
 
@@ -109,31 +110,6 @@
   (completion-category-overrides '((file (styles partial-completion))))
   (completion-category-defaults nil) ;; Disable defaults, use our settings
   (completion-pcm-leading-wildcard t)) ;; Emacs 31: partial-completion behaves like substring
-
-(use-package corfu
-  :ensure t
-  ;; TAB-and-Go customizations
-  :custom
-  (corfu-cycle t)           ;; Enable cycling for `corfu-next/previous'
-  (corfu-preselect 'prompt) ;; Always preselect the prompt
-  (global-corfu-minibuffer nil)
-  :config
-  (define-key corfu-map [remap next-line] nil)
-  (define-key corfu-map [remap previous-line] nil)
-  (setq corfu-auto        t
-    corfu-auto-delay  0  ;; TOO SMALL - NOT RECOMMENDED!
-    corfu-auto-prefix 0) ;; TOO SMALL - NOT RECOMMENDED!
-  (add-hook
-    'corfu-mode-hook
-    (lambda ()
-      ;; Settings only for Corfu
-      (setq-local
-        completion-styles '(basic)
-        completion-category-overrides nil
-        completion-category-defaults nil)))
-  (global-corfu-mode))
-
-
 
 ;; Use Dabbrev with Corfu!
 (use-package dabbrev
@@ -380,7 +356,7 @@ Return an event vector."
       :args (split-string-shell-command cmd)
       :env nil)))
 
-(repeat-mode)
+
 (use-package multiple-cursors
   :ensure t
   :config
@@ -514,10 +490,14 @@ Return an event vector."
       (load-theme theme t))
     ;; run that function again next hour
     (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
-(y/auto-update-theme)
+
+(use-package gruber-darker-theme
+  :ensure t
+  :config
+  (load-theme 'gruber-darker t))
 
 (use-package org
-  :bind (("C-c a" . org-agenda) ("C-c o d" . my/goto-today-journal-entry))
+  :bind (("C-c a" . org-agenda) ("C-c j" . my/goto-today-journal-entry))
   :config
   (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s"))
   (setq org-startup-with-inline-images t)
@@ -569,20 +549,116 @@ Return an event vector."
 
 
 
-(global-display-line-numbers-mode)
-
 (use-package lsp-pyright
   :ensure t
   :custom
-  (lsp-pyright-langserver-command "pyright")
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp))))  ; or lsp-deferred
+  (lsp-pyright-langserver-command "pyright"))  ; or lsp-deferred
 
 (use-package auth-source-pass
   :ensure t
   :config
   (auth-source-pass-enable))
+
+(use-package eglot
+  :ensure nil
+  :custom
+  (eglot-autoshutdown t)
+  (eglot-events-buffer-size 0) ;; EMACS-31 -- do we still need it?
+  (eglot-events-buffer-config '(:size 0 :format full))
+  (eglot-prefer-plaintext nil)
+  (jsonrpc-event-hook nil)
+  (eglot-code-action-indications nil) ;; EMACS-31 -- annoying as hell
+  :init
+  (fset #'jsonrpc--log-event #'ignore)
+
+  (setq-default eglot-workspace-configuration (quote
+                                                (:gopls (:hints (:parameterNames t)))))
+
+  (defun emacs-solo/eglot-setup ()
+    "Setup eglot mode with specific exclusions."
+    (unless (memq major-mode '(emacs-lisp-mode lisp-mode))
+      (eglot-ensure)))
+
+  (add-hook 'prog-mode-hook #'emacs-solo/eglot-setup)
+
+  (with-eval-after-load 'eglot
+    (add-to-list
+      'eglot-server-programs
+      '((ruby-mode ruby-ts-mode) "ruby-lsp")))
+
+  (with-eval-after-load 'eglot
+    (add-to-list
+      'eglot-server-programs
+      '((tsx-ts-mode typescript-ts-mode js-mode js-jsx-mode js-ts-mode)
+         . ("rass"
+             "--"
+             "typescript-language-server" "--stdio"
+             "--"
+             "eslint-lsp" "--stdio"
+             "--"
+             "tailwindcss-language-server" "--stdio"))))
+
+  :bind (:map
+          eglot-mode-map
+          ("C-c l a" . eglot-code-actions)
+          ("C-c l o" . eglot-code-action-organize-imports)
+          ("C-c l r" . eglot-rename)
+          ("C-c l d" . eglot-find-typeDefinition)
+          ("C-c l i" . eglot-find-implementation)
+          ("C-c l g" . eglot-find-declaration)
+          ("C-c l f" . eglot-format)))
+
+(use-package icomplete
+  :bind ((:map icomplete-minibuffer-map
+           ("C-n" . icomplete-forward-completions)
+           ("C-p" . icomplete-backward-completions)
+           ("C-v" . icomplete-vertical-toggle)
+           ("RET" . icomplete-force-complete-and-exit))
+          (:map icomplete-vertical-mode-minibuffer-map
+            ("C-n" . icomplete-forward-completions)
+            ("C-p" . icomplete-backward-completions)
+            ("C-v" . icomplete-vertical-toggle)
+            ("TAB" . icomplete-force-complete)
+            ;; ("TAB" . minibuffer-complete)
+            ("RET" . icomplete-force-complete-and-exit)
+            ("C-j" . exit-minibuffer))
+          );; So we can exit commands like
+  ;; `multi-file-replace-regexp-as-diff'
+  :hook
+  (after-init-hook .
+    (lambda ()
+      (fido-mode -1)
+      (icomplete-vertical-mode 1)))
+  :config
+  (defun my-find-file-predicate (file)
+    (not (string= file "./")))
+  (defun my-hide-completions-after-capf (&rest _)
+    (unless (minibufferp)
+      (minibuffer-hide-completions)))
+  (advice-add 'completion-at-point
+    :after #'my-hide-completions-after-capf))
+
+  (define-advice find-file-read-args
+    (:override (prompt mustmatch) filter-dot-slash)
+    (list
+      (read-file-name prompt nil default-directory mustmatch nil
+        #'my-find-file-predicate)
+      t))
+  (setq icomplete-delay-completions-threshold 0)
+  (setq icomplete-compute-delay 0)
+  (setq icomplete-show-matches-on-no-input t)
+  (setq icomplete-hide-common-prefix nil)
+  (setq icomplete-prospects-height 10)
+  (setq icomplete-separator " . ")
+  (setq icomplete-with-completion-tables t)
+  (setq icomplete-in-buffer t)
+  (setq icomplete-max-delay-chars 0)
+  (setq icomplete-scroll t)
+
+  (setq icomplete-vertical-in-buffer-adjust-list t)
+  (setq icomplete-vertical-render-prefix-indicator t)
+
+  )
 
 (defun uv-activate ()
   "Activate Python environment managed by uv based on current project directory.
@@ -606,15 +682,12 @@ Looks for .venv directory in project root and activates the Python interpreter."
                                   (remove venv-bin-dir exec-path))))
 
           ;; Update PATH environment variable
-          (setenv "PATH" (concat (file-name-directory python-path)
+          (setenv "PATH" (concat (string-remove-suffix "/" (file-name-directory python-path))
                                  path-separator
                                  (getenv "PATH")))
 
           ;; Update VIRTUAL_ENV environment variable
           (setenv "VIRTUAL_ENV" venv-path)
-
-          ;; Remove PYTHONHOME if it exists
-          (setenv "PYTHONHOME" nil)
 
           (message "Activated UV Python environment at %s" venv-path))
       (error "No UV Python environment found in %s" project-root))))
@@ -644,59 +717,3 @@ Looks for .venv directory in project root and activates the Python interpreter."
                       labels)))
       (when (< (length filtered) (length labels))
 	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
-
-
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-    '("0f1341c0096825b1e5d8f2ed90996025a0d013a0978677956a9e61408fcd2c77"
-       "b754d3a03c34cfba9ad7991380d26984ebd0761925773530e24d8dd8b6894738"
-       "7235b77f371f46cbfae9271dce65f5017b61ec1c8687a90ff30c6db281bfd6b7"
-       "dd4582661a1c6b865a33b89312c97a13a3885dc95992e2e5fc57456b4c545176"
-       "0325a6b5eea7e5febae709dab35ec8648908af12cf2d2b569bedc8da0a3a81c1"
-       "4990532659bb6a285fee01ede3dfa1b1bdf302c5c3c8de9fad9b6bc63a9252f7"
-       "f1e8339b04aef8f145dd4782d03499d9d716fdc0361319411ac2efc603249326"
-       "c5975101a4597094704ee78f89fb9ad872f965a84fb52d3e01b9102168e8dc40"
-       "6bf350570e023cd6e5b4337a6571c0325cec3f575963ac7de6832803df4d210a"
-       "0adcffc4894e2dd21283672da7c3d1025b5586bcef770fdc3e2616bdb2a771cd"
-       "5e39e95c703e17a743fb05a132d727aa1d69d9d2c9cde9353f5350e545c793d4"
-       "01a9797244146bbae39b18ef37e6f2ca5bebded90d9fe3a2f342a9e863aaa4fd"
-       default))
- '(org-agenda-files
-    '("/Users/ivi/Sync/my/notes/notes.org"
-       "/Users/ivi/Sync/my/notes/pionative.org"))
- '(org-agenda-time-grid
-    '((daily today require-timed remove-match)
-       (800 1000 1200 1400 1600 1800 2000) " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄"))
- '(org-babel-load-languages '((dot . t) (shell . t) (emacs-lisp . t)))
- '(package-selected-packages
-    '(## async auctex cape claude-code-ide consult corfu counsel
-       dap-dlv-go dap-mode dash-docs dash-functional direnv
-       doom-themes eat embark embark-consult flycheck forge go-mode
-       graphviz-dot-mode gruber-darker-theme helm ido-completing-read+
-       inheritenv ivy kakoune lsp-mode lsp-pyright magit marginalia
-       mc-extras meow modus-themes multiple-cursors nix-mode orderless
-       ox-hugo paredit phi-search rust-mode smex spacious-padding
-       terraform-mode treemacs undo-tree vertico visual-regexp
-       visual-regexp-steroids vterm yaml-mode yaml-pro yasnippet))
- '(package-vc-selected-packages
-    '((claude-code-ide :url
-        "https://github.com/manzaltu/claude-code-ide.el")
-       (claude-code :url
-         "https://github.com/stevemolitor/claude-code.el")))
- '(safe-local-variable-directories
-    '("/Users/ivi/Programming/Pionative/quickstart/" "/Users/ivi/"))
- '(safe-local-variable-values
-    '((tex-indent-basic . 2) (tex-indent-item . 2) (tex-indent-arg . 4)
-       (TeX-brace-indent-level . 2) (LaTeX-indent-level . 2)
-       (LaTeX-item-indent . -2))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
