@@ -2,14 +2,28 @@
 set -e
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 #
-# Velox
-make -C /var/home/ivi/.local/src/wl/wld install
-make -C /var/home/ivi/.local/src/wl/swc install
-make -C /var/home/ivi/.local/src/wl/velox install
-make -C /var/home/ivi/.local/src/wl/st install
+# Ensure permissions are correct
+chown ivi:ivi /var/home/ivi
+chown -R ivi:ivi /var/home/ivi/.ssh
+chsh ivi -s /usr/bin/zsh
 #
-# timezone
+# Velox
+make -j12 -C /var/home/ivi/.local/src/wl/wld install
+make -j12 -C /var/home/ivi/.local/src/wl/swc install
+make -j12 -C /var/home/ivi/.local/src/wl/velox install
+make -j12 -C /var/home/ivi/.local/src/wl/st install
+#
+# Timezone
 ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 #
 # Enable using ssh
 systemctl enable sshd.service
+#
+# Add optional packages
+mkdir -p /var/opt/laptop
+chown ivi:ivi /var/opt/laptop
+cd /var/opt/laptop
+su ivi -c 'git clone https://aur.archlinux.org/emacs-git.git'
+su ivi -c 'git clone https://aur.archlinux.org/visual-studio-code-bin.git'
+su ivi -c 'git clone https://aur.archlinux.org/teams-for-linux-bin.git'
+su ivi -c 'git clone https://aur.archlinux.org/slack-desktop-wayland.git'
