@@ -13,7 +13,3 @@ ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 #
 # Enable using ssh
 systemctl enable sshd.service
-#
-# Make the system stateful until the next build.
-systemctl enable ostree-state-overlay@opt.service
-systemctl enable ostree-state-overlay@usr.service
