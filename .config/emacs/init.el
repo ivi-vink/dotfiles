@@ -632,7 +632,14 @@ Return an event vector."
   :config
   (defun my/icomplete-force-complete-and-exit ()
     (interactive)
-    (if (equal (icomplete--field-string) icomplete--initial-input)
+    (if
+      (or
+        (and
+          minibuffer-completing-file-name
+          (string-suffix-p "/" (icomplete--field-string)))
+        (and
+          (equal (icomplete--field-string) icomplete--initial-input)
+          (not (equal icomplete--initial-input ""))))
       (exit-minibuffer)
       (icomplete-force-complete-and-exit))
     )
