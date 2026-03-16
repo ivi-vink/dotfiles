@@ -620,7 +620,7 @@ Return an event vector."
             ("C-v" . icomplete-vertical-toggle)
             ("TAB" . icomplete-force-complete)
             ;; ("TAB" . minibuffer-complete)
-            ("RET" . icomplete-force-complete-and-exit)
+            ("RET" . my/icomplete-force-complete-and-exit)
             ("C-j" . exit-minibuffer))
           );; So we can exit commands like
   ;; `multi-file-replace-regexp-as-diff'
@@ -630,13 +630,19 @@ Return an event vector."
       (fido-mode -1)
       (icomplete-vertical-mode 1)))
   :config
+  (defun my/icomplete-force-complete-and-exit ()
+    (interactive)
+    (if (equal (icomplete--field-string) icomplete--initial-input)
+      (exit-minibuffer)
+      (icomplete-force-complete-and-exit))
+    )
   (defun my-find-file-predicate (file)
     (not (string= file "./")))
   (defun my-hide-completions-after-capf (&rest _)
     (unless (minibufferp)
       (minibuffer-hide-completions)))
   (advice-add 'completion-at-point
-    :after #'my-hide-completions-after-capf))
+    :after #'my-hide-completions-after-capf)
 
   (define-advice find-file-read-args
     (:override (prompt mustmatch) filter-dot-slash)
