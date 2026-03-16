@@ -1,3 +1,4 @@
+autoconf
 debugedit
 fakeroot
 fd
@@ -15,6 +16,7 @@ patch
 pixman
 ripgrep
 sudo
+texinfo
 ttf-liberation
 wayland
 wayland-protocols
