@@ -23,5 +23,7 @@ wayland-protocols
 xcb-util-wm
 xorg-xwayland
 zsh
+wireplumber
 pipewire
 alsa-lib
+keyd

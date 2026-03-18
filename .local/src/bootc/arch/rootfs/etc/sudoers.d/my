@@ -1,18 +1,3 @@
-Defaults!/usr/bin/visudo env_keep += "SUDO_EDITOR EDITOR VISUAL"
-Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/bin"
-Defaults env_keep += "LANG LANGUAGE LINGUAS LC_* _XKB_CHARSET"
-##
-## User privilege specification
-##
-root ALL=(ALL:ALL) ALL
-
-## Uncomment to allow members of group wheel to execute any command
-# %wheel ALL=(ALL:ALL) ALL
-
-## Same thing without a password
-# %wheel ALL=(ALL:ALL) NOPASSWD: ALL
-
-## Uncomment to allow members of group sudo to execute any command
 %sudo ALL=(ALL:ALL) ALL
 
 ##
@@ -32,6 +17,3 @@ Cmnd_Alias	PKGMAN = /usr/bin/apt, /usr/bin/dpkg, /usr/bin/rpm, \
 			 /usr/bin/pacman
 
 %sudo ALL=(ALL:ALL) NOPASSWD: OS, REBOOT, DEBUGGERS, PKGMAN
-
-## Read drop-in files from /etc/sudoers.d
-@includedir /etc/sudoers.d

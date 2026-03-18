@@ -1,29 +1,40 @@
 #!/bin/sh
 set -e
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+export LD_LIBRARY_PATH=/usr/local/lib
+git_host="https://github.com/ivi-vink"
 #
 # Ensure permissions are correct
 chown ivi:ivi /var/home/ivi
 chown -R ivi:ivi /var/home/ivi/.ssh
 chsh ivi -s /usr/bin/zsh
 #
-# Velox
-make -j12 -C /var/home/ivi/.local/src/wl/wld install
-make -j12 -C /var/home/ivi/.local/src/wl/swc install
-make -j12 -C /var/home/ivi/.local/src/wl/velox install
-make -j12 -C /var/home/ivi/.local/src/wl/st install
-#
 # Timezone
 ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 #
-# Enable using ssh
-systemctl enable sshd.service
+# Enable services
+set -- sshd keyd
+for service
+do systemctl enable "${service}"
+done
+#
+# Add wayland setup
+install() {
+  for pkg
+  do
+    src="/var/home/ivi/.local/src/${pkg}"
+    git clone ${git_host}/${pkg}.git ${src}
+    make -j12 -C "${src}" install
+  done
+}
+
+install wld swc velox st dmenu
 #
 # Add optional packages
 mkdir -p /var/opt/laptop
 chown ivi:ivi /var/opt/laptop
 cd /var/opt/laptop
-su ivi -c 'git clone https://aur.archlinux.org/emacs-git.git'
-su ivi -c 'git clone https://aur.archlinux.org/visual-studio-code-bin.git'
-su ivi -c 'git clone https://aur.archlinux.org/teams-for-linux-bin.git'
-su ivi -c 'git clone https://aur.archlinux.org/slack-desktop-wayland.git'
+su ivi -c 'git clone https://aur.archlinux.org/emacs-git.git' &
+su ivi -c 'git clone https://aur.archlinux.org/visual-studio-code-bin.git' &
+su ivi -c 'git clone https://aur.archlinux.org/teams-for-linux-bin.git' &
+su ivi -c 'git clone https://aur.archlinux.org/slack-desktop-wayland.git' &

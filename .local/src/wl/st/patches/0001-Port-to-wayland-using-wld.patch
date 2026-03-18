@@ -15,18 +15,18 @@ index fb026c4..053d3e0 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -3,7 +3,7 @@
- 
+
  include config.mk
- 
+
 -SRC = st.c
 +SRC = st.c xdg-shell-unstable-v5-protocol.c
  OBJ = ${SRC:.c=.o}
- 
+
  all: options st
 @@ -17,6 +17,16 @@ options:
  config.h:
  	cp config.def.h config.h
- 
+
 +xdg-shell-unstable-v5-protocol.c:
 +	@echo GEN $@
 +	@wayland-scanner code ${XDG_SHELL_PROTO} $@
@@ -47,14 +47,14 @@ index a719e36..49ca50b 100644
 @@ -38,13 +38,13 @@ static char worddelimiters[] = " ";
  static unsigned int doubleclicktimeout = 300;
  static unsigned int tripleclicktimeout = 600;
- 
+
 +/* key repeat timeouts (in milliseconds) */
 +static unsigned int keyrepeatdelay = 500;
 +static unsigned int keyrepeatinterval = 25;
 +
  /* alt screens */
  static int allowaltscreen = 1;
- 
+
 -/* frames per second st should at maximum draw to the screen */
 -static unsigned int xfps = 120;
 -static unsigned int actionfps = 30;
@@ -70,12 +70,12 @@ index a719e36..49ca50b 100644
 +/* XXX: Wayland does not have a bell.
 + * static int bellvolume = 0;
 + */
- 
+
  /* default TERM value */
  static char termname[] = "st-256color";
 @@ -138,11 +140,9 @@ static unsigned int cols = 80;
  static unsigned int rows = 24;
- 
+
  /*
 - * Default colour and shape of the mouse cursor
 + * Default shape of the mouse cursor
@@ -84,7 +84,7 @@ index a719e36..49ca50b 100644
 -static unsigned int mousefg = 7;
 -static unsigned int mousebg = 0;
 +static char mouseshape[] = "xterm";
- 
+
  /*
   * Color used to display font attributes when fontconfig selected a font which
 @@ -156,36 +156,38 @@ static unsigned int defaultattr = 11;
@@ -101,11 +101,11 @@ index a719e36..49ca50b 100644
 +	{ AXIS_VERTICAL,    +1,		MOD_MASK_ANY,	"\031"},
 +	{ AXIS_VERTICAL,    -1,		MOD_MASK_ANY,	"\005"},
  };
- 
+
  /* Internal keyboard shortcuts. */
 -#define MODKEY Mod1Mask
 +#define MODKEY MOD_MASK_ALT
- 
+
  static Shortcut shortcuts[] = {
 -	/* mask                 keysym          function        argument */
 -	{ XK_ANY_MOD,           XK_Break,       sendbreak,      {.i =  0} },
@@ -133,7 +133,7 @@ index a719e36..49ca50b 100644
 +	{ MODKEY,                       XKB_KEY_Num_Lock,       numlock,        {.i =  0} },
 +	{ MODKEY,                       XKB_KEY_Control_L,      iso14755,       {.i =  0} },
  };
- 
+
  /*
   * Special keys (change & recompile st.info accordingly)
   *
@@ -153,14 +153,14 @@ index a719e36..49ca50b 100644
 + * this table sequentially, so any MOD_MASK_ANY must be in the last
   * position for a key.
   */
- 
+
 @@ -209,239 +211,233 @@ static Shortcut shortcuts[] = {
   * If you want keys other than the X11 function keys (0xFD00 - 0xFFFF)
   * to be mapped below, add them to this array.
   */
 -static KeySym mappedkeys[] = { -1 };
 +static xkb_keysym_t mappedkeys[] = { -1 };
- 
+
 -/*
 - * State bits to ignore when matching key or button events.  By default,
 - * numlock (Mod2Mask) and keyboard layout (XK_SWITCH_MOD) are ignored.
@@ -168,7 +168,7 @@ index a719e36..49ca50b 100644
 -static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
 +/* State bits to ignore when matching key or button events. */
 +static uint ignoremod = 0;
- 
+
  /*
   * Override mouse-select while mask is active (when MODE_MOUSE is set).
 - * Note that if you want to use ShiftMask with selmasks, set this to an other
@@ -178,7 +178,7 @@ index a719e36..49ca50b 100644
   */
 -static uint forceselmod = ShiftMask;
 +static uint forceselmod = MOD_MASK_SHIFT;
- 
+
  /*
   * This is the huge key array which defines all compatibility to the Linux
   * world. Please decide about changes wisely.
@@ -608,7 +608,7 @@ index a719e36..49ca50b 100644
 +	{ XKB_KEY_F34,           MOD_MASK_NONE,   "\033[21;5~",    0,    0,    0},
 +	{ XKB_KEY_F35,           MOD_MASK_NONE,   "\033[23;5~",    0,    0,    0},
  };
- 
+
  /*
 @@ -452,7 +448,7 @@ static Key key[] = {
   * If no match is found, regular selection is used.
@@ -617,7 +617,7 @@ index a719e36..49ca50b 100644
 -	[SEL_RECTANGULAR] = Mod1Mask,
 +	[SEL_RECTANGULAR] = MOD_MASK_ALT,
  };
- 
+
  /*
 diff --git a/config.mk b/config.mk
 index c84c5ee..7da06f1 100644
@@ -626,12 +626,12 @@ index c84c5ee..7da06f1 100644
 @@ -7,16 +7,12 @@ VERSION = 0.7
  PREFIX = /usr/local
  MANPREFIX = ${PREFIX}/share/man
- 
+
 -X11INC = /usr/X11R6/include
 -X11LIB = /usr/X11R6/lib
 +PKGCFG = fontconfig wayland-client wayland-cursor xkbcommon wld
 +XDG_SHELL_PROTO = `pkg-config --variable=pkgdatadir wayland-protocols`/unstable/xdg-shell/xdg-shell-unstable-v5.xml
- 
+
  # includes and libs
 -INCS = -I. -I/usr/include -I${X11INC} \
 -       `pkg-config --cflags fontconfig` \
@@ -641,7 +641,7 @@ index c84c5ee..7da06f1 100644
 -       `pkg-config --libs freetype2`
 +INCS = -I. -I/usr/include `pkg-config --cflags ${PKGCFG}`
 +LIBS = -L/usr/lib -lc -lm -lrt -lutil `pkg-config --libs ${PKGCFG}`
- 
+
  # flags
  CPPFLAGS = -DVERSION=\"${VERSION}\" -D_XOPEN_SOURCE=600
 diff --git a/st.c b/st.c
@@ -683,12 +683,12 @@ index fbcd9e0..9ead681 100644
 +#include <wld/wayland.h>
  #include <fontconfig/fontconfig.h>
  #include <wchar.h>
- 
+
  #include "arg.h"
 +#include "xdg-shell-client-protocol.h"
- 
+
  char *argv0;
- 
+
 -#define Glyph Glyph_
 -#define Font Font_
 -
@@ -697,8 +697,8 @@ index fbcd9e0..9ead681 100644
  #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 @@ -47,10 +46,6 @@ char *argv0;
  #endif
- 
- 
+
+
 -/* XEMBED messages */
 -#define XEMBED_FOCUS_IN  4
 -#define XEMBED_FOCUS_OUT 5
@@ -714,7 +714,7 @@ index fbcd9e0..9ead681 100644
  #define XK_ANY_MOD    UINT_MAX
  #define XK_NO_MOD     0
  #define XK_SWITCH_MOD (1<<13)
- 
+
 +#define MOD_MASK_ANY	UINT_MAX
 +#define MOD_MASK_NONE	0
 +#define MOD_MASK_CTRL	(1<<0)
@@ -735,17 +735,17 @@ index fbcd9e0..9ead681 100644
  #define DIVCEIL(n, d)		(((n) + ((d) - 1)) / (d))
 @@ -89,7 +94,7 @@ char *argv0;
  #define TRUEBLUE(x)		(((x) & 0xff) << 8)
- 
+
  /* constants */
 -#define ISO14755CMD		"dmenu -w %lu -p codepoint: </dev/null"
 +#define ISO14755CMD		"dmenu -p codepoint: </dev/null"
- 
+
  enum glyph_attribute {
  	ATTR_NULL       = 0,
 @@ -195,9 +200,6 @@ typedef unsigned short ushort;
- 
+
  typedef uint_least32_t Rune;
- 
+
 -typedef XftDraw *Draw;
 -typedef XftColor Color;
 -
@@ -763,7 +763,7 @@ index fbcd9e0..9ead681 100644
 @@ -255,29 +256,54 @@ typedef struct {
  	int *tabs;
  } Term;
- 
+
 -/* Purely graphic info */
  typedef struct {
 -	Display *dpy;
@@ -828,12 +828,12 @@ index fbcd9e0..9ead681 100644
 +	struct wl_cursor *cursor;
 +	struct wl_surface *surface;
 +} Cursor;
- 
+
  typedef struct {
  	uint b;
 @@ -286,7 +312,14 @@ typedef struct {
  } MouseShortcut;
- 
+
  typedef struct {
 -	KeySym k;
 +	int axis;
@@ -850,7 +850,7 @@ index fbcd9e0..9ead681 100644
 @@ -310,11 +343,10 @@ typedef struct {
  		int x, y;
  	} nb, ne, ob, oe;
- 
+
 -	char *primary, *clipboard;
 -	Atom xtarget;
 +	char *primary;
@@ -860,10 +860,10 @@ index fbcd9e0..9ead681 100644
 -	struct timespec tclick2;
 +	uint32_t tclick1, tclick2;
  } Selection;
- 
+
  typedef union {
 @@ -326,19 +358,25 @@ typedef union {
- 
+
  typedef struct {
  	uint mod;
 -	KeySym keysym;
@@ -871,7 +871,7 @@ index fbcd9e0..9ead681 100644
  	void (*func)(const Arg *);
  	const Arg arg;
  } Shortcut;
- 
+
 +typedef struct {
 +	char str[32];
 +	uint32_t key;
@@ -903,7 +903,7 @@ index fbcd9e0..9ead681 100644
  	FcFontSet *set;
  	FcPattern *pattern;
  } Font;
- 
+
  /* Drawing Context */
  typedef struct {
 -	Color col[MAX(LEN(colorname), 256)];
@@ -911,20 +911,20 @@ index fbcd9e0..9ead681 100644
  	Font font, bfont, ifont, ibfont;
 -	GC gc;
  } DC;
- 
+
  static void die(const char *, ...);
 @@ -378,6 +415,7 @@ static void execsh(void);
  static void stty(void);
  static void sigchld(int);
  static void run(void);
 +static void cresize(int, int);
- 
+
  static void csidump(void);
  static void csihandle(void);
 @@ -433,56 +471,80 @@ static void ttysend(char *, size_t);
  static void ttywrite(const char *, size_t);
  static void tstrsequence(uchar);
- 
+
 -static inline ushort sixd_to_16bit(int);
 -static int xmakeglyphfontspecs(XftGlyphFontSpec *, const Glyph *, int, int, int);
 -static void xdrawglyphfontspecs(const XftGlyphFontSpec *, Glyph, int, int, int);
@@ -1027,7 +1027,7 @@ index fbcd9e0..9ead681 100644
 +static void datasrctarget(void *, struct wl_data_source *, const char *);
 +static void datasrcsend(void *, struct wl_data_source *, const char *, int32_t);
 +static void datasrccancelled(void *, struct wl_data_source *);
- 
+
  static void selinit(void);
  static void selnormalize(void);
  static inline int selected(int, int);
@@ -1040,13 +1040,13 @@ index fbcd9e0..9ead681 100644
  static int y2row(int);
 -static void getbuttoninfo(XEvent *);
 -static void mousereport(XEvent *);
- 
+
  static size_t utf8decode(char *, Rune *, size_t);
  static Rune utf8decodebyte(char, size_t *);
 @@ -498,41 +560,37 @@ static char *xstrdup(char *);
- 
+
  static void usage(void);
- 
+
 -static void (*handler[LASTEvent])(XEvent *) = {
 -	[KeyPress] = kpress,
 -	[ClientMessage] = cmessage,
@@ -1089,7 +1089,7 @@ index fbcd9e0..9ead681 100644
 +static struct wl_data_offer_listener dataofferlistener = { dataofferoffer };
 +static struct wl_data_source_listener datasrclistener =
 +	{ datasrctarget, datasrcsend, datasrccancelled };
- 
+
  /* Globals */
  static DC dc;
 -static XWindow xw;
@@ -1112,12 +1112,12 @@ index fbcd9e0..9ead681 100644
  static char *opt_title = NULL;
  static int oldbutton   = 3; /* button event on startup: 3 = release */
 +static int oldx, oldy;
- 
+
  static char *usedfont = NULL;
  static double usedfontsize = 0;
 @@ -562,7 +621,7 @@ enum {
  };
- 
+
  typedef struct {
 -	XftFont *font;
 +	struct wld_font *font;
@@ -1142,14 +1142,14 @@ index fbcd9e0..9ead681 100644
 -		sel.xtarget = XA_STRING;
 +	sel.source = NULL;
  }
- 
+
  int
  x2col(int x)
  {
  	x -= borderpx;
 -	x /= xw.cw;
 +	x /= wl.cw;
- 
+
  	return LIMIT(x, 0, term.col-1);
  }
 @@ -732,7 +788,7 @@ int
@@ -1158,12 +1158,12 @@ index fbcd9e0..9ead681 100644
  	y -= borderpx;
 -	y /= xw.ch;
 +	y /= wl.ch;
- 
+
  	return LIMIT(y, 0, term.row-1);
  }
 @@ -868,15 +924,15 @@ selsnap(int *x, int *y, int direction)
  }
- 
+
  void
 -getbuttoninfo(XEvent *e)
 +getbuttoninfo(void)
@@ -1171,19 +1171,19 @@ index fbcd9e0..9ead681 100644
  	int type;
 -	uint state = e->xbutton.state & ~(Button1Mask | forceselmod);
 +	uint state = wl.xkb.mods & ~forceselmod;
- 
+
  	sel.alt = IS_SET(MODE_ALTSCREEN);
- 
+
 -	sel.oe.x = x2col(e->xbutton.x);
 -	sel.oe.y = y2row(e->xbutton.y);
 +	sel.oe.x = x2col(wl.px);
 +	sel.oe.y = y2row(wl.py);
  	selnormalize();
- 
+
  	sel.type = SEL_REGULAR;
 @@ -889,59 +945,20 @@ getbuttoninfo(XEvent *e)
  }
- 
+
  void
 -mousereport(XEvent *e)
 +wlmousereport(int button, bool release, int x, int y)
@@ -1229,7 +1229,7 @@ index fbcd9e0..9ead681 100644
 -				return;
 -		}
 -	}
- 
+
  	if (!IS_SET(MODE_MOUSEX10)) {
 -		button += ((state & ShiftMask  ) ? 4  : 0)
 -			+ ((state & Mod4Mask   ) ? 8  : 0)
@@ -1238,7 +1238,7 @@ index fbcd9e0..9ead681 100644
 +			+ ((wl.xkb.mods & MOD_MASK_LOGO ) ? 8  : 0)
 +			+ ((wl.xkb.mods & MOD_MASK_CTRL ) ? 16 : 0);
  	}
- 
+
  	if (IS_SET(MODE_MOUSESGR)) {
  		len = snprintf(buf, sizeof(buf), "\033[<%d;%d;%d%c",
 -				button, x+1, y+1,
@@ -1249,7 +1249,7 @@ index fbcd9e0..9ead681 100644
  				32+button, 32+x+1, 32+y+1);
 @@ -953,53 +970,59 @@ mousereport(XEvent *e)
  }
- 
+
  void
 -bpress(XEvent *e)
 +wlmousereportbutton(uint32_t button, uint32_t state)
@@ -1257,7 +1257,7 @@ index fbcd9e0..9ead681 100644
 -	struct timespec now;
 -	MouseShortcut *ms;
 +	bool release = state == WL_POINTER_BUTTON_STATE_RELEASED;
- 
+
 -	if (IS_SET(MODE_MOUSE) && !(e->xbutton.state & forceselmod)) {
 -		mousereport(e);
 -		return;
@@ -1276,7 +1276,7 @@ index fbcd9e0..9ead681 100644
 +			break;
 +		}
  	}
- 
+
 -	for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
 -		if (e->xbutton.button == ms->b
 -				&& match(ms->mask, e->xbutton.state)) {
@@ -1289,12 +1289,12 @@ index fbcd9e0..9ead681 100644
 +	if (IS_SET(MODE_MOUSEX10) && release) {
 +		return;
  	}
- 
+
 -	if (e->xbutton.button == Button1) {
 -		clock_gettime(CLOCK_MONOTONIC, &now);
 +	wlmousereport(button, release, oldx, oldy);
 +}
- 
+
 -		/* Clear previous selection, logically and visually. */
 -		selclear(NULL);
 -		sel.mode = SEL_EMPTY;
@@ -1305,7 +1305,7 @@ index fbcd9e0..9ead681 100644
 +wlmousereportmotion(wl_fixed_t fx, wl_fixed_t fy)
 +{
 +	int x = x2col(wl_fixed_to_int(fx)), y = y2row(wl_fixed_to_int(fy));
- 
+
 -		/*
 -		 * If the user clicks below predefined timeouts specific
 -		 * snapping behaviour is exposed.
@@ -1325,7 +1325,7 @@ index fbcd9e0..9ead681 100644
 +	/* MOUSE_MOTION: no reporting if no button is pressed */
 +	if (IS_SET(MODE_MOUSEMOTION) && oldbutton == 3)
 +		return;
- 
+
 -		if (sel.snap != 0)
 -			sel.mode = SEL_READY;
 -		tsetdirt(sel.nb.y, sel.ne.y);
@@ -1343,11 +1343,11 @@ index fbcd9e0..9ead681 100644
 +	wlmousereport(64 + (axis == AXIS_VERTICAL ? 4 : 6)
 +		+ (amount > 0 ? 1 : 0), false, oldx, oldy);
  }
- 
+
  char *
 @@ -1057,148 +1080,67 @@ getsel(void)
  }
- 
+
  void
 -selcopy(Time t)
 -{
@@ -1369,7 +1369,7 @@ index fbcd9e0..9ead681 100644
 -	}
 +	wlsetsel(getsel(), serial);
  }
- 
+
 -void
 -selnotify(XEvent *e)
 +static inline void
@@ -1454,7 +1454,7 @@ index fbcd9e0..9ead681 100644
 -		ofs += nitems * format / 32;
 -	} while (rem > 0);
 +	char *repl = buf;
- 
+
  	/*
 -	 * Deleting the property again tells the selection owner to send the
 -	 * next data chunk in the property.
@@ -1469,7 +1469,7 @@ index fbcd9e0..9ead681 100644
 +	while ((repl = memchr(repl, '\n', len))) {
 +		*repl++ = '\r';
 +	}
- 
+
 -void
 -selpaste(const Arg *dummy)
 -{
@@ -1477,7 +1477,7 @@ index fbcd9e0..9ead681 100644
 -			xw.win, CurrentTime);
 +	ttysend(buf, len);
  }
- 
+
  void
 -clipcopy(const Arg *dummy)
 +selpaste(const Arg *dummy)
@@ -1485,7 +1485,7 @@ index fbcd9e0..9ead681 100644
 -	Atom clipboard;
 +	int fds[2], len, left;
 +	char buf[BUFSIZ], *str;
- 
+
 -	if (sel.clipboard != NULL)
 -		free(sel.clipboard);
 -
@@ -1521,7 +1521,7 @@ index fbcd9e0..9ead681 100644
 +			ttywrite("\033[201~", 6);
  	}
  }
- 
+
  void
 -clippaste(const Arg *dummy)
 -{
@@ -1540,7 +1540,7 @@ index fbcd9e0..9ead681 100644
  		return;
 @@ -1208,117 +1150,19 @@ selclear(XEvent *e)
  }
- 
+
  void
 -selrequest(XEvent *e)
 -{
@@ -1605,7 +1605,7 @@ index fbcd9e0..9ead681 100644
  {
  	free(sel.primary);
  	sel.primary = str;
- 
+
 -	XSetSelectionOwner(xw.dpy, XA_PRIMARY, xw.win, t);
 -	if (XGetSelectionOwner(xw.dpy, XA_PRIMARY) != xw.win)
 -		selclear(0);
@@ -1662,20 +1662,20 @@ index fbcd9e0..9ead681 100644
 -		tsetdirt(MIN(sel.nb.y, oldsby), MAX(sel.ne.y, oldsey));
 +	wl_data_device_set_selection(wl.datadev, sel.source, serial);
  }
- 
+
  void
 @@ -1337,7 +1181,6 @@ execsh(void)
  {
  	char **args, *sh, *prog;
  	const struct passwd *pw;
 -	char buf[sizeof(long) * 8 + 1];
- 
+
  	errno = 0;
  	if ((pw = getpwuid(getuid())) == NULL) {
 @@ -1358,8 +1201,6 @@ execsh(void)
  		prog = sh;
  	args = (opt_cmd) ? opt_cmd : (char *[]) {prog, NULL};
- 
+
 -	snprintf(buf, sizeof(buf), "%lu", xw.win);
 -
  	unsetenv("COLUMNS");
@@ -1686,19 +1686,19 @@ index fbcd9e0..9ead681 100644
  	setenv("HOME", pw->pw_dir, 1);
  	setenv("TERM", termname, 1);
 -	setenv("WINDOWID", buf, 1);
- 
+
  	signal(SIGCHLD, SIG_DFL);
  	signal(SIGHUP, SIG_DFL);
 @@ -1513,6 +1353,7 @@ ttyread(void)
  	if (buflen > 0)
  		memmove(buf, ptr, buflen);
- 
+
 +	needdraw = true;
  	return ret;
  }
- 
+
 @@ -1606,8 +1447,8 @@ ttyresize(void)
- 
+
  	w.ws_row = term.row;
  	w.ws_col = term.col;
 -	w.ws_xpixel = xw.tw;
@@ -1709,16 +1709,16 @@ index fbcd9e0..9ead681 100644
  		fprintf(stderr, "Couldn't set window size: %s\n", strerror(errno));
  }
 @@ -1637,6 +1478,8 @@ tsetdirt(int top, int bot)
- 
+
  	for (i = top; i <= bot; i++)
  		term.dirty[i] = 1;
 +
 +	needdraw = true;
  }
- 
+
  void
 @@ -1771,7 +1614,7 @@ selscroll(int orig, int n)
- 
+
  	if (BETWEEN(sel.ob.y, orig, term.bot) || BETWEEN(sel.oe.y, orig, term.bot)) {
  		if ((sel.ob.y += n) > term.bot || (sel.oe.y += n) < term.top) {
 -			selclear(NULL);
@@ -1811,12 +1811,12 @@ index fbcd9e0..9ead681 100644
  	FILE *p;
  	char *us, *e, codepoint[9], uc[UTF_SIZ];
  	unsigned long utf32;
- 
+
 -	snprintf(cmd, sizeof(cmd), ISO14755CMD, xw.win);
 -	if (!(p = popen(cmd, "r")))
 +	if (!(p = popen(ISO14755CMD, "r")))
  		return;
- 
+
  	us = fgets(codepoint, sizeof(codepoint), p);
 @@ -2747,6 +2584,7 @@ techo(Rune u)
  		}
@@ -1824,7 +1824,7 @@ index fbcd9e0..9ead681 100644
  	tputc(u);
 +	needdraw = true;
  }
- 
+
  void
 @@ -2833,10 +2671,12 @@ tcontrolcode(uchar ascii)
  			/* backwards compatibility to xterm */
@@ -1869,13 +1869,13 @@ index fbcd9e0..9ead681 100644
  	if (sel.ob.x != -1 && BETWEEN(term.c.y, sel.ob.y, sel.oe.y))
 -		selclear(NULL);
 +		selclear();
- 
+
  	gp = &term.line[term.c.y][term.c.x];
  	if (IS_SET(MODE_WRAP) && (term.c.state & CURSOR_WRAPNEXT)) {
 @@ -3176,9 +3016,6 @@ tresize(int col, int row)
  		free(term.alt[i]);
  	}
- 
+
 -	/* resize to new width */
 -	term.specbuf = xrealloc(term.specbuf, col * sizeof(XftGlyphFontSpec));
 -
@@ -1884,7 +1884,7 @@ index fbcd9e0..9ead681 100644
  	term.alt  = xrealloc(term.alt,  row * sizeof(Line));
 @@ -3228,155 +3065,107 @@ tresize(int col, int row)
  }
- 
+
  void
 -xresize(int col, int row)
 +wlresize(int col, int row)
@@ -1895,7 +1895,7 @@ index fbcd9e0..9ead681 100644
 +
 +	wl.tw = MAX(1, col * wl.cw);
 +	wl.th = MAX(1, row * wl.ch);
- 
+
 -	XFreePixmap(xw.dpy, xw.buf);
 -	xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
 -			DefaultDepth(xw.dpy, xw.scr));
@@ -1907,7 +1907,7 @@ index fbcd9e0..9ead681 100644
 +	wld_export(wld.buffer, WLD_WAYLAND_OBJECT_BUFFER, &object);
 +	wl.buffer = object.ptr;
  }
- 
+
 -ushort
 -sixd_to_16bit(int x)
 +uchar
@@ -1916,7 +1916,7 @@ index fbcd9e0..9ead681 100644
 -	return x == 0 ? 0 : 0x3737 + 0x2828 * x;
 +	return x == 0 ? 0 : 0x37 + 0x28 * x;
  }
- 
+
  int
 -xloadcolor(int i, const char *name, Color *ncolor)
 +wlloadcolor(int i, const char *name, uint32_t *color)
@@ -1943,11 +1943,11 @@ index fbcd9e0..9ead681 100644
  		} else
  			name = colorname[i];
  	}
- 
+
 -	return XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, ncolor);
 +	return wld_lookup_named_color(name, color);
  }
- 
+
  void
 -xloadcols(void)
 +wlloadcols(void)
@@ -1960,7 +1960,7 @@ index fbcd9e0..9ead681 100644
 -		for (cp = dc.col; cp < &dc.col[LEN(dc.col)]; ++cp)
 -			XftColorFree(xw.dpy, xw.vis, xw.cmap, cp);
 -	}
- 
+
  	for (i = 0; i < LEN(dc.col); i++)
 -		if (!xloadcolor(i, NULL, &dc.col[i])) {
 +		if (!wlloadcolor(i, NULL, &dc.col[i])) {
@@ -1971,29 +1971,29 @@ index fbcd9e0..9ead681 100644
  		}
 -	loaded = 1;
  }
- 
+
  int
 -xsetcolorname(int x, const char *name)
 +wlsetcolorname(int x, const char *name)
  {
 -	Color ncolor;
 +	uint32_t color;
- 
+
  	if (!BETWEEN(x, 0, LEN(dc.col)))
  		return 1;
- 
+
 -
 -	if (!xloadcolor(x, name, &ncolor))
 +	if (!wlloadcolor(x, name, &color))
  		return 1;
- 
+
 -	XftColorFree(xw.dpy, xw.vis, xw.cmap, &dc.col[x]);
 -	dc.col[x] = ncolor;
 +	dc.col[x] = color;
- 
+
  	return 0;
  }
- 
+
 -/*
 - * Absolute coordinates.
 - */
@@ -2007,7 +2007,7 @@ index fbcd9e0..9ead681 100644
 -}
 +	char *names[] = { mouseshape, "xterm", "ibeam", "text" };
 +	int i;
- 
+
 -void
 -xhints(void)
 -{
@@ -2040,13 +2040,13 @@ index fbcd9e0..9ead681 100644
 +
 +	for (i = 0; !cursor.cursor && i < LEN(names); i++)
 +		cursor.cursor = wl_cursor_theme_get_cursor(cursor.theme, names[i]);
- 
+
 -	XSetWMProperties(xw.dpy, xw.win, NULL, NULL, NULL, 0, sizeh, &wm,
 -			&class);
 -	XFree(sizeh);
 +	cursor.surface = wl_compositor_create_surface(wl.cmp);
  }
- 
+
 -int
 -xgeommasktogravity(int mask)
 +/*
@@ -2064,11 +2064,11 @@ index fbcd9e0..9ead681 100644
 -		return SouthWestGravity;
 -	}
 +	uint32_t color = dc.col[IS_SET(MODE_REVERSE) ? defaultfg : defaultbg];
- 
+
 -	return SouthEastGravity;
 +	wld_fill_rectangle(wld.renderer, color, x1, y1, x2 - x1, y2 - y1);
  }
- 
+
  int
 -xloadfont(Font *f, FcPattern *pattern)
 +wlloadfont(Font *f, FcPattern *pattern)
@@ -2079,28 +2079,28 @@ index fbcd9e0..9ead681 100644
 -	XGlyphInfo extents;
 +	struct wld_extents extents;
  	int wantattr, haveattr;
- 
+
  	/*
 @@ -3389,7 +3178,7 @@ xloadfont(Font *f, FcPattern *pattern)
  		return 1;
- 
+
  	FcConfigSubstitute(NULL, configured, FcMatchPattern);
 -	XftDefaultSubstitute(xw.dpy, xw.scr, configured);
 +	FcDefaultSubstitute(configured);
- 
+
  	match = FcFontMatch(NULL, configured, &result);
  	if (!match) {
 @@ -3397,37 +3186,36 @@ xloadfont(Font *f, FcPattern *pattern)
  		return 1;
  	}
- 
+
 -	if (!(f->match = XftFontOpenPattern(xw.dpy, match))) {
 +	if (!(f->match = wld_font_open_pattern(wld.fontctx, match))) {
  		FcPatternDestroy(configured);
  		FcPatternDestroy(match);
  		return 1;
  	}
- 
+
 -	if ((XftPatternGetInteger(pattern, "slant", 0, &wantattr) ==
 -	    XftResultMatch)) {
 +	if ((FcPatternGetInteger(pattern, "slant", 0, &wantattr) ==
@@ -2117,7 +2117,7 @@ index fbcd9e0..9ead681 100644
  			fputs("st: font slant does not match\n", stderr);
  		}
  	}
- 
+
 -	if ((XftPatternGetInteger(pattern, "weight", 0, &wantattr) ==
 -	    XftResultMatch)) {
 -		if ((XftPatternGetInteger(f->match->pattern, "weight", 0,
@@ -2130,13 +2130,13 @@ index fbcd9e0..9ead681 100644
  			fputs("st: font weight does not match\n", stderr);
  		}
  	}
- 
+
 -	XftTextExtentsUtf8(xw.dpy, f->match,
 -		(const FcChar8 *) ascii_printable,
 -		strlen(ascii_printable), &extents);
 +
 +	wld_font_text_extents(f->match, ascii_printable, &extents);
- 
+
  	f->set = NULL;
  	f->pattern = configured;
 @@ -3435,23 +3223,24 @@ xloadfont(Font *f, FcPattern *pattern)
@@ -2145,14 +2145,14 @@ index fbcd9e0..9ead681 100644
  	f->lbearing = 0;
 -	f->rbearing = f->match->max_advance_width;
 +	f->rbearing = f->match->max_advance;
- 
+
  	f->height = f->ascent + f->descent;
 -	f->width = DIVCEIL(extents.xOff, strlen(ascii_printable));
 +	f->width = DIVCEIL(extents.advance, strlen(ascii_printable));
- 
+
  	return 0;
  }
- 
+
  void
 -xloadfonts(char *fontstr, double fontsize)
 +wlloadfonts(char *fontstr, double fontsize)
@@ -2160,7 +2160,7 @@ index fbcd9e0..9ead681 100644
  	FcPattern *pattern;
  	double fontval;
  	float ceilf(float);
- 
+
  	if (fontstr[0] == '-') {
 -		pattern = XftXlfdParse(fontstr, False, False);
 +		/* XXX: need XftXlfdParse equivalent */
@@ -2171,14 +2171,14 @@ index fbcd9e0..9ead681 100644
 @@ -3482,11 +3271,14 @@ xloadfonts(char *fontstr, double fontsize)
  		defaultfontsize = usedfontsize;
  	}
- 
+
 -	if (xloadfont(&dc.font, pattern))
 +	FcConfigSubstitute(0, pattern, FcMatchPattern);
 +	FcDefaultSubstitute(pattern);
 +
 +	if (wlloadfont(&dc.font, pattern))
  		die("st: can't open font %s\n", fontstr);
- 
+
  	if (usedfontsize < 0) {
 -		FcPatternGetDouble(dc.font.match->pattern,
 +		FcPatternGetDouble(dc.font.pattern,
@@ -2187,34 +2187,34 @@ index fbcd9e0..9ead681 100644
  		if (fontsize == 0)
 @@ -3494,282 +3286,339 @@ xloadfonts(char *fontstr, double fontsize)
  	}
- 
+
  	/* Setting character width and height. */
 -	xw.cw = ceilf(dc.font.width * cwscale);
 -	xw.ch = ceilf(dc.font.height * chscale);
 +	wl.cw = ceilf(dc.font.width * cwscale);
 +	wl.ch = ceilf(dc.font.height * chscale);
- 
+
  	FcPatternDel(pattern, FC_SLANT);
  	FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
 -	if (xloadfont(&dc.ifont, pattern))
 +	if (wlloadfont(&dc.ifont, pattern))
  		die("st: can't open font %s\n", fontstr);
- 
+
  	FcPatternDel(pattern, FC_WEIGHT);
  	FcPatternAddInteger(pattern, FC_WEIGHT, FC_WEIGHT_BOLD);
 -	if (xloadfont(&dc.ibfont, pattern))
 +	if (wlloadfont(&dc.ibfont, pattern))
  		die("st: can't open font %s\n", fontstr);
- 
+
  	FcPatternDel(pattern, FC_SLANT);
  	FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ROMAN);
 -	if (xloadfont(&dc.bfont, pattern))
 +	if (wlloadfont(&dc.bfont, pattern))
  		die("st: can't open font %s\n", fontstr);
- 
+
  	FcPatternDestroy(pattern);
  }
- 
+
  void
 -xunloadfont(Font *f)
 +wlunloadfont(Font *f)
@@ -2225,7 +2225,7 @@ index fbcd9e0..9ead681 100644
  	if (f->set)
  		FcFontSetDestroy(f->set);
  }
- 
+
  void
 -xunloadfonts(void)
 +wlunloadfonts(void)
@@ -2234,7 +2234,7 @@ index fbcd9e0..9ead681 100644
  	while (frclen > 0)
 -		XftFontClose(xw.dpy, frc[--frclen].font);
 +		wld_font_close(frc[--frclen].font);
- 
+
 -	xunloadfont(&dc.font);
 -	xunloadfont(&dc.bfont);
 -	xunloadfont(&dc.ifont);
@@ -2244,18 +2244,18 @@ index fbcd9e0..9ead681 100644
 +	wlunloadfont(&dc.ifont);
 +	wlunloadfont(&dc.ibfont);
  }
- 
+
  void
 -xzoom(const Arg *arg)
 +wlzoom(const Arg *arg)
  {
  	Arg larg;
- 
+
  	larg.f = usedfontsize + arg->f;
 -	xzoomabs(&larg);
 +	wlzoomabs(&larg);
  }
- 
+
  void
 -xzoomabs(const Arg *arg)
 +wlzoomabs(const Arg *arg)
@@ -2273,20 +2273,20 @@ index fbcd9e0..9ead681 100644
 +	 * xhints();
 +	 */
  }
- 
+
  void
 -xzoomreset(const Arg *arg)
 +wlzoomreset(const Arg *arg)
  {
  	Arg larg;
- 
+
  	if (defaultfontsize > 0) {
  		larg.f = defaultfontsize;
 -		xzoomabs(&larg);
 +		wlzoomabs(&larg);
  	}
  }
- 
+
  void
 -xinit(void)
 +wlinit(void)
@@ -2297,7 +2297,7 @@ index fbcd9e0..9ead681 100644
 -	pid_t thispid = getpid();
 -	XColor xmousefg, xmousebg;
 +	struct wl_registry *registry;
- 
+
 -	if (!(xw.dpy = XOpenDisplay(NULL)))
 +	if (!(wl.dpy = wl_display_connect(NULL)))
  		die("Can't open display\n");
@@ -2327,11 +2327,11 @@ index fbcd9e0..9ead681 100644
 +	wl.datadev = wl_data_device_manager_get_data_device(wl.datadevmanager,
 +			wl.seat);
 +	wl_data_device_add_listener(wl.datadev, &datadevlistener, NULL);
- 
+
  	/* font */
  	if (!FcInit())
  		die("Could not init fontconfig.\n");
- 
+
  	usedfont = (opt_font == NULL)? font : opt_font;
 -	xloadfonts(usedfont, 0);
 -
@@ -2404,7 +2404,7 @@ index fbcd9e0..9ead681 100644
 -	}
 +	wld.fontctx = wld_font_create_context();
 +	wlloadfonts(usedfont, 0);
- 
+
 -	if (XParseColor(xw.dpy, xw.cmap, colorname[mousebg], &xmousebg) == 0) {
 -		xmousebg.red   = 0x0000;
 -		xmousebg.green = 0x0000;
@@ -2412,19 +2412,19 @@ index fbcd9e0..9ead681 100644
 -	}
 +	wlloadcols();
 +	wlloadcursor();
- 
+
 -	XRecolorCursor(xw.dpy, cursor, &xmousefg, &xmousebg);
 +	wl.vis = 0;
 +	wl.h = 2 * borderpx + term.row * wl.ch;
 +	wl.w = 2 * borderpx + term.col * wl.cw;
- 
+
 -	xw.xembed = XInternAtom(xw.dpy, "_XEMBED", False);
 -	xw.wmdeletewin = XInternAtom(xw.dpy, "WM_DELETE_WINDOW", False);
 -	xw.netwmname = XInternAtom(xw.dpy, "_NET_WM_NAME", False);
 -	XSetWMProtocols(xw.dpy, xw.win, &xw.wmdeletewin, 1);
 +	wl.surface = wl_compositor_create_surface(wl.cmp);
 +	wl_surface_add_listener(wl.surface, &surflistener, NULL);
- 
+
 -	xw.netwmpid = XInternAtom(xw.dpy, "_NET_WM_PID", False);
 -	XChangeProperty(xw.dpy, xw.win, xw.netwmpid, XA_CARDINAL, 32,
 -			PropModeReplace, (uchar *)&thispid, 1);
@@ -2434,7 +2434,7 @@ index fbcd9e0..9ead681 100644
 +	xdg_toplevel_add_listener(wl.toplevel, &toplevellistener, NULL);
 +	xdg_toplevel_set_app_id(wl.toplevel, opt_class ? opt_class : termname);
 +	wl_surface_commit(wl.surface);
- 
+
 -	xresettitle();
 -	XMapWindow(xw.dpy, xw.win);
 -	xhints();
@@ -2442,7 +2442,7 @@ index fbcd9e0..9ead681 100644
 +	wl.xkb.ctx = xkb_context_new(0);
 +	wlresettitle();
  }
- 
+
 -int
 -xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x, int y)
 +/*
@@ -2473,13 +2473,13 @@ index fbcd9e0..9ead681 100644
 -	int i, f, numspecs = 0;
 +	uint32_t fg, bg, temp;
 +	int oneatatime;
- 
+
 -	for (i = 0, xp = winx, yp = winy + font->ascent; i < len; ++i) {
 -		/* Fetch rune and mode for current glyph. */
 -		rune = glyphs[i].u;
 -		mode = glyphs[i].mode;
 +	frcflags = FRC_NORMAL;
- 
+
 -		/* Skip dummy wide-character spacing. */
 -		if (mode == ATTR_WDUMMY)
 -			continue;
@@ -2500,7 +2500,7 @@ index fbcd9e0..9ead681 100644
 +		font = &dc.ifont;
 +		frcflags = FRC_BOLD;
 +	}
- 
+
 -		/* Determine font for glyph if different from previous glyph. */
 -		if (prevmode != mode) {
 -			prevmode = mode;
@@ -2546,7 +2546,7 @@ index fbcd9e0..9ead681 100644
 +			frcflags = FRC_BOLD;
  		}
 +	}
- 
+
 -		/* Lookup character index with default font. */
 -		glyphidx = XftCharIndex(xw.dpy, font->match, rune);
 -		if (glyphidx) {
@@ -2563,7 +2563,7 @@ index fbcd9e0..9ead681 100644
 +		} else {
 +			fg = ~(fg & 0xffffff);
  		}
- 
+
 -		/* Fallback on font cache, search the font cache for match. */
 -		for (f = 0; f < frclen; f++) {
 -			glyphidx = XftCharIndex(xw.dpy, frc[f].font, rune);
@@ -2581,7 +2581,7 @@ index fbcd9e0..9ead681 100644
 +			bg = ~(bg & 0xffffff);
  		}
 +	}
- 
+
 -		/* Nothing was found. Use fontconfig to find matching font. */
 -		if (f >= frclen) {
 -			if (!font->set)
@@ -2593,7 +2593,7 @@ index fbcd9e0..9ead681 100644
 +		fg = bg;
 +		bg = temp;
 +	}
- 
+
 -			/*
 -			 * Nothing was found in the cache. Now use
 -			 * some dozen of Fontconfig calls to get the
@@ -2609,7 +2609,7 @@ index fbcd9e0..9ead681 100644
 +			| ((((fg >> 8) & 0xff) / 2) << 8)
 +			| ((fg & 0xff) / 2);
 +	}
- 
+
 -			FcCharSetAddChar(fccharset, rune);
 -			FcPatternAddCharSet(fcpattern, FC_CHARSET,
 -					fccharset);
@@ -2711,7 +2711,7 @@ index fbcd9e0..9ead681 100644
 +			FcPatternAddCharSet(fcpattern, FC_CHARSET,
 +					fccharset);
 +			FcPatternAddBool(fcpattern, FC_SCALABLE, 1);
- 
+
  			FcConfigSubstitute(0, fcpattern,
  					FcMatchPattern);
 @@ -3783,186 +3632,58 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
@@ -2722,7 +2722,7 @@ index fbcd9e0..9ead681 100644
 +				wld_font_close(frc[frclen].font);
  				frc[frclen].unicodep = 0;
  			}
- 
+
 -			frc[frclen].font = XftFontOpenPattern(xw.dpy,
 +			frc[frclen].font = wld_font_open_pattern(wld.fontctx,
  					fontpattern);
@@ -2731,15 +2731,15 @@ index fbcd9e0..9ead681 100644
 -
 -			glyphidx = XftCharIndex(xw.dpy, frc[frclen].font, rune);
 +			frc[frclen].unicodep = unicodep;
- 
+
 -			f = frclen;
 +			i = frclen;
  			frclen++;
- 
+
  			FcPatternDestroy(fcpattern);
  			FcCharSetDestroy(fccharset);
  		}
- 
+
 -		specs[numspecs].font = frc[f].font;
 -		specs[numspecs].glyph = glyphidx;
 -		specs[numspecs].x = (short)xp;
@@ -2844,7 +2844,7 @@ index fbcd9e0..9ead681 100644
 +		wld_draw_text(wld.renderer, frc[i].font, fg,
 +				xp, winy + frc[i].font->ascent,
 +				u8c, u8cblen, NULL);
- 
+
 -	/* Intelligent cleaning up of the borders. */
 -	if (x == 0) {
 -		xclear(0, (y == 0)? 0 : winy, borderpx,
@@ -2859,7 +2859,7 @@ index fbcd9e0..9ead681 100644
 -		xclear(winx, 0, winx + width, borderpx);
 -	if (y == term.row-1)
 -		xclear(winx, winy + xw.ch, winx + width, xw.h);
- 
+
 -	/* Clean up the region we want to draw to. */
 -	XftDrawRect(xw.draw, bg, winx, winy, width, xw.ch);
 -
@@ -2879,7 +2879,7 @@ index fbcd9e0..9ead681 100644
 +		wld_fill_rectangle(wld.renderer, fg, winx, winy + font->ascent + 1,
  				width, 1);
  	}
- 
+
  	if (base.mode & ATTR_STRUCK) {
 -		XftDrawRect(xw.draw, fg, winx, winy + 2 * dc.font.ascent / 3,
 +		wld_fill_rectangle(wld.renderer, fg, winx, winy + 2 * font->ascent / 3,
@@ -2889,7 +2889,7 @@ index fbcd9e0..9ead681 100644
 -	/* Reset clip to none. */
 -	XftDrawSetClip(xw.draw, 0);
  }
- 
+
  void
 -xdrawglyph(Glyph g, int x, int y)
 +wldrawglyph(Glyph g, int x, int y)
@@ -2899,12 +2899,12 @@ index fbcd9e0..9ead681 100644
 +	static char buf[UTF_SIZ];
 +	size_t len = utf8encode(g.u, buf);
 +	int width = g.mode & ATTR_WIDE ? 2 : 1;
- 
+
 -	numspecs = xmakeglyphfontspecs(&spec, &g, 1, x, y);
 -	xdrawglyphfontspecs(&spec, g, numspecs, x, y);
 +	wldraws(buf, g, x, y, width, len);
  }
- 
+
  void
 -xdrawcursor(void)
 +wldrawcursor(void)
@@ -2915,7 +2915,7 @@ index fbcd9e0..9ead681 100644
  	int ena_sel = sel.ob.x != -1 && sel.alt == IS_SET(MODE_ALTSCREEN);
 -	Color drawcol;
 +	uint32_t drawcol;
- 
+
  	LIMIT(oldx, 0, term.col-1);
  	LIMIT(oldy, 0, term.row-1);
 @@ -3979,7 +3700,11 @@ xdrawcursor(void)
@@ -2928,12 +2928,12 @@ index fbcd9e0..9ead681 100644
 +		wl_surface_damage(wl.surface, borderpx + oldx * wl.cw,
 +				borderpx + oldy * wl.ch, wl.cw, wl.ch);
 +	}
- 
+
  	g.u = term.line[term.c.y][term.c.x].u;
- 
+
 @@ -4010,198 +3735,152 @@ xdrawcursor(void)
  		return;
- 
+
  	/* draw the new one */
 -	if (xw.state & WIN_FOCUSED) {
 -		switch (xw.cursor) {
@@ -3010,7 +3010,7 @@ index fbcd9e0..9ead681 100644
 +			borderpx + term.c.y * wl.ch, wl.cw, wl.ch);
  	oldx = curx, oldy = term.c.y;
  }
- 
+
 -
  void
 -xsettitle(char *p)
@@ -3025,7 +3025,7 @@ index fbcd9e0..9ead681 100644
 -	XFree(prop.value);
 +	xdg_toplevel_set_title(wl.toplevel, title);
  }
- 
+
  void
 -xresettitle(void)
 +wlresettitle(void)
@@ -3033,14 +3033,14 @@ index fbcd9e0..9ead681 100644
 -	xsettitle(opt_title ? opt_title : "st");
 +	wlsettitle(opt_title ? opt_title : "st");
  }
- 
+
  void
  redraw(void)
  {
  	tfulldirt();
 -	draw();
  }
- 
+
  void
  draw(void)
  {
@@ -3074,7 +3074,7 @@ index fbcd9e0..9ead681 100644
 +	}
 +	needdraw = false;
  }
- 
+
  void
  drawregion(int x1, int y1, int x2, int y2)
  {
@@ -3084,14 +3084,14 @@ index fbcd9e0..9ead681 100644
 -	XftGlyphFontSpec *specs;
 +	char buf[DRAW_BUF_SIZ];
  	int ena_sel = sel.ob.x != -1 && sel.alt == IS_SET(MODE_ALTSCREEN);
- 
+
 -	if (!(xw.state & WIN_VISIBLE))
 -		return;
 -
  	for (y = y1; y < y2; y++) {
  		if (!term.dirty[y])
  			continue;
- 
+
  		term.dirty[y] = 0;
 -
 -		specs = term.specbuf;
@@ -3162,7 +3162,7 @@ index fbcd9e0..9ead681 100644
 -	XChangeWindowAttributes(xw.dpy, xw.win, CWEventMask, &xw.attrs);
 +	wldrawcursor();
  }
- 
+
  void
 -xseturgency(int add)
 +wlseturgency(int add)
@@ -3196,18 +3196,18 @@ index fbcd9e0..9ead681 100644
 -	}
 +	/* XXX: no urgency equivalent yet in wayland */
  }
- 
+
  int
  match(uint mask, uint state)
  {
 -	return mask == XK_ANY_MOD || mask == (state & ~ignoremod);
 +	return mask == MOD_MASK_ANY || mask == (state & ~(ignoremod));
  }
- 
+
  void
 @@ -4211,7 +3890,7 @@ numlock(const Arg *dummy)
  }
- 
+
  char*
 -kmap(KeySym k, uint state)
 +kmap(xkb_keysym_t k, uint state)
@@ -3216,7 +3216,7 @@ index fbcd9e0..9ead681 100644
  	int i;
 @@ -4251,38 +3930,176 @@ kmap(KeySym k, uint state)
  }
- 
+
  void
 -kpress(XEvent *ev)
 +cresize(int width, int height)
@@ -3360,10 +3360,10 @@ index fbcd9e0..9ead681 100644
  	Rune c;
 -	Status status;
  	Shortcut *bp;
- 
+
  	if (IS_SET(MODE_KBDLOCK))
  		return;
- 
+
 -	len = XmbLookupString(xw.xic, e, buf, sizeof buf, &ksym, &status);
 +	if (state == WL_KEYBOARD_KEY_STATE_RELEASED) {
 +		if (repeat.key == key)
@@ -3384,7 +3384,7 @@ index fbcd9e0..9ead681 100644
  			return;
  		}
  	}
- 
+
  	/* 2. custom keys from config.h */
 -	if ((customkey = kmap(ksym, e->state))) {
 -		ttysend(customkey, strlen(customkey));
@@ -3393,7 +3393,7 @@ index fbcd9e0..9ead681 100644
 +		len = strlen(str);
 +		goto send;
  	}
- 
+
  	/* 3. composed string from input method */
  	if (len == 0)
  		return;
@@ -3428,7 +3428,7 @@ index fbcd9e0..9ead681 100644
 +	clock_gettime(CLOCK_MONOTONIC, &repeat.last);
 +	ttysend(str, len);
  }
- 
+
 +void
 +kbdmodifiers(void *data, struct wl_keyboard *keyboard, uint32_t serial,
 +             uint32_t dep, uint32_t lat, uint32_t lck, uint32_t group)
@@ -3449,7 +3449,7 @@ index fbcd9e0..9ead681 100644
 +	if (mod_mask & (1 << wl.xkb.logo))
 +		wl.xkb.mods |= MOD_MASK_LOGO;
 +}
- 
+
  void
 -cmessage(XEvent *e)
 +kbdrepeatinfo(void *data, struct wl_keyboard *keyboard, int32_t rate,
@@ -3586,7 +3586,7 @@ index fbcd9e0..9ead681 100644
 +		break;
  	}
  }
- 
+
  void
 -cresize(int width, int height)
 +ptraxis(void * data, struct wl_pointer * pointer, uint32_t time, uint32_t axis,
@@ -3595,7 +3595,7 @@ index fbcd9e0..9ead681 100644
 -	int col, row;
 +	Axiskey *ak;
 +	int dir = value > 0 ? +1 : -1;
- 
+
 -	if (width != 0)
 -		xw.w = width;
 -	if (height != 0)
@@ -3604,7 +3604,7 @@ index fbcd9e0..9ead681 100644
 +		wlmousereportaxis(axis, value);
 +		return;
 +	}
- 
+
 -	col = (xw.w - 2 * borderpx) / xw.cw;
 -	row = (xw.h - 2 * borderpx) / xw.ch;
 +	for (ak = ashortcuts; ak < ashortcuts + LEN(ashortcuts); ak++) {
@@ -3615,7 +3615,7 @@ index fbcd9e0..9ead681 100644
 +		}
 +	}
 +}
- 
+
 -	tresize(col, row);
 -	xresize(col, row);
 +void
@@ -3629,7 +3629,7 @@ index fbcd9e0..9ead681 100644
 +{
 +	xdg_surface_ack_configure(surf, serial);
  }
- 
+
  void
 -resize(XEvent *e)
 +toplevelconfigure(void *data, struct xdg_toplevel *toplevel, int32_t w, int32_t h,
@@ -3644,7 +3644,7 @@ index fbcd9e0..9ead681 100644
 +	else
 +		wl.configured = true;
 +}
- 
+
 -	cresize(e->xconfigure.width, e->xconfigure.height);
 -	ttyresize();
 +void
@@ -3731,7 +3731,7 @@ index fbcd9e0..9ead681 100644
 +	}
 +	wl_data_source_destroy(source);
  }
- 
+
  void
  run(void)
  {
@@ -3743,7 +3743,7 @@ index fbcd9e0..9ead681 100644
  	struct timespec drawtimeout, *tv = NULL, now, last, lastblink;
 -	long deltatime;
 +	ulong msecs;
- 
+
 -	/* Waiting for window mapping */
 -	do {
 -		XNextEvent(xw.dpy, &ev);
@@ -3771,17 +3771,17 @@ index fbcd9e0..9ead681 100644
 +		ttyresize();
 +	}
 +	draw();
- 
+
  	clock_gettime(CLOCK_MONOTONIC, &last);
  	lastblink = last;
- 
+
 -	for (xev = actionfps;;) {
 +	for (;;) {
  		FD_ZERO(&rfd);
  		FD_SET(cmdfd, &rfd);
 -		FD_SET(xfd, &rfd);
 +		FD_SET(wlfd, &rfd);
- 
+
 -		if (pselect(MAX(xfd, cmdfd)+1, &rfd, NULL, NULL, tv, NULL) < 0) {
 +		if (pselect(MAX(wlfd, cmdfd)+1, &rfd, NULL, NULL, tv, NULL) < 0) {
  			if (errno == EINTR)
@@ -3795,14 +3795,14 @@ index fbcd9e0..9ead681 100644
 @@ -4398,60 +4448,54 @@ run(void)
  			}
  		}
- 
+
 -		if (FD_ISSET(xfd, &rfd))
 -			xev = actionfps;
 +		if (FD_ISSET(wlfd, &rfd)) {
 +			if (wl_display_dispatch(wl.dpy) == -1)
 +				die("Connection error\n");
 +		}
- 
+
  		clock_gettime(CLOCK_MONOTONIC, &now);
 -		drawtimeout.tv_sec = 0;
 -		drawtimeout.tv_nsec =  (1000 * 1E6)/ xfps;
@@ -3843,7 +3843,7 @@ index fbcd9e0..9ead681 100644
 +					TIMEDIFF(now, repeat.last));
 +			}
  		}
- 
+
 -		if (dodraw) {
 -			while (XPending(xw.dpy)) {
 -				XNextEvent(xw.dpy, &ev);
@@ -3856,7 +3856,7 @@ index fbcd9e0..9ead681 100644
 +				draw();
  			}
 +		}
- 
+
 -			draw();
 -			XFlush(xw.dpy);
 -
@@ -3892,7 +3892,7 @@ index fbcd9e0..9ead681 100644
 +		wl_display_flush(wl.dpy);
  	}
  }
- 
+
 @@ -4471,9 +4515,7 @@ usage(void)
  int
  main(int argc, char *argv[])
@@ -3901,7 +3901,7 @@ index fbcd9e0..9ead681 100644
 -	xw.isfixed = False;
 -	xw.cursor = cursorshape;
 +	wl.cursor = cursorshape;
- 
+
  	ARGBEGIN {
  	case 'a':
 @@ -4489,13 +4531,6 @@ main(int argc, char *argv[])
@@ -3928,7 +3928,6 @@ index fbcd9e0..9ead681 100644
 +	wlinit();
  	selinit();
  	run();
- 
--- 
-2.37.3
 
+--
+2.37.3
