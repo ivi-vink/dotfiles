@@ -1,9 +1,12 @@
 alsa-lib
 autoconf
+browserpass-firefox
 debugedit
 fakeroot
 fd
 firefox
+firefox-tridactyl
+firefox-ublock-origin
 fontconfig
 freetype2
 gcc
@@ -32,5 +35,6 @@ wayland
 wayland-protocols
 wireplumber
 xcb-util-wm
+xclip
 xorg-xwayland
 zsh
