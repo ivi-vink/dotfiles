@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ -d "$HOME/.local/src/dotfiles/.git" ]; then
 	cd "$HOME/.local/src/dotfiles"
-	ls -A | xargs -I xxx cp -rvf \
+	ls -A | grep -v '.*.img' | xargs -I xxx cp -rvf \
 		"$HOME/.local/src/dotfiles/xxx" \
 		 "$HOME"
         ln -sf "$HOME/.gnupg/gpg-agent.conf.$(uname -s)" "$HOME/.gnupg/gpg-agent.conf"

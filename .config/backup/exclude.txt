@@ -1,0 +1,11 @@
+- /ivi/.cache
+- /ivi/.local/share
+- /ivi/nixos
+- /ivi/.mozilla
+- /ivi/.rustup
+- /ivi/.cargo
+- /ivi/go
+- /ivi/Programming/texlive-source
+- *.img
+- *.iso
+- .venv
