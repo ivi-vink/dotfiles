@@ -25,5 +25,7 @@ xorg-xwayland
 zsh
 wireplumber
 pipewire
+pipewire-pulse
+pipewire-alsa
 alsa-lib
 keyd
