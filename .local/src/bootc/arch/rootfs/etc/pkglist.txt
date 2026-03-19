@@ -37,4 +37,6 @@ wireplumber
 xcb-util-wm
 xclip
 xorg-xwayland
+zathura
+zathura-pdf-poppler
 zsh
