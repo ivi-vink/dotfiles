@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 export LD_LIBRARY_PATH=/usr/local/lib
 git_host="https://github.com/ivi-vink"
@@ -15,7 +14,11 @@ ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 # Enable services
 set -- sshd keyd
 for service
-do systemctl enable "${service}"
+do if systemctl enable "${service}"
+   then echo "enabled service: ${service}"
+   else echo "error enabling: ${services}"
+        exit 1
+   fi
 done
 #
 # Add wayland setup
@@ -23,18 +26,48 @@ install() {
   for pkg
   do
     src="/var/home/ivi/.local/src/${pkg}"
-    git clone ${git_host}/${pkg}.git ${src}
-    make -j12 -C "${src}" install
+    if su ivi -c "git clone ${git_host}/${pkg}.git ${src}" &&
+        make -j12 -C "${src}" install
+    then echo "installed ${pkg}"
+    else return 1
+    fi
   done
 }
 
-install wld swc velox st dmenu
+if install wld swc velox st dmenu
+then echo "installed wayland wm"
+else echo "failed to install wayland wm"
+     exit 1
+fi
+
 #
-# Add optional packages
+# Add aur repositories
 mkdir -p /var/opt/laptop
 chown ivi:ivi /var/opt/laptop
 cd /var/opt/laptop
-su ivi -c 'git clone https://aur.archlinux.org/emacs-git.git' &
-su ivi -c 'git clone https://aur.archlinux.org/visual-studio-code-bin.git' &
-su ivi -c 'git clone https://aur.archlinux.org/teams-for-linux-bin.git' &
-su ivi -c 'git clone https://aur.archlinux.org/slack-desktop-wayland.git' &
+
+waitforme=
+set -- \
+    emacs-git \
+    visual-studio-code-bin \
+    teams-for-linux-bin \
+    slack-desktop-wayland \
+    microsoft-azure-vpn-client-bin \
+    gdbuspp \
+    openvpn3 \
+    awsvpnclient \
+    pinentry-dmenu
+for pkg
+do su ivi -c "git clone https://aur.archlinux.org/${pkg}.git" &
+   waitforme="${waitforme} ${!}"
+done
+
+set -- $waitforme
+for waiting
+do echo "gonna wait for=$waiting"
+done
+if wait "$@"
+then echo final exit code $?
+else echo error
+     exit 1
+fi
