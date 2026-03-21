@@ -3,6 +3,7 @@ autoconf
 browserpass-firefox
 debugedit
 fakeroot
+fcft
 fd
 firefox
 firefox-tridactyl
@@ -10,7 +11,10 @@ firefox-ublock-origin
 fontconfig
 freetype2
 gcc
+ghostty
 git
+git-delta
+iwd
 keyd
 libinput
 libxcb
@@ -29,11 +33,14 @@ pixman
 ripgrep
 sudo
 texinfo
+tllist
 ttf-liberation
 usbutils
 wayland
 wayland-protocols
 wireplumber
+wlroots0.19
+wmenu
 xcb-util-wm
 xclip
 xorg-xwayland

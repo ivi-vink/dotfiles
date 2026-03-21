@@ -10,8 +10,8 @@ if [ -d $HOME/.config/shell/profile.d ]; then
 fi
 
 if [ -z "$DISPLAY" ] && [ "$(tty)" = /dev/tty1 ]; then
-  if command -v velox >/dev/null
-  then swc-launch velox
+  if command -v dwl >/dev/null
+  then dwl -s "$HOME/.config/x11/xprofile"
   else startx
   fi
 fi

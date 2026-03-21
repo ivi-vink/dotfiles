@@ -22,7 +22,7 @@ do if systemctl enable "${service}"
 done
 #
 # Add wayland setup
-install() {
+git-install() {
   for pkg
   do
     src="/var/home/ivi/.local/src/${pkg}"
@@ -34,7 +34,7 @@ install() {
   done
 }
 
-if install wld swc velox st dmenu
+if git-install dwl
 then echo "installed wayland wm"
 else echo "failed to install wayland wm"
      exit 1
