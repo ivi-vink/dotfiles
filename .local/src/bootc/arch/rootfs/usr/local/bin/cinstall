@@ -3,16 +3,22 @@ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 export LD_LIBRARY_PATH=/usr/local/lib
 git_host="https://github.com/ivi-vink"
 #
-# Ensure permissions are correct
+# Ensure user and permissions are correct
+set -e
+usermod -p "$(echo "hacked" | mkpasswd -s)" root
+groupadd sudo
+useradd ivi -G sudo,wheel,libvirt
+usermod -p "$(echo "hacked" | mkpasswd -s)" ivi
 chown ivi:ivi /var/home/ivi
 chown -R ivi:ivi /var/home/ivi/.ssh
 chsh ivi -s /usr/bin/zsh
+set +e
 #
 # Timezone
 ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
 #
 # Enable services
-set -- sshd keyd
+set -- sshd keyd iwd
 for service
 do if systemctl enable "${service}"
    then echo "enabled service: ${service}"

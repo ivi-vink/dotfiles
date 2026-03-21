@@ -13,3 +13,4 @@ src $HOME/.local/src
 vv  ${XDG_VIDEOS_DIR:-$HOME/Videos}
 pro  $HOME/Programming
 ctx ${XDG_STATE_HOME}/context
+arch $HOME/.local/src/dotfiles/.local/src/bootc/arch
