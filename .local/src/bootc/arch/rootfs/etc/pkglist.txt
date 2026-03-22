@@ -35,6 +35,7 @@ pixman
 ripgrep
 rtkit
 sudo
+system76-firmware
 texinfo
 tllist
 ttf-liberation
