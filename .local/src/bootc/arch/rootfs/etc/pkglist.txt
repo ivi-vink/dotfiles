@@ -12,6 +12,7 @@ fontconfig
 freetype2
 gammastep
 gcc
+geoclue
 ghostty
 git
 git-delta
@@ -38,6 +39,7 @@ pixman
 ripgrep
 rtkit
 sudo
+syncthing
 system76-firmware
 texinfo
 tllist
@@ -57,4 +59,3 @@ xorg-xwayland
 zathura
 zathura-pdf-poppler
 zsh
-geoclue
