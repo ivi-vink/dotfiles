@@ -10,6 +10,7 @@ firefox-tridactyl
 firefox-ublock-origin
 fontconfig
 freetype2
+gammastep
 gcc
 ghostty
 git
@@ -22,7 +23,9 @@ libxcb
 libxkbcommon
 make
 man-db
+meson
 mpv
+ninja
 openssh
 pass
 pass-otp
@@ -45,6 +48,7 @@ wayland
 wayland-protocols
 whois
 wireplumber
+wl-clipboard
 wlroots0.19
 wmenu
 xcb-util-wm
@@ -53,3 +57,4 @@ xorg-xwayland
 zathura
 zathura-pdf-poppler
 zsh
+geoclue
