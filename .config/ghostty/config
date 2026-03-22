@@ -38,6 +38,7 @@ keybind = super+q=close_window
 keybind = super+r=reload_config
 theme=gruber-darker
 window-decoration=true
+link-previews = false
 confirm-close-surface=false
 macos-option-as-alt=true
 

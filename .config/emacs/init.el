@@ -3,6 +3,7 @@
 (setq ring-bell-function 'ignore)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(set-scroll-bar-mode nil)
 (setq custom-file "~/.config/emacs/custom.el")
 (load custom-file)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
@@ -245,7 +246,7 @@
 
   ;; Enable automatic preview at point in the *Completions* buffer. This is
   ;; relevant when you use the default completion UI.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
+  ;; :hook (completion-list-mode . consult-preview-at-point-mode)
 
   ;; The :init configuration is always executed (Not lazy)
   :init
@@ -712,6 +713,9 @@ Looks for .venv directory in project root and activates the Python interpreter."
   (add-hook 'lisp-interaction-mode-hook
     (lambda ()
       (local-set-key (kbd "C-c C-j") #'eval-print-last-sexp))))
+
+(use-package vterm
+  :ensure t)
 
 (use-package claude-code-ide
   :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)

@@ -62,7 +62,7 @@ set -- \
     gdbuspp \
     openvpn3 \
     awsvpnclient \
-    pinentry-dmenu
+    netextender
 for pkg
 do su ivi -c "git clone https://aur.archlinux.org/${pkg}.git" &
    waitforme="${waitforme} ${!}"

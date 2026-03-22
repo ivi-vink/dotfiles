@@ -46,7 +46,8 @@ alias \
 	xr="xbps-remove -R" \
 	xq="xbps-query" \
 	z="zathura" \
-	fzl="fuzzy-links"
+	fzl="fuzzy-links" \
+	xs="TERM=xterm ssh"
 
 alias \
 	ref="shortcuts >/dev/null; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutrc ; . ${XDG_CONFIG_HOME:-$HOME/.config}/shell/shortcutenvrc" \
