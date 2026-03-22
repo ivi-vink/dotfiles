@@ -11,7 +11,8 @@ fi
 
 if [ -z "$DISPLAY" ] && [ "$(tty)" = /dev/tty1 ]; then
   if command -v dwl >/dev/null
-  then dwl -s "$HOME/.config/x11/xprofile"
+  then dbus-update-activation-environment --all
+       dbus-launch dwl -s "$HOME/.config/session/init"
   else startx
   fi
 fi
