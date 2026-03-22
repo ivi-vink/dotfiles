@@ -38,8 +38,11 @@ COPY .local/src/bootc/arch/rootfs/etc/pkglist.txt /etc/pkglist.txt
 RUN --mount=type=cache,dst=/usr/lib/sysimage/cache/pacman \
   pacman -Syu --noconfirm - </etc/pkglist.txt
 
+# Make sure pacman doesn't install another boot setup on the composefs
+RUN sed -i 's,^#IgnorePkg.*,IgnorePkg = linux linux-headers linux-firmware,' /etc/pacman.conf
+
 COPY .local/src/bootc/arch/rootfs /
-COPY --chown=ivi . /var/home/ivi
+COPY . /var/home/ivi
 RUN /usr/local/bin/cinstall
 
 # https://bootc-dev.github.io/bootc/bootc-images.html#standard-metadata-for-bootc-compatible-images

@@ -9,8 +9,8 @@ usermod -p "$(echo "hacked" | mkpasswd -s)" root
 groupadd sudo
 useradd ivi -G sudo,wheel,libvirt
 usermod -p "$(echo "hacked" | mkpasswd -s)" ivi
-chown ivi:ivi /var/home/ivi
-chown -R ivi:ivi /var/home/ivi/.ssh
+chown -R ivi:ivi /var/home/ivi
+# chown -R ivi:ivi /var/home/ivi/.ssh
 chsh ivi -s /usr/bin/zsh
 set +e
 #
@@ -77,3 +77,4 @@ then echo final exit code $?
 else echo error
      exit 1
 fi
+
