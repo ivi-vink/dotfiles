@@ -1,0 +1,2 @@
+#!/bin/sh
+zathura ~/Sync/my/$(cd ~/Sync/my; ls book* | dmenu)
