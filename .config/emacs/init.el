@@ -3,6 +3,7 @@
 (setq ring-bell-function 'ignore)
 (tool-bar-mode -1)
 (menu-bar-mode -1)
+(put 'upcase-region 'disabled nil)
 (set-scroll-bar-mode nil)
 (setq custom-file "~/.config/emacs/custom.el")
 (load custom-file)
@@ -131,6 +132,9 @@
         (remove #'cape-dabbrev completion-at-point-functions))))
   (add-hook 'after-change-major-mode-hook #'my-capf-prepend-cape-dabbrev))
 
+(use-package tramp
+  :config
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 (use-package yaml-pro
   :ensure t
   :config
@@ -259,8 +263,8 @@
   (setq register-preview-delay 0.5)
 
   ;; Use Consult to select xref locations with preview
-  (setq xref-show-xrefs-function #'consult-xref
-    xref-show-definitions-function #'consult-xref)
+  ;; (setq xref-show-xrefs-function #'consult-xref
+  ;;   xref-show-definitions-function #'consult-xref)
 
   ;; Configure other variables and modes in the :config section,
   ;; after lazily loading the package.
@@ -336,10 +340,15 @@ Return an event vector."
   (setq terraform-format-on-save t)
   (add-hook 'terraform-mode-hook 'terraform-format-on-save-mode 100))
 
+
 (use-package go-mode
   :ensure t
-  :config
-  (add-hook 'before-save-hook #'gofmt-before-save))
+  :hook
+  (go-mode .
+    (lambda () (add-hook 'before-save-hook
+      (lambda ()
+        (eglot-code-action-organize-imports (point-min) (point-max)))
+      nil t))))
 
 (use-package dap-mode
   :ensure t)
@@ -532,6 +541,9 @@ Return an event vector."
 
   (add-hook 'post-command-hook #'my/postcommand t)
   (setq org-directory "~/Sync/my/notes")
+  (setq org-todo-keywords
+    '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED" "NOTPLANNED")))
+  (setq org-export-backends '(ascii html icalendar latex odt md))
   (setq org-agenda-files (list org-directory))
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-folded t)
@@ -539,7 +551,11 @@ Return an event vector."
   (setq org-datetree-add-timestamp t)
   (setq org-capture-templates
     '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
-        "* %?\n  Entered on %U\n  %c\n  %i\n  %a")))
+        "* %?\n  Entered on %U\n  %i\n  %a")
+       ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+         "* %?\n  DATE: %T\n %i\n  %a")
+       ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+         "* %?\n  DEADLINE: %T\n %i\n  %a")))
   (defun my/goto-today-journal-entry ()
     "Go to today's journal entry in the datetree and narrow to subtree."
     (interactive)
