@@ -1,16 +1,17 @@
 # You can add comments to these files with #
 cf  ${XDG_CONFIG_HOME:-$HOME/.config}
-sd  $HOME/.local/src/dotfiles
+sd  ${HOME}/.local/src/dotfiles
 D   ${XDG_DOWNLOAD_DIR:-$HOME/Downloads}
 d   ${XDG_DOCUMENTS_DIR:-$HOME/Documents}
 dt  ${XDG_DATA_HOME:-$HOME/.local/share}
-rr  $HOME/.local/src
-h   $HOME
+rr  ${HOME}/.local/src
+h   ${HOME}
 m   ${XDG_MUSIC_DIR:-$HOME/Music}
 mn  /mnt
 sc  $HOME/.local/bin
 src $HOME/.local/src
 vv  ${XDG_VIDEOS_DIR:-$HOME/Videos}
-pro  $HOME/Programming
+pro $HOME/Programming
 ctx ${XDG_STATE_HOME}/context
 arch $HOME/.local/src/dotfiles/.local/src/bootc/arch
+pw ${PASSWORD_STORE_DIR}

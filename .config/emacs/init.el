@@ -72,6 +72,7 @@
   (repeat-mode)
   (global-display-line-numbers-mode)
   :custom
+  (window-sides-vertical t)
   (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
   ;; TAB cycle if there are only few candidates
   ;; (completion-cycle-threshold 3)
@@ -134,7 +135,21 @@
 
 (use-package tramp
   :config
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
+  (setq tramp-remote-process-environment
+    '("ENV='/etc/profile'"
+       "TMOUT=0"
+       "LC_CTYPE=''"
+       "CDPATH="
+       "HISTORY="
+       "MAIL="
+       "MAILCHECK="
+       "MAILPATH="
+       "PAGER=cat"
+       "autocorrect="
+       "correct="))
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+  (add-hook 'after-change-major-mode-hook #'editorconfig-major-mode-hook))
+
 (use-package yaml-pro
   :ensure t
   :config
@@ -340,32 +355,69 @@ Return an event vector."
   (setq terraform-format-on-save t)
   (add-hook 'terraform-mode-hook 'terraform-format-on-save-mode 100))
 
-
 (use-package go-mode
   :ensure t
   :hook
   (go-mode .
     (lambda () (add-hook 'before-save-hook
-      (lambda ()
-        (eglot-code-action-organize-imports (point-min) (point-max)))
-      nil t))))
+                 (lambda ()
+                   (eglot-code-action-organize-imports (point-min) (point-max)))
+                 nil t)))
+  :config
+  (add-to-list 'project-vc-extra-root-markers "go.mod"))
 
-(use-package dap-mode
-  :ensure t)
+(use-package dape
+  :ensure t
+  :preface
+  ;; By default dape shares the same keybinding prefix as `gud'
+  ;; If you do not want to use any prefix, set it to nil.
+  ;; (setq dape-key-prefix "\C-x\C-a")
 
-(defun dap-exec-with-args (cmd)
-  (interactive "scmd: ")
-  (dap-register-debug-template
-    "exec"
-    (list
-      :type "go"
-      :request "launch"
-      :name "Launch Executable"
-      :mode "exec"
-      :program nil
-      :args (split-string-shell-command cmd)
-      :env nil)))
+  :hook
+  ;; Save breakpoints on quit
+  (kill-emacs . dape-breakpoint-save)
+  ;; Load breakpoints on startup
+  (after-init . dape-breakpoint-load)
 
+  :custom
+  ;; Turn on global bindings for setting breakpoints with mouse
+  (dape-breakpoint-global-mode +1)
+
+  ;; Info buffers to the right
+  ;; (dape-buffer-window-arrangement 'right)
+  ;; Info buffers like gud (gdb-mi)
+  ;; (dape-buffer-window-arrangement 'gud)
+  ;; (dape-info-hide-mode-line nil)
+
+  ;; Projectile users
+  ;; (dape-cwd-function #'projectile-project-root)
+
+  :config
+  ;; Pulse source line (performance hit)
+  (add-hook 'dape-display-source-hook #'pulse-momentary-highlight-one-line)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  (add-hook 'dape-start-hook (lambda () (save-some-buffers t t)))
+
+  ;; Kill compile buffer on build success
+  (add-hook 'dape-compile-hook #'kill-buffer)
+  (setq dape-buffer-window-arrangement 'right)
+
+  ;; dlv command "ooh" command-args ["open" "exec" "--port=:autoport" "--" "dlv" "dap" "--listen" "127.0.0.1::autoport"] :args ["open" "url" "https://youtube.com"] :program "./cmd/ooh"
+  (add-to-list 'dape-configs
+    '(ooh-dlv .
+       (modes (go-mode go-ts-mode)
+         ensure dape-ensure-command
+         command "ooh"
+         command-args ("open" "exec" "--port=:autoport" "--" "dlv" "dap" "--listen" "127.0.0.1::autoport")
+         command-cwd dape-command-cwd
+         command-insert-stderr t
+         port :autoport
+         :request "launch"
+         :type "go"
+         :cwd "."
+         :program ".")))
+  )
 
 (use-package multiple-cursors
   :ensure t
@@ -536,7 +588,7 @@ Return an event vector."
 
   (defun my/postcommand()
     (cond
-      ((equal this-command 'org-ctrl-c-ctrl-c)
+      ((equal this-command nil)
         (org-display-inline-images))))
 
   (add-hook 'post-command-hook #'my/postcommand t)
