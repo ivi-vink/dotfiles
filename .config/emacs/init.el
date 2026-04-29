@@ -59,6 +59,10 @@
   :config
   (global-clipetty-mode))
 
+(use-package mermaid-mode
+  :custom
+  (mermaid-flags "--scale=2"))
+
 ;; Emacs minibuffer configurations.
 (use-package emacs
   :ensure t
@@ -147,58 +151,65 @@
        "PAGER=cat"
        "autocorrect="
        "correct="))
+  (setq
+    remote-file-name-inhibit-cache 300
+    remote-file-name-inhibit-locks t
+    tramp-use-scp-direct-remote-copying t
+    remote-file-name-inhibit-auto-save-visited t)
+  (setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
+    tramp-verbose 2)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (add-hook 'after-change-major-mode-hook #'editorconfig-major-mode-hook))
 
-(use-package yaml-pro
-  :ensure t
-  :config
-  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+;; (use-package yaml-pro
+;;   :ensure t
+;;   :config
+;;   (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+;;   (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+;;   (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
 
-  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+;;   (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
 
-  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
-  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+;;   (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+;;   (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+;;   (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+;;   (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
 
-  (defvar-keymap my/yaml-pro/tree-repeat-mapo
-    :repeat t
-    "n" #'yaml-pro-ts-next-subtree
-    "p" #'yaml-pro-ts-prev-subtree
-    "u" #'yaml-pro-ts-up-level
-    "d" #'yaml-pro-ts-down-level
-    "m" #'yaml-pro-ts-mark-subtree
-    "k" #'yaml-pro-ts-kill-subtree
-    "a" #'yaml-pro-ts-first-sibling
-    "e" #'yaml-pro-ts-last-sibling
-    "SPC" #'my/yaml-pro/set-mark
-    "f" #'yaml-pro-fold-at-point
-    "o" #'yaml-pro-unfold-at-point
-    )
+;;   (defvar-keymap my/yaml-pro/tree-repeat-mapo
+;;     :repeat t
+;;     "n" #'yaml-pro-ts-next-subtree
+;;     "p" #'yaml-pro-ts-prev-subtree
+;;     "u" #'yaml-pro-ts-up-level
+;;     "d" #'yaml-pro-ts-down-level
+;;     "m" #'yaml-pro-ts-mark-subtree
+;;     "k" #'yaml-pro-ts-kill-subtree
+;;     "a" #'yaml-pro-ts-first-sibling
+;;     "e" #'yaml-pro-ts-last-sibling
+;;     "SPC" #'my/yaml-pro/set-mark
+;;     "f" #'yaml-pro-fold-at-point
+;;     "o" #'yaml-pro-unfold-at-point
+;;     )
 
-  (defun my/yaml-pro/set-mark ()
-    (interactive)
-    (my/region/set-mark 'my/yaml-pro/set-mark))
+;;   (defun my/yaml-pro/set-mark ()
+;;     (interactive)
+;;     (my/region/set-mark 'my/yaml-pro/set-mark))
 
-  (defun my/region/set-mark (command-name)
-    (if (eq last-command command-name)
-      (if (region-active-p)
-        (progn
-          (deactivate-mark)
-          (message "Mark deactivated"))
-        (activate-mark)
-        (message "Mark activated"))
-      (set-mark-command nil))))
+;;   (defun my/region/set-mark (command-name)
+;;     (if (eq last-command command-name)
+;;       (if (region-active-p)
+;;         (progn
+;;           (deactivate-mark)
+;;           (message "Mark deactivated"))
+;;         (activate-mark)
+;;         (message "Mark activated"))
+;;       (set-mark-command nil))))
 
 (use-package editorconfig
   :ensure t
@@ -431,7 +442,18 @@ Return an event vector."
     "," #'mc/remove-current-cursor
     "(" #'mc/cycle-backward
     ")" #'mc/cycle-forward)
-  (add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
+  ;; (add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
+  (defun mc/remove-current-cursor ()
+    "Remove the current cursor by replacing the next fake cursor."
+    (interactive)
+    (let ((next-cursor
+            (or (mc/next-fake-cursor-after-point)
+              (mc/prev-fake-cursor-before-point)
+              (error "This is the only cursor."))))
+      (mapc 'mc/remove-fake-cursor
+        (cl-remove-if-not 'mc/fake-cursor-p
+          (overlays-at (point))))
+      (mc/pop-state-from-overlay next-cursor)))
   (global-set-key (kbd "C-c n") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-c p") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c N") 'mc/skip-to-next-like-this)
@@ -439,8 +461,8 @@ Return an event vector."
   (global-set-key (kbd "C-c M-s") 'mc/edit-lines)
   (global-set-key (kbd "C-c s") 'vr/mc-mark)
   (global-set-key (kbd "C-c ,") 'mc/remove-current-cursor)
-  (global-set-key (kbd "C-c M-(") 'mc/cycle-backward)
-  (global-set-key (kbd "C-c M-)") 'mc/cycle-forward))
+  (global-set-key (kbd "C-c (") 'mc/cycle-backward)
+  (global-set-key (kbd "C-c )") 'mc/cycle-forward))
 
 (defun my/pick-line-from-shell (command)
   "Run COMMAND, prompt user to pick one output line, return the chosen line."
@@ -453,7 +475,7 @@ Return an event vector."
 
   (interactive)
   (let ((issue
-          (my/pick-line-from-shell "{ echo 000; gh issue list --assignee='ivi-vink'; }")))
+          (my/pick-line-from-shell "{ echo 000; NO_COLOR=y gh issue list --assignee='ivi-vink'; }")))
     (save-match-data (when (string-match "\\([0-9]+\\).*" issue) (match-string 1 issue)))))
 
 (defun my/issue-insert ()

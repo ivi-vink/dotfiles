@@ -26,6 +26,9 @@
 [worktree]
 	guessRemote = true
 
+[github]
+        user = "ivi-vink"
+
 # [includeIf "hasconfig:remote.*.url:git@github.com:**/**"]
 # 	path = "/nix-config/mut/git/github"
 # [includeIf "hasconfig:remote.*.url:https://github.com/**/**"]
