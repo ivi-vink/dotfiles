@@ -559,22 +559,6 @@ Return an event vector."
           (pcomplete-here (pcomplete-entries)))
         ))))
 
-(defun y/auto-update-theme ()
-  "Depending on time use different theme."
-  ;; very early => gruvbox-light, solarized-light, nord-light
-  (let* ((hour (nth 2 (decode-time (current-time))))
-         (theme (cond ((<= 7 hour 8)   'doom-gruvbox-light)
-                      ((= 9 hour)      'doom-solarized-light)
-                      ((<= 10 hour 16) 'doom-nord-light)
-                      ((<= 17 hour 18) 'doom-gruvbox-light)
-                      ((<= 19 hour 22) 'doom-oceanic-next)
-                      (t               'doom-laserwave))))
-    (when (not (equal (car custom-enabled-themes) theme))
-      (mapc #'disable-theme custom-enabled-themes)
-      (load-theme theme t))
-    ;; run that function again next hour
-    (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
-
 (use-package gruber-darker-theme
   :ensure t
   :config
@@ -637,8 +621,6 @@ Return an event vector."
     (widen)
     (org-datetree-find-date-create (calendar-current-date))
     (org-narrow-to-subtree)))
-
-
 
 (use-package lsp-pyright
   :ensure t
@@ -812,15 +794,3 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
   :config
   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
-
-(defun my/remove-labels ()
-  (dolist (topic (forge--list-topics
-                  (forge--topics-spec :type 'issue :state 'open)
-                  (forge-get-repository "https://github.com/pionative/quickstart")))
-    (let* ((labels (oref topic labels))
-           (filtered (seq-remove
-                      (lambda (label)
-			(member (cadr label) '("infra-as-code" "business-administratie" "meerwerk")))
-                      labels)))
-      (when (< (length filtered) (length labels))
-	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
