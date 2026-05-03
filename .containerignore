@@ -1,2 +1,5 @@
+.containerignore
 .git
 *.img
+host
+Makefile
