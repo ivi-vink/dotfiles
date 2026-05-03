@@ -60,6 +60,7 @@
   (global-clipetty-mode))
 
 (use-package mermaid-mode
+  :ensure t
   :custom
   (mermaid-flags "--scale=2"))
 
