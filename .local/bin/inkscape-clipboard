@@ -1,0 +1,10 @@
+#!/bin/bash
+# Usage: echo "data" | inkscape-clipboard "image/svg+xml"
+MIME="$1"
+python3 -c "
+import sys, subprocess, AppKit
+data = sys.stdin.buffer.read()
+pb = AppKit.NSPasteboard.generalPasteboard()
+pb.clearContents()
+pb.setData_forType_(AppKit.NSData.dataWithBytes_length_(data, len(data)), '$MIME')
+"

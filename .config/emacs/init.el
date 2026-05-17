@@ -5,6 +5,7 @@
 (menu-bar-mode -1)
 (put 'upcase-region 'disabled nil)
 (set-scroll-bar-mode nil)
+(add-to-list 'load-path  "~/.config/emacs/my")
 (setq custom-file "~/.config/emacs/custom.el")
 (load custom-file)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
@@ -152,65 +153,58 @@
        "PAGER=cat"
        "autocorrect="
        "correct="))
-  (setq
-    remote-file-name-inhibit-cache 300
-    remote-file-name-inhibit-locks t
-    tramp-use-scp-direct-remote-copying t
-    remote-file-name-inhibit-auto-save-visited t)
-  (setq tramp-copy-size-limit (* 1024 1024) ;; 1MB
-    tramp-verbose 2)
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
   (add-hook 'after-change-major-mode-hook #'editorconfig-major-mode-hook))
 
-;; (use-package yaml-pro
-;;   :ensure t
-;;   :config
-;;   (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-;;   (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-;;   (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+(use-package yaml-pro
+  :ensure t
+  :config
+  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
 
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-;;   (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
 
-;;   (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
-;;   (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
-;;   (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
-;;   (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
 
-;;   (defvar-keymap my/yaml-pro/tree-repeat-mapo
-;;     :repeat t
-;;     "n" #'yaml-pro-ts-next-subtree
-;;     "p" #'yaml-pro-ts-prev-subtree
-;;     "u" #'yaml-pro-ts-up-level
-;;     "d" #'yaml-pro-ts-down-level
-;;     "m" #'yaml-pro-ts-mark-subtree
-;;     "k" #'yaml-pro-ts-kill-subtree
-;;     "a" #'yaml-pro-ts-first-sibling
-;;     "e" #'yaml-pro-ts-last-sibling
-;;     "SPC" #'my/yaml-pro/set-mark
-;;     "f" #'yaml-pro-fold-at-point
-;;     "o" #'yaml-pro-unfold-at-point
-;;     )
+  (defvar-keymap my/yaml-pro/tree-repeat-mapo
+    :repeat t
+    "n" #'yaml-pro-ts-next-subtree
+    "p" #'yaml-pro-ts-prev-subtree
+    "u" #'yaml-pro-ts-up-level
+    "d" #'yaml-pro-ts-down-level
+    "m" #'yaml-pro-ts-mark-subtree
+    "k" #'yaml-pro-ts-kill-subtree
+    "a" #'yaml-pro-ts-first-sibling
+    "e" #'yaml-pro-ts-last-sibling
+    "SPC" #'my/yaml-pro/set-mark
+    "f" #'yaml-pro-fold-at-point
+    "o" #'yaml-pro-unfold-at-point
+    )
 
-;;   (defun my/yaml-pro/set-mark ()
-;;     (interactive)
-;;     (my/region/set-mark 'my/yaml-pro/set-mark))
+  (defun my/yaml-pro/set-mark ()
+    (interactive)
+    (my/region/set-mark 'my/yaml-pro/set-mark))
 
-;;   (defun my/region/set-mark (command-name)
-;;     (if (eq last-command command-name)
-;;       (if (region-active-p)
-;;         (progn
-;;           (deactivate-mark)
-;;           (message "Mark deactivated"))
-;;         (activate-mark)
-;;         (message "Mark activated"))
-;;       (set-mark-command nil))))
+  (defun my/region/set-mark (command-name)
+    (if (eq last-command command-name)
+      (if (region-active-p)
+        (progn
+          (deactivate-mark)
+          (message "Mark deactivated"))
+        (activate-mark)
+        (message "Mark activated"))
+      (set-mark-command nil))))
 
 (use-package editorconfig
   :ensure t
@@ -443,18 +437,7 @@ Return an event vector."
     "," #'mc/remove-current-cursor
     "(" #'mc/cycle-backward
     ")" #'mc/cycle-forward)
-  ;; (add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
-  (defun mc/remove-current-cursor ()
-    "Remove the current cursor by replacing the next fake cursor."
-    (interactive)
-    (let ((next-cursor
-            (or (mc/next-fake-cursor-after-point)
-              (mc/prev-fake-cursor-before-point)
-              (error "This is the only cursor."))))
-      (mapc 'mc/remove-fake-cursor
-        (cl-remove-if-not 'mc/fake-cursor-p
-          (overlays-at (point))))
-      (mc/pop-state-from-overlay next-cursor)))
+  (add-hook 'multiple-cursors-mode-hook (lambda() (corfu-mode -1)))
   (global-set-key (kbd "C-c n") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-c p") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-c N") 'mc/skip-to-next-like-this)
@@ -462,8 +445,8 @@ Return an event vector."
   (global-set-key (kbd "C-c M-s") 'mc/edit-lines)
   (global-set-key (kbd "C-c s") 'vr/mc-mark)
   (global-set-key (kbd "C-c ,") 'mc/remove-current-cursor)
-  (global-set-key (kbd "C-c (") 'mc/cycle-backward)
-  (global-set-key (kbd "C-c )") 'mc/cycle-forward))
+  (global-set-key (kbd "C-c M-(") 'mc/cycle-backward)
+  (global-set-key (kbd "C-c M-)") 'mc/cycle-forward))
 
 (defun my/pick-line-from-shell (command)
   "Run COMMAND, prompt user to pick one output line, return the chosen line."
@@ -476,7 +459,7 @@ Return an event vector."
 
   (interactive)
   (let ((issue
-          (my/pick-line-from-shell "{ echo 000; NO_COLOR=y gh issue list --assignee='ivi-vink'; }")))
+          (my/pick-line-from-shell "{ echo 000; gh issue list --assignee='ivi-vink'; }")))
     (save-match-data (when (string-match "\\([0-9]+\\).*" issue) (match-string 1 issue)))))
 
 (defun my/issue-insert ()
@@ -560,6 +543,22 @@ Return an event vector."
           (pcomplete-here (pcomplete-entries)))
         ))))
 
+(defun y/auto-update-theme ()
+  "Depending on time use different theme."
+  ;; very early => gruvbox-light, solarized-light, nord-light
+  (let* ((hour (nth 2 (decode-time (current-time))))
+         (theme (cond ((<= 7 hour 8)   'doom-gruvbox-light)
+                      ((= 9 hour)      'doom-solarized-light)
+                      ((<= 10 hour 16) 'doom-nord-light)
+                      ((<= 17 hour 18) 'doom-gruvbox-light)
+                      ((<= 19 hour 22) 'doom-oceanic-next)
+                      (t               'doom-laserwave))))
+    (when (not (equal (car custom-enabled-themes) theme))
+      (mapc #'disable-theme custom-enabled-themes)
+      (load-theme theme t))
+    ;; run that function again next hour
+    (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
+
 (use-package gruber-darker-theme
   :ensure t
   :config
@@ -581,10 +580,12 @@ Return an event vector."
         (make-directory dir))
       ;; Create minimal SVG if it doesn't exist
       (unless (file-exists-p fullpath)
-        (with-temp-file fullpath
-          (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
-            "</svg>")))
+        (if (file-exists-p "~/.config/emacs/drawing.svg")
+          (copy-file "~/.config/emacs/drawing.svg" fullpath)
+          (with-temp-file fullpath
+            (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
+              "</svg>"))))
       ;; Insert link in org buffer
       (insert (format "[[file:%s]]\n" fullpath))
       (org-display-inline-images)
@@ -622,6 +623,8 @@ Return an event vector."
     (widen)
     (org-datetree-find-date-create (calendar-current-date))
     (org-narrow-to-subtree)))
+
+
 
 (use-package lsp-pyright
   :ensure t
@@ -795,3 +798,210 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
   :config
   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
+
+
+;; URLS: https://ai.pionerds.nl/v1
+;; api key: (zie pionative keyvault clients/pionative-testllm-api-key)
+;; model: qwen3.6:35b
+(use-package gptel
+  :ensure t
+  ;; :bind ("C-c ." . gptel-menu)
+  :config
+  (gptel-make-openai "Pionative"
+    :host "ai.pionerds.nl"
+    :protocol "https"
+    :key (plist-get (car (auth-source-search :host "ai.pionerds.nl" :type 'pass)) :secret)
+    :endpoint "/v1/chat/completions"
+    :stream t
+    :models '("qwen3.6:35b" "qwen2.5-coder:32b")))
+(use-package gptel-agent
+  :ensure t)
+(use-package acp
+  :ensure t)
+(use-package agent-shell
+  :ensure t
+  :bind ("C-c ." . agent-shell)
+  :config
+  (setq agent-shell-pi-environment
+    (agent-shell-make-environment-variables
+      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
+  (setq agent-shell-opencode-environment
+    (agent-shell-make-environment-variables
+      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl"))))
+
+(defun my/remove-labels ()
+  (dolist (topic (forge--list-topics
+                  (forge--topics-spec :type 'issue :state 'open)
+                  (forge-get-repository "https://github.com/pionative/quickstart")))
+    (let* ((labels (oref topic labels))
+           (filtered (seq-remove
+                      (lambda (label)
+			(member (cadr label) '("infra-as-code" "business-administratie" "meerwerk")))
+                      labels)))
+      (when (< (length filtered) (length labels))
+	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
+
+(use-package denote
+  :ensure t
+  :hook (dired-mode . denote-dired-mode)
+  :bind
+  (("C-c l n" . denote)
+    ("C-c l r" . denote-rename-file)
+    ("C-c l l" . denote-link)
+    ("C-c l b" . denote-backlinks)
+    ("C-c l d" . denote-dired)
+    ("C-c l g" . denote-grep))
+  :config
+  (setq xref-search-program
+      (cond
+       ((or (executable-find "ripgrep")
+            (executable-find "rg"))
+        'ripgrep)
+       ((executable-find "ugrep")
+        'ugrep)
+       (t
+        'grep)))
+  (setq denote-directory (expand-file-name "~/Sync/my/notes/denote"))
+
+  ;; Automatically rename Denote buffers when opening them so that
+  ;; instead of their long file name they have, for example, a literal
+  ;; "[D]" followed by the file's title.  Read the doc string of
+  ;; `denote-rename-buffer-format' for how to modify this.
+  (denote-rename-buffer-mode 1))
+
+
+;;;; Run commands in a popup frame
+
+(defun prot-window-delete-popup-frame (&rest _)
+  "Kill selected selected frame if it has parameter `prot-window-popup-frame'.
+Use this function via a hook."
+  (when (frame-parameter nil 'prot-window-popup-frame)
+    (delete-frame)))
+
+(defun ns-raise-emacs-with-frame (frame)
+  "Raise Emacs and select the provided frame."
+  (with-selected-frame frame
+    (when (and (featurep 'ns) (eq system-type 'darwin))
+      (x-focus-frame frame))))
+
+(defun make-frame-bottom (arglist)
+  "Create a new frame at the bottom half of the display."
+  (let* ((display-w (display-pixel-width))
+          (display-h (display-pixel-height))
+          (frame-h   (/ display-h 2)))
+    (make-frame (append `((left   . 0)
+                           (top    . ,frame-h)
+                           (width  . (text-pixels . ,display-w))
+                           (height . (text-pixels . ,frame-h))
+                           )
+                  arglist))))
+
+(defmacro prot-window-define-with-popup-frame (command)
+  "Define interactive function which calls COMMAND in a new frame.
+Make the new frame have the `prot-window-popup-frame' parameter."
+  `(defun ,(intern (format "prot-window-popup-%s" command)) ()
+     ,(format "Run `%s' in a popup frame with `prot-window-popup-frame' parameter.
+Also see `prot-window-delete-popup-frame'." command)
+     (interactive)
+
+     (let ((frame (make-frame-bottom '((prot-window-popup-frame . t)))))
+       (select-frame frame)
+       (ns-raise-emacs-with-frame frame)
+       (switch-to-buffer " prot-window-hidden-buffer-for-popup-frame")
+       (condition-case nil
+           (call-interactively ',command)
+         ((quit error user-error)
+          (delete-frame frame))))))
+
+(declare-function org-capture "org-capture" (&optional goto keys))
+(defvar org-capture-after-finalize-hook)
+
+;;;###autoload (autoload 'prot-window-popup-org-capture "prot-window")
+(prot-window-define-with-popup-frame org-capture)
+
+(add-hook 'org-capture-after-finalize-hook #'prot-window-delete-popup-frame)
+
+(defun x:inkscape-delete-popup-frame (&rest _)
+  "Kill selected selected frame if it has parameter `prot-window-popup-frame'.
+Use this function via a hook."
+  (when (frame-parameter nil 'x:is-inkscape-menu-frame)
+    (delete-frame)))
+
+(defun x:inkscape-paste-svg ()
+  (interactive)
+  (x:inkscape-return))
+
+(defun x:inkscape-return ()
+  (interactive)
+  (ns-do-applescript "tell application \"Inkscape\" to activate")
+  (x:inkscape-delete-popup-frame))
+
+(defun x:inkscape-menu-edit-latex ()
+  (interactive)
+  (let* ((window (frame-root-window x:inkscape-popup-frame))
+          (new-window (split-window window nil 'below)))
+    (select-window new-window)
+    (switch-to-buffer (get-buffer-create "*inkscape-latex*"))
+    (add-hook 'kill-buffer-hook #'x:inkscape-return nil t)
+    (latex-mode)
+    (setq header-line-format
+      (substitute-command-keys
+        "Edit, then exit with ‘C-c '’ or abort with ‘C-c C-k’"))
+    (local-set-key (kbd "C-c '") #'x:inkscape-compile-to-clipboard)
+    (local-set-key (kbd "C-c C-k") #'x:inkscape-latex-kill))
+  (keyboard-quit))
+
+(defun x:inkscape-compile-to-clipboard ()
+  (interactive)
+  )
+
+(defun x:inkscape-latex-kill ()
+  (interactive)
+  (kill-buffer (current-buffer)))
+
+(transient-define-prefix x:inkscape ()
+  "Mode interacting with inkscape by clipboard."
+  ["Clipboard"
+   ("p" "Paste SVG"   x:inkscape-paste-svg)]
+  ["Edit"
+   ("e" "Edit latex"   x:inkscape-menu-edit-latex :transient t)]
+  ["Actions"
+    ("q" "Quit"       x:inkscape-return)])
+
+(defvar x:inkscape-popup-frame nil
+  "The popup frame used for inkscape interaction.")
+
+(defun x:inkscape-menu-popup (buffer alist)
+  (let ((frame (window-frame (display-buffer-pop-up-frame buffer alist))))
+    (setq x:inkscape-popup-frame frame)
+    (set-frame-parameter frame 'x:is-inkscape-menu-frame t)
+    (x-focus-frame frame)))
+
+(defun x:inkscape-menu ()
+  (interactive)
+  (let ((transient-display-buffer-action
+          '(x:inkscape-menu-popup)))
+    (x:inkscape)))
+
+;;;; The emacsclient call depends on the daemon or `server-mode' (I use the latter)
+(use-package server
+  :ensure nil
+  :defer 1
+  :config
+  (unless (server-running-p)
+    (server-start)))
+
+;;;; The emacsclient calls that need ot be bound to system-wide keys
+
+;; emacsclient -e '(prot-window-popup-org-capture)'
+;; emacsclient -e '(prot-window-popup-tmr)'
+;; (add-to-list 'org-preview-latex-process-alist '(tectonic :programs ("tectonic" "convert")
+;;                :description "pdf > png"
+;;                :message "you need install the programs: tectonic and imagemagick."
+;;                :image-input-type "pdf"
+;;                :image-output-type "png"
+;;                :image-size-adjust (1.0 . 1.0)
+;;                :latex-compiler
+;;                  ("tectonic -Z shell-escape-cwd=%o --outfmt pdf --outdir %o %f")
+;;                :image-converter
+;;                ("convert -density %D -trim -antialias %f -quality 300 %O")))
