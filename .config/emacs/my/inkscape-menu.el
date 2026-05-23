@@ -1,5 +1,6 @@
 ;; e -*- lexical-binding: t; -*-
 ;;;; Run commands in a popup frame
+(require 'cl-lib)
 
 (defun prot-window-delete-popup-frame (&rest _)
   "Kill selected selected frame if it has parameter `prot-window-popup-frame'.
@@ -158,83 +159,217 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
   :group 'x:inkscape-menu
   :type '(alist :key-type string :value-type string))
 
-(defun x:inkscape--build-style-svg (style-alist)
+
+(setq x:inkscape--style-pixels 1.327)
+(setq x:inkscape--style-normal-width (* 0.4 x:inkscape--style-pixels))
+(setq x:inkscape--style-thick-width (* 0.8 x:inkscape--style-pixels))
+(setq x:inkscape--style-heavy-width (* 1.2 x:inkscape--style-pixels))
+
+(defun x:inkscape--build-style-svg (styles)
   "Build an inkscape clipboard SVG from STYLE-ALIST."
-  (let ((style-string
-          (mapconcat (lambda (kv)
-                       (format "%s: %s" (car kv) (cdr kv)))
-            style-alist
-            ;; (sort style-alist (lambda (a b)
-            ;;                     (string< (car a) (car b))))
-            ";")))
+  (let
+    ((style-map
+       (seq-reduce
+         (lambda (m style)
+           (funcall style m))
+         styles
+         (list)
+         )))
     (format "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>
 <svg xmlns=\"http://www.w3.org/2000/svg\"
      xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\">
 <inkscape:clipboard style=\"%s\" /></svg>"
-      style-string)))
+      (cl-loop for (k v) on style-map by #'cddr
+        collect (format "%s: %s" (substring (symbol-name k) 1) v)
+        into parts finally return (mapconcat (lambda(i)i) parts)))))
 
-(defun x:inkscape--build-style (args)
-  (let ((result
-          (mapcar
-            (lambda (arg)
-              (pcase arg
-                ("white" '(("fill" . "white")
-                            ("fill-opacity" . "1")))
-                ("black" '(("fill" . "black")
-                            ("fill-opacity" . "1")))
-                ("fill" '(("fill" . "black")
-                           ("fill-opacity" . "0.12")))))
-            args)))
-    (apply #'append result)))
-
-(transient-define-suffix x:inkscape-paste-style (args)
-  (interactive (list (transient-args 'x:inkscape)))
-  (let* ((style (x:inkscape--build-style args))
-         (svg (x:inkscape--build-style-svg style))
-         (tmp "/tmp/emacs.inkscape.style.svg"))
-    (message svg)
+(defun x:inkscape-paste-style (styles)
+  (interactive)
+  (let* ((svg (x:inkscape--build-style-svg styles))
+          (tmp "/tmp/emacs.inkscape.style.svg"))
     (with-temp-file tmp (insert svg))
     (when (> (call-process "inkscape-clipboard" tmp "*Tectonic*" nil "image/x-inkscape-svg") 0)
       (error "clipboard error"))
     (x:inkscape-return nil t)))
 
+(defclass x:inkscape--style-switch (transient-switch)
+  ((style-value :initarg :style-value)
+    (style-group :initarg :style-group))
+  "hello")
 
-(defclass x:inkscape-style-switch-naked (transient-argument)
-  ()
-  "A transient switch that carries a style key/value pair.")
+(cl-defmethod transient-infix-read ((obj x:inkscape--style-switch))
+  (oref obj style-value))
 
-(cl-defmethod transient-infix-read ((obj x:inkscape-style-switch-naked))
-  (x:inkscape-)
-  t)
+(cl-defmethod transient-infix-value ((obj x:inkscape--style-switch))
+  (when (oref obj value)
+    (cons (oref obj style-group) (oref obj value))))
 
-(transient-define-argument x:inkscape--fill ()
-  :description "Fill"
-  :class 'transient-switch
+(cl-defmethod transient-format-value ((obj x:inkscape--style-switch))
+  (propertize (oref obj description)
+              'face (if (oref obj value)
+                        (if (oref obj inapt)
+                            'transient-inapt-argument
+                          'transient-argument)
+                      'transient-inactive-argument)))
+
+(cl-defmethod transient-infix-set ((obj x:inkscape--style-switch) value)
+  ;; Deactivate all other infixes in the same style-group
+  (dolist (other transient--suffixes)
+    (when (and (cl-typep other 'x:inkscape--style-switch)
+            (equal (oref other style-group) (oref obj style-group))
+            (not (eq other obj)))
+      (oset other value nil)))
+  (oset obj value value)
+  (let* ((styles (seq-filter
+                   (lambda (suffix)
+                     (and (cl-typep suffix 'x:inkscape--style-switch) (oref suffix value)))
+                   transient--suffixes))
+          (groups (mapcar
+                    (lambda (style) (oref style style-group))
+                    styles)))
+    (when
+      (and
+        (member "fill" groups)
+        (member "stroke" groups)
+        (member "weight" groups))
+      ;; (x:inkscape-paste-style (mapcar (lambda (style) (oref style argument)) styles))
+      (x:inkscape-return nil nil)
+      )))
+
+(defun map-put-and-return (m k v) (plist-put m k v))
+(transient-define-infix x:inkscape--style-grey () "Style: grey"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "grey"
+  :style-value "grey"
   :key "f"
-  :argument "fill")
-
-(transient-define-argument x:inkscape--black ()
-  :description "Black"
-  :class 'transient-switch
+  :argument (lambda (m)
+              (thread-first m
+                (map-put-and-return :fill "black")
+                (map-put-and-return :fill-opacity "0.12"))))
+(transient-define-infix x:inkscape--style-black () "Style: black"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "black"
+  :style-value "black"
   :key "b"
-  :argument "black")
-
-(transient-define-argument x:inkscape--white ()
-  :description "White"
-  :class 'transient-switch
+  :argument (lambda (m)
+              (thread-first m
+                (map-put-and-return :fill "black")
+                (map-put-and-return :fill-opacity "1"))))
+(transient-define-infix x:inkscape--style-white () "Style: white"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "white"
+  :style-value "white"
   :key "w"
-  :argument "white")
+  :argument (lambda (m)
+              (thread-first m
+                (map-put-and-return :fill "white")
+                (map-put-and-return :fill-opacity "1"))))
+(transient-define-infix x:inkscape--style-arrow () "Style: arrow"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "arrow"
+  :style-value "arrow"
+  :key "a"
+  :argument (lambda (m)))
+(transient-define-infix x:inkscape--style-arrows () "Style: arrows"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "arrows"
+  :style-value "arrows"
+  :key "x"
+  :argument (lambda (m)))
+(transient-define-infix x:inkscape--style-solid () "Style: solid"
+  :class 'x:inkscape--style-switch
+  :style-group "stroke"
+  :description "solid"
+  :style-value "solid"
+  :key "s"
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :stroke-dasharray "none"))))
+(transient-define-infix x:inkscape--style-dotted () "Style: dotted"
+    :class 'x:inkscape--style-switch
+    :style-group "stroke"
+    :description "dotted"
+    :style-value "dotted"
+    :key "d"
+    :argument
+    (lambda (m)
+      (thread-first m
+        (map-put-and-return :stroke-dasharray
+          (format "%s,%s"
+            (number-to-string x:inkscape--style-normal-width)
+            (number-to-string (* 2 x:inkscape--style-pixels)))))))
+(transient-define-infix x:inkscape--style-dashed () "Style: dashed"
+  :class 'x:inkscape--style-switch
+  :style-group "stroke"
+  :description "dashed"
+  :style-value "dashed"
+  :key "e"
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :stroke-dasharray
+        (format "%s,%s"
+          (number-to-string (* 3 x:inkscape--style-pixels))
+          (number-to-string (* 3 x:inkscape--style-pixels)))))))
+(transient-define-infix x:inkscape--style-normal () "Style: normal"
+  :class 'x:inkscape--style-switch
+  :style-group "weight"
+  :description "normal"
+  :init-value (lambda (obj) (oset obj value t))
+  :style-value "normal"
+  :key "v"
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :stroke "black")
+      (map-put-and-return :stroke-width (number-to-string x:inkscape--style-normal-width)))))
+(transient-define-infix x:inkscape--style-thick () "Style: thick"
+  :class 'x:inkscape--style-switch
+  :style-group "weight"
+  :description "thick"
+  :style-value "thick"
+  :key "g"
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :stroke-width (number-to-string x:inkscape--style-thick-width)))))
+(transient-define-infix x:inkscape--style-heavy () "Style: heavy"
+  :class 'x:inkscape--style-switch
+  :style-group "weight"
+  :description "heavy"
+  :style-value "heavy"
+  :key "h"
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :stroke-width (number-to-string x:inkscape--style-thick-width)))))
 
 (transient-define-prefix x:inkscape ()
   "Mode interacting with inkscape by clipboard."
   ;; :display-action '(x:inkscape-menu-popup)
-  ["Style"
-    (x:inkscape--fill)
-    (x:inkscape--black)
-    (x:inkscape--white)]
+  ["Style" ["Fill"
+    (x:inkscape--style-grey)
+    (x:inkscape--style-black)
+    (x:inkscape--style-white)
+    (x:inkscape--style-arrow)
+    (x:inkscape--style-arrows)]
+  ["Stroke"
+    (x:inkscape--style-solid)
+    (x:inkscape--style-dotted)
+    (x:inkscape--style-dashed)]
+  ["Weight"
+    (x:inkscape--style-normal)
+    (x:inkscape--style-thick)
+    (x:inkscape--style-heavy)]]
   ["Paste"
-    ("e" "Edit latex"   x:inkscape-menu-edit-latex :transient t)
-    ("v" "Style" x:inkscape-paste-style)]
+    ("t" "Edit latex"   x:inkscape-menu-edit-latex :transient t)
+    ]
   ["Other"
     ("q" "Quit"       x:inkscape-return)])
 
