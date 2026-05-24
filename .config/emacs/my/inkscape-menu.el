@@ -72,7 +72,8 @@ Use this function via a hook."
     (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using command down"))
 
   (when paste-style
-    (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using {command down, shift down}")))
+    (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using {command down, shift down}"))
+  (keyboard-quit))
 
 (defun x:inkscape-menu-edit-latex ()
   (interactive)
@@ -167,21 +168,59 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
 
 (defun x:inkscape--build-style-svg (styles)
   "Build an inkscape clipboard SVG from STYLE-ALIST."
-  (let
+  (let*
     ((style-map
        (seq-reduce
          (lambda (m style)
-           (funcall style m))
-         styles
-         (list)
-         )))
+           (funcall (oref style argument) m))
+         (sort styles
+           :key (lambda (style) (oref style style-group))
+           :lessp (lambda (a b)
+                    (pcase a
+                      ("weight" t))))
+         (list
+           :fill "none"
+           :fill-opacity "1"
+           :stroke-width (number-to-string x:inkscape--style-normal-width)
+           :marker-start "none"
+           :marker-end "none"
+           :stroke-dasharray "none")))
+      (style-string (cl-loop for (k v) on style-map by #'cddr
+                      collect (format "%s: %s" (substring (symbol-name k) 1) v)
+                      into parts finally return (mapconcat (lambda(i)i) parts ";")))
+      (arrow-string (if (let ((start (plist-get style-map :marker-start))
+                                (end (plist-get style-map :marker-end)))
+                          (or
+                            (and start (not (equal start "none")))
+                            (and end (not (equal end "none")))))
+                      (let
+                        ((w (plist-get style-map :stroke-width)))
+                        (format "
+<defs id=\"marker-defs\">
+<marker
+id=\"marker-arrow-%s\"
+orient=\"auto-start-reverse\"
+refY=\"0\" refX=\"0\"
+markerHeight=\"1.690\" markerWidth=\"0.911\">
+  <g transform=\"scale(%s)\">
+    <path
+       d=\"M -1.55415,2.0722 C -1.42464,1.29512 0,0.1295 0.38852,0 0,-0.1295 -1.42464,-1.29512 -1.55415,-2.0722\"
+       style=\"fill:none;stroke:#000000;stroke-width:0.6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1\"
+       inkscape:connector-curvature=\"0\" />
+   </g>
+</marker>
+</defs>
+"
+                          w
+                          (/ (+ (* 2.40 (string-to-number w)) 3.87) (* 4.5 (string-to-number w)))
+                          ))
+                      "")))
+    (pp style-string)
+    (pp arrow-string)
     (format "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>
-<svg xmlns=\"http://www.w3.org/2000/svg\"
-     xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\">
-<inkscape:clipboard style=\"%s\" /></svg>"
-      (cl-loop for (k v) on style-map by #'cddr
-        collect (format "%s: %s" (substring (symbol-name k) 1) v)
-        into parts finally return (mapconcat (lambda(i)i) parts)))))
+<svg>%s<inkscape:clipboard style=\"%s\" /></svg>"
+      arrow-string
+      style-string)))
 
 (defun x:inkscape-paste-style (styles)
   (interactive)
@@ -219,24 +258,35 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
             (equal (oref other style-group) (oref obj style-group))
             (not (eq other obj)))
       (oset other value nil)))
-  (oset obj value value)
-  (let* ((styles (seq-filter
-                   (lambda (suffix)
-                     (and (cl-typep suffix 'x:inkscape--style-switch) (oref suffix value)))
-                   transient--suffixes))
-          (groups (mapcar
-                    (lambda (style) (oref style style-group))
-                    styles)))
+  (oset obj value (not (oref obj value)))
+  (let* ((styles
+           (seq-filter
+             (lambda (suffix)
+               (and (cl-typep suffix 'x:inkscape--style-switch) (oref suffix value)))
+             transient--suffixes))
+          (groups
+            (mapcar
+              (lambda (style) (oref style style-group))
+              styles)))
     (when
       (and
         (member "fill" groups)
         (member "stroke" groups)
         (member "weight" groups))
-      ;; (x:inkscape-paste-style (mapcar (lambda (style) (oref style argument)) styles))
-      (x:inkscape-return nil nil)
-      )))
+      (x:inkscape-paste-style styles))))
 
 (defun map-put-and-return (m k v) (plist-put m k v))
+(transient-define-infix x:inkscape--style-nofill () "Style: nofill"
+  :class 'x:inkscape--style-switch
+  :style-group "fill"
+  :description "nofill"
+  :style-value "nofill"
+  :init-value (lambda (obj) (oset obj value t))
+  :key "w"
+  :argument (lambda (m)
+              (thread-first m
+                (map-put-and-return :fill "none")
+                (map-put-and-return :fill-opacity "1"))))
 (transient-define-infix x:inkscape--style-grey () "Style: grey"
   :class 'x:inkscape--style-switch
   :style-group "fill"
@@ -263,24 +313,35 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
   :description "white"
   :style-value "white"
   :key "w"
-  :argument (lambda (m)
-              (thread-first m
-                (map-put-and-return :fill "white")
-                (map-put-and-return :fill-opacity "1"))))
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :fill "white")
+      (map-put-and-return :fill-opacity "1"))))
 (transient-define-infix x:inkscape--style-arrow () "Style: arrow"
   :class 'x:inkscape--style-switch
-  :style-group "fill"
+  :style-group "arrow"
   :description "arrow"
   :style-value "arrow"
   :key "a"
-  :argument (lambda (m)))
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :marker-end
+        (format "url(#marker-arrow-%s)" (plist-get m :stroke-width))))))
 (transient-define-infix x:inkscape--style-arrows () "Style: arrows"
   :class 'x:inkscape--style-switch
-  :style-group "fill"
+  :style-group "arrow"
   :description "arrows"
   :style-value "arrows"
   :key "x"
-  :argument (lambda (m)))
+  :argument
+  (lambda (m)
+    (thread-first m
+      (map-put-and-return :marker-start
+        (format "url(#marker-arrow-%s)" (plist-get m :stroke-width)))
+      (map-put-and-return :marker-end
+        (format "url(#marker-arrow-%s)" (plist-get m :stroke-width))))))
 (transient-define-infix x:inkscape--style-solid () "Style: solid"
   :class 'x:inkscape--style-switch
   :style-group "stroke"
@@ -302,7 +363,7 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
       (thread-first m
         (map-put-and-return :stroke-dasharray
           (format "%s,%s"
-            (number-to-string x:inkscape--style-normal-width)
+            (plist-get m :stroke-width)
             (number-to-string (* 2 x:inkscape--style-pixels)))))))
 (transient-define-infix x:inkscape--style-dashed () "Style: dashed"
   :class 'x:inkscape--style-switch
@@ -323,7 +384,7 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
   :description "normal"
   :init-value (lambda (obj) (oset obj value t))
   :style-value "normal"
-  :key "v"
+  :key "n"
   :argument
   (lambda (m)
     (thread-first m
@@ -348,25 +409,28 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
   :argument
   (lambda (m)
     (thread-first m
-      (map-put-and-return :stroke-width (number-to-string x:inkscape--style-thick-width)))))
+      (map-put-and-return :stroke-width (number-to-string x:inkscape--style-heavy-width)))))
 
 (transient-define-prefix x:inkscape ()
   "Mode interacting with inkscape by clipboard."
   ;; :display-action '(x:inkscape-menu-popup)
-  ["Style" ["Fill"
-    (x:inkscape--style-grey)
-    (x:inkscape--style-black)
-    (x:inkscape--style-white)
-    (x:inkscape--style-arrow)
-    (x:inkscape--style-arrows)]
-  ["Stroke"
-    (x:inkscape--style-solid)
-    (x:inkscape--style-dotted)
-    (x:inkscape--style-dashed)]
-  ["Weight"
-    (x:inkscape--style-normal)
-    (x:inkscape--style-thick)
-    (x:inkscape--style-heavy)]]
+  ["Style"
+    ["arrow"
+      (x:inkscape--style-arrow)
+      (x:inkscape--style-arrows)]
+    ["Fill"
+      (x:inkscape--style-nofill)
+      (x:inkscape--style-grey)
+      (x:inkscape--style-black)
+      (x:inkscape--style-white)]
+    ["Stroke"
+      (x:inkscape--style-solid)
+      (x:inkscape--style-dotted)
+      (x:inkscape--style-dashed)]
+    ["Weight"
+      (x:inkscape--style-normal)
+      (x:inkscape--style-thick)
+      (x:inkscape--style-heavy)]]
   ["Paste"
     ("t" "Edit latex"   x:inkscape-menu-edit-latex :transient t)
     ]
