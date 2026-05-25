@@ -200,6 +200,7 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
 <marker
 id=\"marker-arrow-%s\"
 orient=\"auto-start-reverse\"
+viewBox=\"-2 -2.5 4 5\"
 refY=\"0\" refX=\"0\"
 markerHeight=\"1.690\" markerWidth=\"0.911\">
   <g transform=\"scale(%s)\">
@@ -454,26 +455,8 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
           '(x:inkscape-menu-popup)))
     (x:inkscape)))
 
-;;;; The emacsclient call depends on the daemon or `server-mode' (I use the latter)
-(use-package server
-  :ensure nil
-  :defer 1
-  :config
-  (unless (server-running-p)
-    (server-start)))
-
-;;;; The emacsclient calls that need ot be bound to system-wide keys
+;;;; The emacsclient calls that need to be bound to system-wide keys
 
 ;; emacsclient -e '(prot-window-popup-org-capture)'
 ;; emacsclient -e '(prot-window-popup-tmr)'
-;; (add-to-list 'org-preview-latex-process-alist '(tectonic :programs ("tectonic" "convert")
-;;                :description "pdf > png"
-;;                :message "you need install the programs: tectonic and imagemagick."
-;;                :image-input-type "pdf"
-;;                :image-output-type "png"
-;;                :image-size-adjust (1.0 . 1.0)
-;;                :latex-compiler
-;;                  ("tectonic -Z shell-escape-cwd=%o --outfmt pdf --outdir %o %f")
-;;                :image-converter
-;;                ("convert -density %D -trim -antialias %f -quality 300 %O")))
 (provide 'inkscape-menu)

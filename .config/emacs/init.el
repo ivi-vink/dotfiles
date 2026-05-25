@@ -23,6 +23,154 @@
 
 (package-initialize)
 
+(use-package org-latex-preview
+  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
+;; (use-package org
+  :bind
+  (("C-c a" . org-agenda)
+    ("C-c j" . my/goto-today-journal-entry))
+  :config
+  ;; Increase preview width
+  (plist-put
+    org-latex-preview-appearance-options
+    :page-width 0.8)
+  (plist-put
+    org-latex-preview-appearance-options
+    :zoom 2.1)
+  (setq org-image-actual-width 0.8)
+
+  ;; ;; Use dvisvgm to generate previews
+  ;; ;; You don't need this, it's the default:
+  ;; (setq org-latex-preview-process-default 'dvisvgm)
+
+  ;; Turn on `org-latex-preview-mode', it's built into Org and much faster/more
+  ;; featured than org-fragtog. (Remember to turn off/uninstall org-fragtog.)
+  (add-hook 'org-mode-hook 'org-latex-preview-mode)
+
+  ;; ;; Block C-n, C-p etc from opening up previews when using `org-latex-preview-mode'
+  ;; (setq org-latex-preview-mode-ignored-commands
+  ;;       '(next-line previous-line mwheel-scroll
+  ;;         scroll-up-command scroll-down-command))
+
+  ;; ;; Enable consistent equation numbering
+  ;; (setq org-latex-preview-numbered t)
+
+  ;; Bonus: Turn on live previews.  This shows you a live preview of a LaTeX
+  ;; fragment and updates the preview in real-time as you edit it.
+  ;; To preview only environments, set it to '(block edit-special) instead
+  (setq org-latex-preview-mode-display-live t)
+
+  ;; More immediate live-previews -- the default delay is 1 second
+  (setq org-latex-preview-mode-update-delay 0.25)
+
+  (defun my/org-latex-preview-uncenter (ov)
+    (overlay-put ov 'before-string nil))
+  (defun my/org-latex-preview-recenter (ov)
+    (overlay-put ov 'before-string (overlay-get ov 'justify)))
+  (defun my/org-latex-preview-center (ov)
+    (save-excursion
+      (goto-char (overlay-start ov))
+      (when-let* ((elem (org-element-context))
+                  ((or (eq (org-element-type elem) 'latex-environment)
+                       (string-match-p "^\\\\\\[" (org-element-property :value elem))))
+                  (img (overlay-get ov 'display))
+                  (prop `(space :align-to (- center (0.55 . ,img))))
+                  (justify (propertize " " 'display prop 'face 'default)))
+        (overlay-put ov 'justify justify)
+        (overlay-put ov 'before-string (overlay-get ov 'justify)))))
+  (define-minor-mode org-latex-preview-center-mode
+    "Center equations previewed with `org-latex-preview'."
+    :global nil
+    (if org-latex-preview-center-mode
+        (progn
+          (add-hook 'org-latex-preview-overlay-open-functions
+                    #'my/org-latex-preview-uncenter nil :local)
+          (add-hook 'org-latex-preview-overlay-close-functions
+                    #'my/org-latex-preview-recenter nil :local)
+          (add-hook 'org-latex-preview-overlay-update-functions
+                    #'my/org-latex-preview-center nil :local))
+      (remove-hook 'org-latex-preview-overlay-close-functions
+                    #'my/org-latex-preview-recenter)
+      (remove-hook 'org-latex-preview-overlay-update-functions
+                    #'my/org-latex-preview-center)
+      (remove-hook 'org-latex-preview-overlay-open-functions
+                    #'my/org-latex-preview-uncenter)))
+
+  (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s"))
+  (setq org-image-actual-width t)
+  (setq org-image-max-width 0.8)
+  (setq org-image-align 'left)
+  (setq org-startup-with-inline-images t)
+  (setq org-preview-latex-default-process 'dvipng)
+  (add-to-list 'project-vc-extra-root-markers "Tectonic.toml")
+  (add-to-list 'org-preview-latex-process-alist
+    '(tectonic
+       :programs ("tectonic" "convert")
+       :description "pdf > png"
+       :message "you need install the programs: tectonic and imagemagick."
+       :image-input-type "pdf"
+       :image-output-type "png"
+       :image-size-adjust (1.0 . 1.0)
+       :latex-compiler
+       ("tectonic -Z shell-escape-cwd=%o --outfmt pdf --outdir %o %f")
+       :image-converter
+       ("convert -density %D -trim -antialias %f -quality 300 %O")))
+
+  (defun my/org-create-and-open-drawing ()
+    "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
+    (interactive)
+    (let* ((dir "drawings/")
+            (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
+            (fullpath (expand-file-name filename dir)))
+      ;; Ensure drawings dir exists
+      (unless (file-directory-p dir)
+        (make-directory dir))
+      ;; Create minimal SVG if it doesn't exist
+      (unless (file-exists-p fullpath)
+        (if (file-exists-p "~/.config/emacs/inkscapel/template.svg")
+          (copy-file "~/.config/emacs/inkscapel/template.svg" fullpath)
+          (with-temp-file fullpath
+            (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
+              "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
+              "</svg>"))))
+      ;; Insert link in org buffer
+      (insert (format "[[file:%s]]\n" fullpath))
+      (org-display-inline-images)
+      ;; Open in Inkscape
+      (start-process "inkscape" nil "/Applications/Inkscape.app/Contents/MacOS/inkscape" fullpath)))
+
+  (global-set-key (kbd "C-c d") 'my/org-create-and-open-drawing)
+
+  (defun my/postcommand()
+    (cond
+      ((equal this-command nil)
+        (org-display-inline-images))))
+
+  (add-hook 'post-command-hook #'my/postcommand t)
+  (setq org-directory "~/Sync/my/notes")
+  (setq org-todo-keywords
+    '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED" "NOTPLANNED")))
+  (setq org-export-backends '(ascii html icalendar latex odt md))
+  (setq org-agenda-files (list org-directory))
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-startup-folded t)
+  (setq org-default-notes-file (concat org-directory "/notes.org"))
+  (setq org-datetree-add-timestamp t)
+  (setq org-capture-templates
+    '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+        "* %?\n  Entered on %U\n  %i\n  %a")
+       ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+         "* %?\n  DATE: %T\n %i\n  %a")
+       ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+         "* %?\n  DEADLINE: %T\n %i\n  %a")))
+  (defun my/goto-today-journal-entry ()
+    "Go to today's journal entry in the datetree and narrow to subtree."
+    (interactive)
+    (find-file "~/Sync/my/notes/notes.org")
+    (widen)
+    (org-datetree-find-date-create (calendar-current-date))
+    (org-narrow-to-subtree)))
+
 (use-package visual-regexp
   :ensure t)
 
@@ -59,11 +207,6 @@
   :ensure t
   :config
   (global-clipetty-mode))
-
-(use-package mermaid-mode
-  :ensure t
-  :custom
-  (mermaid-flags "--scale=2"))
 
 ;; Emacs minibuffer configurations.
 (use-package emacs
@@ -564,68 +707,6 @@ Return an event vector."
   :config
   (load-theme 'gruber-darker t))
 
-(use-package org
-  :bind (("C-c a" . org-agenda) ("C-c j" . my/goto-today-journal-entry))
-  :config
-  (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s"))
-  (setq org-startup-with-inline-images t)
-  (defun my/org-create-and-open-drawing ()
-    "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
-    (interactive)
-    (let* ((dir "drawings/")
-            (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
-            (fullpath (expand-file-name filename dir)))
-      ;; Ensure drawings dir exists
-      (unless (file-directory-p dir)
-        (make-directory dir))
-      ;; Create minimal SVG if it doesn't exist
-      (unless (file-exists-p fullpath)
-        (if (file-exists-p "~/.config/emacs/drawing.svg")
-          (copy-file "~/.config/emacs/drawing.svg" fullpath)
-          (with-temp-file fullpath
-            (insert "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-              "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1024\" height=\"768\">\n"
-              "</svg>"))))
-      ;; Insert link in org buffer
-      (insert (format "[[file:%s]]\n" fullpath))
-      (org-display-inline-images)
-      ;; Open in Inkscape
-      (start-process "inkscape" nil "/Applications/Inkscape.app/Contents/MacOS/inkscape" fullpath)))
-
-  (global-set-key (kbd "C-c d") 'my/org-create-and-open-drawing)
-
-  (defun my/postcommand()
-    (cond
-      ((equal this-command nil)
-        (org-display-inline-images))))
-
-  (add-hook 'post-command-hook #'my/postcommand t)
-  (setq org-directory "~/Sync/my/notes")
-  (setq org-todo-keywords
-    '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED" "NOTPLANNED")))
-  (setq org-export-backends '(ascii html icalendar latex odt md))
-  (setq org-agenda-files (list org-directory))
-  (setq org-confirm-babel-evaluate nil)
-  (setq org-startup-folded t)
-  (setq org-default-notes-file (concat org-directory "/notes.org"))
-  (setq org-datetree-add-timestamp t)
-  (setq org-capture-templates
-    '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
-        "* %?\n  Entered on %U\n  %i\n  %a")
-       ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
-         "* %?\n  DATE: %T\n %i\n  %a")
-       ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
-         "* %?\n  DEADLINE: %T\n %i\n  %a")))
-  (defun my/goto-today-journal-entry ()
-    "Go to today's journal entry in the datetree and narrow to subtree."
-    (interactive)
-    (find-file "~/Sync/my/notes/notes.org")
-    (widen)
-    (org-datetree-find-date-create (calendar-current-date))
-    (org-narrow-to-subtree)))
-
-
-
 (use-package lsp-pyright
   :ensure t
   :custom
@@ -793,12 +874,11 @@ Looks for .venv directory in project root and activates the Python interpreter."
 (use-package vterm
   :ensure t)
 
-(use-package claude-code-ide
-  :vc (:url "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-  :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
-  :config
-  (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
-
+;; (use-package claude-code-ide
+;;   :vc (:urls "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
+;;   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
+;;   :config
+;;   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
 
 ;; URLS: https://ai.pionerds.nl/v1
 ;; api key: (zie pionative keyvault clients/pionative-testllm-api-key)
@@ -807,13 +887,14 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :ensure t
   ;; :bind ("C-c ." . gptel-menu)
   :config
-  (gptel-make-openai "Pionative"
-    :host "ai.pionerds.nl"
-    :protocol "https"
-    :key (plist-get (car (auth-source-search :host "ai.pionerds.nl" :type 'pass)) :secret)
-    :endpoint "/v1/chat/completions"
-    :stream t
-    :models '("qwen3.6:35b" "qwen2.5-coder:32b")))
+  ;; (gptel-make-openai "Pionative"
+  ;;   :host "ai.pionerds.nl"
+  ;;   :protocol "https"
+  ;;   :key (plist-get (car (auth-source-search :host "ai.pionerds.nl" :type 'pass)) :secret)
+  ;;   :endpoint "/v1/chat/completions"
+  ;;   :stream t
+  ;;   :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
+  )
 (use-package gptel-agent
   :ensure t)
 (use-package acp
@@ -822,12 +903,15 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :ensure t
   :bind ("C-c ." . agent-shell)
   :config
-  (setq agent-shell-pi-environment
-    (agent-shell-make-environment-variables
-      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
-  (setq agent-shell-opencode-environment
-    (agent-shell-make-environment-variables
-      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl"))))
+  ;; (setq agent-shell-pi-environment
+  ;;   (agent-shell-make-environment-variables
+  ;;     "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
+  ;; (setq agent-shell-opencode-environment
+  ;;   (agent-shell-make-environment-variables
+  ;;     "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
+  )
+(use-package agent-review
+  :ensure t)
 
 (defun my/remove-labels ()
   (dolist (topic (forge--list-topics
@@ -852,6 +936,8 @@ Looks for .venv directory in project root and activates the Python interpreter."
     ("C-c l d" . denote-dired)
     ("C-c l g" . denote-grep))
   :config
+  (setq denote-sort-dired-extra-prompts '());; sort-by-component reverse-sort)
+  (setq denote-excluded-files-regexp ".tex$")
   (setq xref-search-program
       (cond
        ((or (executable-find "ripgrep")
@@ -869,4 +955,22 @@ Looks for .venv directory in project root and activates the Python interpreter."
   ;; `denote-rename-buffer-format' for how to modify this.
   (denote-rename-buffer-mode 1))
 
+
+;;;; The emacsclient call depends on the daemon or `server-mode' (I use the latter)
+(use-package server
+  :ensure nil
+  :defer 1
+  :config
+  (unless (server-running-p)
+    (server-start)))
+
+(use-package org-roam
+  :ensure t
+  :config
+  (setq org-roam-directory "~/Sync/my/notes/roam")
+  (org-roam-db-autosync-mode)
+  (setq org-roam-node-display-template
+      (concat "${title:*} "
+              (propertize "${tags:10}" 'face 'org-tag))))
 (use-package inkscape-menu)
+(use-package n)
