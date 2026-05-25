@@ -25,7 +25,7 @@
 
 (use-package org-latex-preview
   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
-;; (use-package org
+  ;; (use-package org
   :bind
   (("C-c a" . org-agenda)
     ("C-c j" . my/goto-today-journal-entry))
@@ -71,37 +71,49 @@
     (save-excursion
       (goto-char (overlay-start ov))
       (when-let* ((elem (org-element-context))
-                  ((or (eq (org-element-type elem) 'latex-environment)
-                       (string-match-p "^\\\\\\[" (org-element-property :value elem))))
-                  (img (overlay-get ov 'display))
-                  (prop `(space :align-to (- center (0.55 . ,img))))
-                  (justify (propertize " " 'display prop 'face 'default)))
+                   ((or (eq (org-element-type elem) 'latex-environment)
+                      (string-match-p "^\\\\\\[" (org-element-property :value elem))))
+                   (img (overlay-get ov 'display))
+                   (prop `(space :align-to (- center (0.55 . ,img))))
+                   (justify (propertize " " 'display prop 'face 'default)))
         (overlay-put ov 'justify justify)
         (overlay-put ov 'before-string (overlay-get ov 'justify)))))
   (define-minor-mode org-latex-preview-center-mode
     "Center equations previewed with `org-latex-preview'."
     :global nil
     (if org-latex-preview-center-mode
-        (progn
-          (add-hook 'org-latex-preview-overlay-open-functions
-                    #'my/org-latex-preview-uncenter nil :local)
-          (add-hook 'org-latex-preview-overlay-close-functions
-                    #'my/org-latex-preview-recenter nil :local)
-          (add-hook 'org-latex-preview-overlay-update-functions
-                    #'my/org-latex-preview-center nil :local))
+      (progn
+        (add-hook 'org-latex-preview-overlay-open-functions
+          #'my/org-latex-preview-uncenter nil :local)
+        (add-hook 'org-latex-preview-overlay-close-functions
+          #'my/org-latex-preview-recenter nil :local)
+        (add-hook 'org-latex-preview-overlay-update-functions
+          #'my/org-latex-preview-center nil :local))
       (remove-hook 'org-latex-preview-overlay-close-functions
-                    #'my/org-latex-preview-recenter)
+        #'my/org-latex-preview-recenter)
       (remove-hook 'org-latex-preview-overlay-update-functions
-                    #'my/org-latex-preview-center)
+        #'my/org-latex-preview-center)
       (remove-hook 'org-latex-preview-overlay-open-functions
-                    #'my/org-latex-preview-uncenter)))
+        #'my/org-latex-preview-uncenter)))
 
   (add-to-list 'org-file-apps '("\\.svg\\'" . "/Applications/Inkscape.app/Contents/MacOS/inkscape %s"))
-  (setq org-image-actual-width t)
-  (setq org-image-max-width 0.8)
+  (setq org-image-actual-width nil)
+  (setq org-image-max-width 'fill-column)
   (setq org-image-align 'left)
   (setq org-startup-with-inline-images t)
-  (setq org-preview-latex-default-process 'dvipng)
+
+  (defun org-image-resize (frame)
+    (message "resize")
+    (when (derived-mode-p 'org-mode)
+      (if (< (window-total-width) 80)
+        (setq org-image-actual-width (window-pixel-width))
+        (setq org-image-actual-width (* 80 (window-font-width))))
+      (org-link-preview-refresh)))
+
+  (add-hook 'window-size-change-functions 'org-image-resize)
+  (advice-add 'text-scale-adjust :after (lambda (&rest _) (org-image-resize)))
+
+  (setq org-preview-latex-default-process 'dvisvgm)
   (add-to-list 'project-vc-extra-root-markers "Tectonic.toml")
   (add-to-list 'org-preview-latex-process-alist
     '(tectonic
