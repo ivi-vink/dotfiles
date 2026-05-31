@@ -15,3 +15,5 @@ pro $HOME/Programming
 ctx ${XDG_STATE_HOME}/context
 arch $HOME/.local/src/dotfiles/.local/src/bootc/arch
 pw ${PASSWORD_STORE_DIR}
+S  ${HOME}/Sync
+nb ${HOME}/Sync/my/notes/roam/n
