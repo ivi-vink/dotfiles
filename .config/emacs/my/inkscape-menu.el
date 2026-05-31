@@ -63,16 +63,21 @@ Use this function via a hook."
   (interactive)
   (x:inkscape-return))
 
+(defun x:inkscape--keyboard-paste ()
+  (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using command down"))
+(defun x:inkscape--keyboard-copy ()
+  (ns-do-applescript "tell application \"System Events\" to keystroke \"c\" using command down"))
+(defun x:inkscape--keyboard-shift-paste ()
+  (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using {command down, shift down}"))
+(defun x:inkscape--focus-inkscape ()
+  (ns-do-applescript "tell application \"Inkscape\" to activate"))
+
 (defun x:inkscape-return (&optional paste paste-style)
   (interactive)
   (x:inkscape-delete-popup-frame)
-  (ns-do-applescript "tell application \"Inkscape\" to activate")
-
-  (when paste
-    (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using command down"))
-
-  (when paste-style
-    (ns-do-applescript "tell application \"System Events\" to keystroke \"v\" using {command down, shift down}"))
+  (x:inkscape--focus-inkscape)
+  (when paste (x:inkscape--keyboard-paste)
+  (when paste-style (x:inkscape--keyboard-shift-paste))
   (keyboard-quit))
 
 (defun x:inkscape-menu-edit-latex ()
@@ -169,51 +174,50 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
 (defun x:inkscape--build-style-svg (styles)
   "Build an inkscape clipboard SVG from STYLE-ALIST."
   (let*
-    ((style-map
-       (seq-reduce
-         (lambda (m style)
-           (funcall (oref style argument) m))
-         (sort styles
-           :key (lambda (style) (oref style style-group))
-           :lessp (lambda (a b)
-                    (pcase a
-                      ("weight" t))))
-         (list
-           :fill "none"
-           :fill-opacity "1"
-           :stroke-width (number-to-string x:inkscape--style-normal-width)
-           :marker-start "none"
-           :marker-end "none"
-           :stroke-dasharray "none")))
+    ((sorted-styles (sort styles
+                      :key (lambda (style) (car style))
+                      :lessp (lambda (a b)
+                               (pcase a
+                                 ("weight" t)))))
+      (style-map
+        (seq-reduce
+          (lambda (m style)
+            (funcall (cdr style) m))
+          ((lambda(x) (pp x) x) sorted-styles)
+          (list
+            :fill "none"
+            :fill-opacity "1"
+            :stroke-width (number-to-string x:inkscape--style-normal-width)
+            :marker-start "none"
+            :marker-end "none"
+            :stroke-dasharray "none")))
       (style-string (cl-loop for (k v) on style-map by #'cddr
                       collect (format "%s: %s" (substring (symbol-name k) 1) v)
                       into parts finally return (mapconcat (lambda(i)i) parts ";")))
       (arrow-string (if (let ((start (plist-get style-map :marker-start))
-                                (end (plist-get style-map :marker-end)))
+                               (end (plist-get style-map :marker-end)))
                           (or
                             (and start (not (equal start "none")))
                             (and end (not (equal end "none")))))
                       (let
                         ((w (plist-get style-map :stroke-width)))
+                        (pp "stroke-width")
+                        (pp w)
                         (format "
 <defs id=\"marker-defs\">
 <marker
 id=\"marker-arrow-%s\"
 orient=\"auto-start-reverse\"
-viewBox=\"-2 -2.5 4 5\"
 refY=\"0\" refX=\"0\"
-markerHeight=\"1.690\" markerWidth=\"0.911\">
-  <g transform=\"scale(%s)\">
+markerUnits=\"strokeWidth\" markerHeight=\"10.402542\" markerWidth=\"7.0301356\">
     <path
        d=\"M -1.55415,2.0722 C -1.42464,1.29512 0,0.1295 0.38852,0 0,-0.1295 -1.42464,-1.29512 -1.55415,-2.0722\"
        style=\"fill:none;stroke:#000000;stroke-width:0.6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1\"
        inkscape:connector-curvature=\"0\" />
-   </g>
 </marker>
 </defs>
 "
                           w
-                          (/ (+ (* 2.40 (string-to-number w)) 3.87) (* 4.5 (string-to-number w)))
                           ))
                       "")))
     (pp style-string)
@@ -242,7 +246,7 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
 
 (cl-defmethod transient-infix-value ((obj x:inkscape--style-switch))
   (when (oref obj value)
-    (cons (oref obj style-group) (oref obj value))))
+    (cons (oref obj style-group) (oref obj argument))))
 
 (cl-defmethod transient-format-value ((obj x:inkscape--style-switch))
   (propertize (oref obj description)
@@ -252,6 +256,10 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
                           'transient-argument)
                       'transient-inactive-argument)))
 
+(defun x:inkscape--confirm-style ()
+  (interactive)
+  (x:inkscape-paste-style (transient-args 'x:inkscape)))
+
 (cl-defmethod transient-infix-set ((obj x:inkscape--style-switch) value)
   ;; Deactivate all other infixes in the same style-group
   (dolist (other transient--suffixes)
@@ -259,22 +267,7 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
             (equal (oref other style-group) (oref obj style-group))
             (not (eq other obj)))
       (oset other value nil)))
-  (oset obj value (not (oref obj value)))
-  (let* ((styles
-           (seq-filter
-             (lambda (suffix)
-               (and (cl-typep suffix 'x:inkscape--style-switch) (oref suffix value)))
-             transient--suffixes))
-          (groups
-            (mapcar
-              (lambda (style) (oref style style-group))
-              styles)))
-    (when
-      (and
-        (member "fill" groups)
-        (member "stroke" groups)
-        (member "weight" groups))
-      (x:inkscape-paste-style styles))))
+  (oset obj value (not (oref obj value))))
 
 (defun map-put-and-return (m k v) (plist-put m k v))
 (transient-define-infix x:inkscape--style-nofill () "Style: nofill"
@@ -283,7 +276,7 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
   :description "nofill"
   :style-value "nofill"
   :init-value (lambda (obj) (oset obj value t))
-  :key "w"
+  :key "n"
   :argument (lambda (m)
               (thread-first m
                 (map-put-and-return :fill "none")
@@ -348,6 +341,7 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
   :style-group "stroke"
   :description "solid"
   :style-value "solid"
+  :init-value (lambda (obj) (oset obj value t))
   :key "s"
   :argument
   (lambda (m)
@@ -385,7 +379,7 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
   :description "normal"
   :init-value (lambda (obj) (oset obj value t))
   :style-value "normal"
-  :key "n"
+  :key "m"
   :argument
   (lambda (m)
     (thread-first m
@@ -432,8 +426,10 @@ markerHeight=\"1.690\" markerWidth=\"0.911\">
       (x:inkscape--style-normal)
       (x:inkscape--style-thick)
       (x:inkscape--style-heavy)]]
-  ["Paste"
+  ["Actions"
+    ("SPC" "Confirm Style" x:inkscape--confirm-style)
     ("t" "Edit latex"   x:inkscape-menu-edit-latex :transient t)
+    ("s" "Save object"   x:inkscape-menu-edit-latex :transient t)
     ]
   ["Other"
     ("q" "Quit"       x:inkscape-return)])
