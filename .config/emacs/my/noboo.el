@@ -5,15 +5,16 @@
 ;; noboo menu
 (transient-define-prefix noboo-menu ()
   "Interact with notes db"
+  ["Flags"
+    (noboo--menu-flag-mode)
+    (noboo--menu-flag-book)
+    (noboo--menu-flag-chapter)]
   ["Noboo"
-    ["Selector"
-      (noboo--menu-flag-mode)
-      (noboo--menu-flag-book)
-      (noboo--menu-flag-chapter)]
-    ["Notes"
-      ("l" "Log" noboo-roam-capture-log)
-      ("e" "Edit" noboo-edit)
-      ("i" "Insert" noboo-insert)]])
+    [("e" "Edit" noboo-edit)
+      ("i" "Insert" noboo-insert)
+      ("l" "Log" noboo-roam-capture-log)]
+    [("E" "Edit current" noboo-roam-capture-log)
+      ("I" "Insert current" noboo-roam-capture-log)]])
 
 (transient-define-infix noboo--menu-flag-mode () "--mode"
   :class 'transient-switches
@@ -48,10 +49,20 @@
   :key "-c"
   :argument "--chapter="
   ;; :init-value (lambda (obj) (oset obj value "log"))
-  :reader (lambda (prompt initial-input history)
-            (funcall
-              (noboo--pick-line-from-command "noboo" "get" "chapters")
-              prompt initial-input history)))
+  :reader
+  (lambda (prompt initial-input history)
+    (let* ((book-value
+             (when-let* ((suffix (car (seq-filter
+                                   (lambda (s)
+                                     (when (cl-typep s 'transient-option)
+                                       (equal (oref s argument) "--book=")))
+                                   transient--suffixes))))
+               (oref suffix value))))
+      (funcall
+        (apply #'noboo--pick-line-from-command
+          (append '("noboo" "get" "chapters")
+            (when book-value (list "--book" book-value))))
+        prompt initial-input history))))
 
 (setq noboo--config nil)
 (defun noboo--read-config ()
@@ -472,7 +483,36 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
       (insert "</g>\n"))))
 
 (defun noboo--inkscape-save-object ()
-  (interactive))
+  (interactive)
+  (when-let*
+    ((cfg (noboo--read-config))
+      (books-dir (plist-get cfg :books-dir))
+      (inkscape-objects-dir (file-name-concat books-dir ".noboo" "inkscape" "objects")))
+    (f-mkdir-full-path inkscape-objects-dir)
+    (noboo--focus-inkscape)
+    (sleep-for 0.3)
+    (noboo--keyboard-copy)
+    (when-let* ((object (noboo--inkscape-clipboard-get)))
+      (noboo--ns-raise-emacs-with-frame (selected-frame))
+      (when-let* ((choice
+                    (completing-read "Object:"
+                      (mapcar
+                        (lambda (filename)
+                          (f-base filename))
+                        (f-entries inkscape-objects-dir))
+                      nil nil nil nil)))
+        (with-temp-file (file-name-concat inkscape-objects-dir (string-join (list choice ".svg")))
+          (insert object)))))
+  (noboo--focus-inkscape)
+  (noboo--window-delete-popup-frame))
+
+(defun noboo--inkscape-clipboard-get ()
+  (with-temp-buffer
+    (let ((status
+            (apply #'call-process (list "inkscape-clipboard-get" nil (current-buffer) nil "image/x-inkscape-svg"))))
+      (unless (eq status 0)
+	(error "%s exited with status %s" "inkscape-clipboard-get" status))
+      (buffer-string))))
 
 (defun noboo--inkscape-return (&optional paste paste-style)
   (interactive)
