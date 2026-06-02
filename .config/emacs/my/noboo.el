@@ -5,17 +5,68 @@
 ;; noboo menu
 (transient-define-prefix noboo-menu ()
   "Interact with notes db"
-  ["Notes"
-    ("l" "Log" noboo-roam-capture-log)
-    ("e" "Edit" noboo-edit)])
+  ["Noboo"
+    ["Selector"
+      (noboo--menu-flag-mode)
+      (noboo--menu-flag-book)
+      (noboo--menu-flag-chapter)]
+    ["Notes"
+      ("l" "Log" noboo-roam-capture-log)
+      ("e" "Edit" noboo-edit)
+      ("i" "Insert" noboo-insert)]])
 
+(transient-define-infix noboo--menu-flag-mode () "--mode"
+  :class 'transient-switches
+  :description "EditMode for Note"
+  :key "m"
+  :argument-format "--mode=%s"
+  :argument-regexp "pen|figure"
+  :choices '("pen" "figure"))
+
+(transient-define-infix noboo--menu-flag-book () "--book"
+  :class 'transient-option
+  :description "Book"
+  :key "-b"
+  :argument "--book="
+  :init-value (lambda (obj)
+                (when-let* ((file-name (expand-file-name default-directory))
+                             (books-dir (plist-get (noboo--read-config) :books-dir))
+                             ((< (length books-dir) (length file-name)))
+                             (rel (substring-no-properties file-name (+ 1 (length books-dir))))
+                             (book (seq-filter
+                                     (lambda (book-name) (string-match-p (regexp-quote book-name) rel))
+                                     (cdr (process-lines "noboo" "get" "books")))))
+                  (oset obj value (car book))))
+  :reader (lambda (prompt initial-input history)
+            (funcall
+              (noboo--pick-line-from-command "noboo" "get" "books")
+              prompt initial-input history)))
+
+(transient-define-infix noboo--menu-flag-chapter () "--chapter"
+  :class 'transient-option
+  :description "Chapter"
+  :key "-c"
+  :argument "--chapter="
+  ;; :init-value (lambda (obj) (oset obj value "log"))
+  :reader (lambda (prompt initial-input history)
+            (funcall
+              (noboo--pick-line-from-command "noboo" "get" "chapters")
+              prompt initial-input history)))
+
+(setq noboo--config nil)
 (defun noboo--read-config ()
-  (flatten-list
-    (mapcar
-      (lambda (line)
-        (let ((parts (string-split line "=")))
-          (list (intern (string-join (list ":" (car parts)))) (cdr parts))))
-      (seq-filter (lambda (l) (> (length l) 0))  (process-lines "noboo" "config" "list")))))
+  (if noboo--config
+    noboo--config
+    (let
+      ((cfg
+         (flatten-list
+           (mapcar
+             (lambda (line)
+               (let ((parts (string-split line "=")))
+                 (list (intern (string-join (list ":" (car parts)))) (cdr parts))))
+             (seq-filter (lambda (l) (> (length l) 0))  (process-lines "noboo" "config" "list"))))))
+      (setq noboo--config cfg)
+      cfg)))
 
 (defun noboo--parse-note-row (line)
   (flatten-list (seq-mapn (lambda (key value) (list key value))
@@ -26,21 +77,27 @@
   "Run COMMAND, prompt user to pick one output line, return the chosen line."
   (let* ((lines (seq-filter (lambda (l) (> (length l) 0))
                   (apply #'process-lines (append (list program) args)))))
-    (completing-read "Pick: " (cdr lines) nil nil)))
+    (lambda (prompt initial-input history)
+      (completing-read prompt (cdr lines) nil nil initial-input history))))
 
 (defun noboo-edit ()
   (interactive)
-  (when (> (start-process "noboo" "*noboo*" "noboo" "edit") 0)
+  (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "edit") (transient-args 'noboo-menu))))
+
+(defun noboo-insert ()
+  (interactive)
+  (when (> (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "insert") (transient-args 'noboo-menu))) 0)
       (error "tectonic compile error")))
 
-(defun noboo-get (book chapter name)
+(defun noboo-get-notes (book chapter name)
   (interactive)
   (let ((bookflag (if book (list "-book" book) '()))
          (chapterflag (if chapter (list "-chapter" chapter) '()))
          (nameflag (if name (list "-name" name) '())))
     (noboo--parse-note-row
-      (apply #'noboo--pick-line-from-command
-        (append '("noboo" "get") bookflag chapterflag nameflag)))))
+      (let ((reader (apply #'noboo--pick-line-from-command
+                      (append '("noboo" "get" "notes") bookflag chapterflag nameflag))))
+        (funcall reader "Note: " nil nil)))))
 
 (defun noboo-roam-capture-log ()
   (interactive)
@@ -49,7 +106,7 @@
        (list (list "l" "WorkLog"
                'entry
                (list 'file
-                 (let ((note (noboo-get nil "log" nil)))
+                 (let ((note (noboo-get-notes nil "log" nil)))
                    (string-join
                      (list
                        (plist-get (noboo--read-config) :books-dir)
@@ -461,8 +518,8 @@ Use this function via a hook."
 
 (defmacro noboo--define-with-popup-frame (command)
   "Define interactive function which calls COMMAND in a new frame.
-Make the new frame have the `noboo--window-popup-frame' parameter."
-  `(defun ,(intern (format "noboo--window-popup-%s" command)) ()
+Make the new frame have the `noboo-window-popup-frame' parameter."
+  `(defun ,(intern (format "noboo-window-popup-%s" command)) ()
      ,(format "Run `%s' in a popup frame with `noboo--window-popup-frame' parameter.
 Also see `noboo--window-delete-popup-frame'." command)
      (interactive)
