@@ -161,6 +161,7 @@
     ("SPC" "Confirm Style" noboo--inkscape-confirm-style)
     ("t" "Edit latex"   noboo--inkscape-edit-latex :transient t)
     ("c" "Save object"   noboo--inkscape-save-object)
+    ("v" "Paste object"   noboo--inkscape-paste-object)
     ]
   ["Other"
     ("q" "Quit"       noboo--inkscape-return)])
@@ -487,24 +488,46 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
   (when-let*
     ((cfg (noboo--read-config))
       (books-dir (plist-get cfg :books-dir))
-      (inkscape-objects-dir (file-name-concat books-dir ".noboo" "inkscape" "objects")))
+      (inkscape-objects-dir (file-name-concat books-dir ".noboo" "inkscape" "objects"))
+      (choice
+        (completing-read "Object:"
+          (mapcar
+            (lambda (filename)
+              (f-base filename))
+            (f-entries inkscape-objects-dir))
+          nil nil nil nil)))
     (f-mkdir-full-path inkscape-objects-dir)
     (noboo--focus-inkscape)
-    (sleep-for 0.3)
+    (sleep-for 0.2)
     (noboo--keyboard-copy)
     (when-let* ((object (noboo--inkscape-clipboard-get)))
-      (noboo--ns-raise-emacs-with-frame (selected-frame))
-      (when-let* ((choice
-                    (completing-read "Object:"
-                      (mapcar
-                        (lambda (filename)
-                          (f-base filename))
-                        (f-entries inkscape-objects-dir))
-                      nil nil nil nil)))
-        (with-temp-file (file-name-concat inkscape-objects-dir (string-join (list choice ".svg")))
-          (insert object)))))
-  (noboo--focus-inkscape)
-  (noboo--window-delete-popup-frame))
+      (with-temp-file (file-name-concat inkscape-objects-dir (string-join (list choice ".svg")))
+        (insert object))
+      (noboo--focus-inkscape)
+      (noboo--window-delete-popup-frame))))
+
+(defun noboo--inkscape-paste-object ()
+  (interactive)
+  (when-let*
+    ((cfg (noboo--read-config))
+      (books-dir (plist-get cfg :books-dir))
+      (inkscape-objects-dir (file-name-concat books-dir ".noboo" "inkscape" "objects"))
+      (choice
+        (completing-read "Object:"
+          (mapcar
+            (lambda (filename)
+              (f-base filename))
+            (f-entries inkscape-objects-dir))
+          nil nil nil nil)))
+    (when-let* ((object (file-name-concat inkscape-objects-dir (string-join (list choice ".svg")))))
+      (noboo--inkscape-clipboard-set
+        (with-temp-buffer
+          (insert-file-contents object)
+          (buffer-string)))
+      (noboo--focus-inkscape)
+      (sleep-for 0.2)
+      (noboo--keyboard-paste)
+      (noboo--window-delete-popup-frame))))
 
 (defun noboo--inkscape-clipboard-get ()
   (with-temp-buffer
@@ -513,6 +536,13 @@ header, or they will be appended." :group 'x:inkscape-menu :type 'string)
       (unless (eq status 0)
 	(error "%s exited with status %s" "inkscape-clipboard-get" status))
       (buffer-string))))
+
+(defun noboo--inkscape-clipboard-set (content)
+  (interactive)
+  (let ((infile "/tmp/emacs.inkscape.paste.svg"))
+    (with-temp-file infile (insert content))
+    (when (> (call-process "inkscape-clipboard" infile "*noboo*" nil "image/x-inkscape-svg") 0)
+      (error "clipboard error"))))
 
 (defun noboo--inkscape-return (&optional paste paste-style)
   (interactive)

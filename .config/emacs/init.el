@@ -36,7 +36,7 @@
     :page-width 0.8)
   (plist-put
     org-latex-preview-appearance-options
-    :zoom 2.1)
+    :zoom 1.6)
   (setq org-image-actual-width 0.8)
 
   ;; ;; Use dvisvgm to generate previews
@@ -102,8 +102,7 @@
   (setq org-image-align 'left)
   (setq org-startup-with-inline-images t)
 
-  (defun org-image-resize (frame)
-    (message "resize")
+  (defun org-image-resize (&optional frame)
     (when (derived-mode-p 'org-mode)
       (if (< (window-total-width) 80)
         (setq org-image-actual-width (window-pixel-width))
@@ -172,7 +171,7 @@
     '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
         "* %?\n  Entered on %U\n  %i\n  %a")
        ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
-         "* %?\n  DATE: %T\n %i\n  %a")
+         "* %?\n  SCHEDULED: %T\n %i\n  %a")
        ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
          "* %?\n  DEADLINE: %T\n %i\n  %a")))
   (defun my/goto-today-journal-entry ()
@@ -314,52 +313,53 @@
 (use-package yaml-pro
   :ensure t
   :config
-  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+  ;; (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+  ;; (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+  ;; (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
 
-  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
 
-  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
-  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+  ;; (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+  ;; (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+  ;; (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
 
-  (defvar-keymap my/yaml-pro/tree-repeat-mapo
-    :repeat t
-    "n" #'yaml-pro-ts-next-subtree
-    "p" #'yaml-pro-ts-prev-subtree
-    "u" #'yaml-pro-ts-up-level
-    "d" #'yaml-pro-ts-down-level
-    "m" #'yaml-pro-ts-mark-subtree
-    "k" #'yaml-pro-ts-kill-subtree
-    "a" #'yaml-pro-ts-first-sibling
-    "e" #'yaml-pro-ts-last-sibling
-    "SPC" #'my/yaml-pro/set-mark
-    "f" #'yaml-pro-fold-at-point
-    "o" #'yaml-pro-unfold-at-point
-    )
+  ;; (defvar-keymap my/yaml-pro/tree-repeat-mapo
+  ;;   :repeat t
+  ;;   "n" #'yaml-pro-ts-next-subtree
+  ;;   "p" #'yaml-pro-ts-prev-subtree
+  ;;   "u" #'yaml-pro-ts-up-level
+  ;;   "d" #'yaml-pro-ts-down-level
+  ;;   "m" #'yaml-pro-ts-mark-subtree
+  ;;   "k" #'yaml-pro-ts-kill-subtree
+  ;;   "a" #'yaml-pro-ts-first-sibling
+  ;;   "e" #'yaml-pro-ts-last-sibling
+  ;;   "SPC" #'my/yaml-pro/set-mark
+  ;;   "f" #'yaml-pro-fold-at-point
+  ;;   "o" #'yaml-pro-unfold-at-point
+  ;;   )
 
-  (defun my/yaml-pro/set-mark ()
-    (interactive)
-    (my/region/set-mark 'my/yaml-pro/set-mark))
+  ;; (defun my/yaml-pro/set-mark ()
+  ;;   (interactive)
+  ;;   (my/region/set-mark 'my/yaml-pro/set-mark))
 
-  (defun my/region/set-mark (command-name)
-    (if (eq last-command command-name)
-      (if (region-active-p)
-        (progn
-          (deactivate-mark)
-          (message "Mark deactivated"))
-        (activate-mark)
-        (message "Mark activated"))
-      (set-mark-command nil))))
+  ;; (defun my/region/set-mark (command-name)
+  ;;   (if (eq last-command command-name)
+  ;;     (if (region-active-p)
+  ;;       (progn
+  ;;         (deactivate-mark)
+  ;;         (message "Mark deactivated"))
+  ;;       (activate-mark)
+  ;;       (message "Mark activated"))
+  ;;     (set-mark-command nil)))
+  )
 
 (use-package editorconfig
   :ensure t
@@ -607,7 +607,7 @@ Return an event vector."
   "Run COMMAND, prompt user to pick one output line, return the chosen line."
   (let* ((out (string-trim-right (shell-command-to-string command)))
           (lines (split-string out "\n" t)))
-    (completing-read "Pick: " lines nil t)))
+    (completing-read "Pick: " lines nil (lambda (input) input))))
 
 (defun my/issue ()
   "Get issue number."
@@ -639,6 +639,44 @@ Return an event vector."
   :ensure t
   :config
   (transient-append-suffix 'magit-commit "c" '("I" "Issue commit" my/issue-commit)))
+
+(use-package forge
+  :ensure t
+  :config
+;; (GITHOST APIHOST WEBHOST CLASS).
+
+;; - GITHOST is the host used to access repositories on the forge using
+;;   Git.
+
+;; - APIHOST is the host used to access the forge’s API.  For some forges
+;;   the isn’t just a host, but a host followed by the path to the API’s
+;;   endpoint.
+
+;; - WEBHOST is the host used to access repositories on this forge using
+;;   a browser.  The IDs used to identify repositories from the forge in
+;;   the local database also derives from this value.
+
+;; - CLASS is the class to be used for repositories from the forge.
+  (add-to-list
+    'forge-alist
+    (list "ssh.dev.azure.com:v3" "dev.azure.com/%o/_apis" "dev.azure.com" 'forge-ado-repository))
+  (defclass forge-ado-repository (forge-unusedapi-repository)
+    ((discussions-url-format     :initform "https://%h/%o/%n/discussions")
+      (discussion-url-format      :initform "https://%h/%o/%n/discussions/%i")
+      (discussion-post-url-format :initform "https://%h/%o/%n/discussions/%i#discussioncomment-%I")
+      (issues-url-format          :initform "https://%h/%o/%n/issues")
+      (issue-url-format           :initform "https://%h/%o/%n/issues/%i")
+      (issue-post-url-format      :initform "https://%h/%o/%n/issues/%i#issuecomment-%I")
+      (pullreqs-url-format        :initform "https://%h/%o/_git/%n/pullrequests")
+      (pullreq-url-format         :initform "https://%h/%o/%n/pull/%i")
+      (pullreq-post-url-format    :initform "https://%h/%o/%n/pull/%i#issuecomment-%I")
+      (commit-url-format          :initform "https://%h/%o/_git/%n/commit/%r")
+      (branch-url-format          :initform "https://%h/%o/_git/%n/commits?itemVersion=GB%r")
+      (remote-url-format          :initform "https://%h/%o/%n")
+      (blob-url-format            :initform "https://%h/%o/%n/blob/%r/%f")
+      (create-issue-url-format    :initform "https://%h/%o/%n/issues/new")
+      (create-pullreq-url-format  :initform "https://%h/%o/%n/compare")
+      (pullreq-refspec            :initform "+refs/pull/*/head:refs/pullreqs/*"))))
 
 (use-package latex)
 (use-package auctex
@@ -915,12 +953,12 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :ensure t
   :bind ("C-c ." . agent-shell)
   :config
-  ;; (setq agent-shell-pi-environment
-  ;;   (agent-shell-make-environment-variables
-  ;;     "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
-  ;; (setq agent-shell-opencode-environment
-  ;;   (agent-shell-make-environment-variables
-  ;;     "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
+  (setq agent-shell-pi-environment
+    (agent-shell-make-environment-variables
+      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
+  (setq agent-shell-opencode-environment
+    (agent-shell-make-environment-variables
+      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
   )
 (use-package agent-review
   :ensure t)
@@ -937,35 +975,35 @@ Looks for .venv directory in project root and activates the Python interpreter."
       (when (< (length filtered) (length labels))
 	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
 
-(use-package denote
-  :ensure t
-  :hook (dired-mode . denote-dired-mode)
-  :bind
-  (("C-c l n" . denote)
-    ("C-c l r" . denote-rename-file)
-    ("C-c l l" . denote-link)
-    ("C-c l b" . denote-backlinks)
-    ("C-c l d" . denote-dired)
-    ("C-c l g" . denote-grep))
-  :config
-  (setq denote-sort-dired-extra-prompts '());; sort-by-component reverse-sort)
-  (setq denote-excluded-files-regexp ".tex$")
-  (setq xref-search-program
-      (cond
-       ((or (executable-find "ripgrep")
-            (executable-find "rg"))
-        'ripgrep)
-       ((executable-find "ugrep")
-        'ugrep)
-       (t
-        'grep)))
-  (setq denote-directory (expand-file-name "~/Sync/my/notes/denote"))
+;; (use-package denote
+;;   :ensure t
+;;   :hook (dired-mode . denote-dired-mode)
+;;   :bind
+;;   (("C-c l n" . denote)
+;;     ("C-c l r" . denote-rename-file)
+;;     ("C-c l l" . denote-link)
+;;     ("C-c l b" . denote-backlinks)
+;;     ("C-c l d" . denote-dired)
+;;     ("C-c l g" . denote-grep))
+;;   :config
+;;   (setq denote-sort-dired-extra-prompts '());; sort-by-component reverse-sort)
+;;   (setq denote-excluded-files-regexp ".tex$")
+;;   (setq xref-search-program
+;;       (cond
+;;        ((or (executable-find "ripgrep")
+;;             (executable-find "rg"))
+;;         'ripgrep)
+;;        ((executable-find "ugrep")
+;;         'ugrep)
+;;        (t
+;;         'grep)))
+;;   (setq denote-directory (expand-file-name "~/Sync/my/notes/denote"))
 
-  ;; Automatically rename Denote buffers when opening them so that
-  ;; instead of their long file name they have, for example, a literal
-  ;; "[D]" followed by the file's title.  Read the doc string of
-  ;; `denote-rename-buffer-format' for how to modify this.
-  (denote-rename-buffer-mode 1))
+;;   ;; Automatically rename Denote buffers when opening them so that
+;;   ;; instead of their long file name they have, for example, a literal
+;;   ;; "[D]" followed by the file's title.  Read the doc string of
+;;   ;; `denote-rename-buffer-format' for how to modify this.
+;;   (denote-rename-buffer-mode 1))
 
 
 ;;;; The emacsclient call depends on the daemon or `server-mode' (I use the latter)
@@ -973,16 +1011,29 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :ensure nil
   :defer 1
   :config
+  (setenv "EDITOR" "nemacsclient")
   (unless (server-running-p)
     (server-start)))
 
 (use-package org-roam
   :ensure t
   :config
+  (add-to-list 'org-roam-capture-templates
+    '("l" "log"
+       entry "* %t
+
+%?"
+       :target
+       (file+head
+	 "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
+")
+       :unnarrowed t))
   (setq org-roam-directory "~/Sync/my/notes/roam")
-  (org-roam-db-autosync-mode)
+  (setq org-roam-db-autosync-mode nil)
   (setq org-roam-node-display-template
-      (concat "${title:*} "
-              (propertize "${tags:10}" 'face 'org-tag))))
-(use-package inkscape-menu)
-(use-package n)
+    (concat "${title:*} "
+      (propertize "${tags:10}" 'face 'org-tag))))
+
+(use-package noboo
+  :bind
+  (("C-c g" . noboo-menu)))
