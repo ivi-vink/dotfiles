@@ -1,0 +1,12 @@
+#!/bin/bash
+# Usage: inkscape-clipboard-get "image/x-inkscape-svg" > out.svg
+MIME="$1"
+python3 -c "
+import sys, AppKit
+pb = AppKit.NSPasteboard.generalPasteboard()
+data = pb.dataForType_('$MIME')
+if data is None:
+    sys.stderr.write('No data for type $MIME\n')
+    sys.exit(1)
+sys.stdout.buffer.write(bytes(data))
+"
