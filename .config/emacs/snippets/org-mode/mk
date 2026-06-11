@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: mk
+# key: /
+# condition: (texmathp)
+# type: command
+# --
+(let* ((line (buffer-substring (line-beginning-position) (point)))
+        (result (string-match "\\(\\([[:digit:]]\+\\)\\|\\([[:digit:]]\*\\)\\(\\\\\\)\?\\([A-Za-z]\+\\)\\([\\\\^\\|_]\\([[:digit:]]\\|{[[:digit:]]\+}\\)\\)\?\\) $" line))
+        (capture (match-string 1 line)))
+  (when capture
+    (yas-expand-snippet
+     (concat "\\frac{" capture "}{${1}} $0")
+     (+ (line-beginning-position) result) (point))
+  )
+)
