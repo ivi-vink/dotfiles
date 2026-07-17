@@ -27,8 +27,7 @@
   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
   ;; (use-package org
   :bind
-  (("C-c a" . org-agenda)
-    ("C-c j" . my/goto-today-journal-entry))
+  (("C-c a" . org-agenda))
   :config
   ;; Increase preview width
   (plist-put
@@ -112,7 +111,18 @@
   (add-hook 'window-size-change-functions 'org-image-resize)
   (advice-add 'text-scale-adjust :after (lambda (&rest _) (org-image-resize)))
 
-  (setq org-preview-latex-default-process 'dvisvgm)
+  (setq org-preview-latex-default-process 'mydvisvgm)
+  (add-to-list 'org-preview-latex-process-alist
+    '(mydvisvgm :programs ("latex" "dvisvgm") :description "dvi > svg"
+	  :message
+	  "you need to install the programs: latex and dvisvgm."
+	  :image-input-type "dvi" :image-output-type "svg"
+	  :latex-compiler
+	  ("%l -interaction nonstopmode -output-directory %o %f")
+	  :latex-precompiler
+	  ("%l -output-directory %o -ini -jobname=%b \"&%L\" mylatexformat.ltx %f")
+	  :image-converter
+	  ("dvisvgm --page=1- --optimize --clipjoin --relative --no-fonts -v3 --message='processing page {?pageno}: output written to {?svgpath}' --exact-bbox --bbox=preview -o %B-%%9p.svg %f")))
   (add-to-list 'project-vc-extra-root-markers "Tectonic.toml")
   (add-to-list 'org-preview-latex-process-alist
     '(tectonic
@@ -129,7 +139,7 @@
 
   (defun my/org-create-and-open-drawing ()
     "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
-    (interactive)
+   (interactive)
     (let* ((dir "drawings/")
             (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
             (fullpath (expand-file-name filename dir)))
@@ -180,7 +190,8 @@
     (find-file "~/Sync/my/notes/notes.org")
     (widen)
     (org-datetree-find-date-create (calendar-current-date))
-    (org-narrow-to-subtree)))
+    (org-narrow-to-subtree))
+  (setq org-export-async-init-file "~/.config/emacs/org-async-init.el"))
 
 (use-package visual-regexp
   :ensure t)
@@ -296,7 +307,7 @@
 (use-package tramp
   :config
   (setq tramp-remote-process-environment
-    '("ENV='/etc/profile'"
+    '("ENV=''"
        "TMOUT=0"
        "LC_CTYPE=''"
        "CDPATH="
@@ -792,11 +803,6 @@ Return an event vector."
   (with-eval-after-load 'eglot
     (add-to-list
       'eglot-server-programs
-      '((ruby-mode ruby-ts-mode) "ruby-lsp")))
-
-  (with-eval-after-load 'eglot
-    (add-to-list
-      'eglot-server-programs
       '((tsx-ts-mode typescript-ts-mode js-mode js-jsx-mode js-ts-mode)
          . ("rass"
              "--"
@@ -814,13 +820,21 @@ Return an event vector."
           ("C-c l d" . eglot-find-typeDefinition)
           ("C-c l i" . eglot-find-implementation)
           ("C-c l g" . eglot-find-declaration)
-          ("C-c l f" . eglot-format)))
+          ("C-c l f" . eglot-format))
+  :config
+  (add-to-list 'eglot-server-programs
+    '(python-mode . ("basedpyright-langserver" "--stdio"
+                      "--" :initializationOptions
+                      (:pyright (:disableOrganizeImports t)
+                        :python.analysis (:diagnosticMode "openFilesOnly"))))))
 
 (use-package icomplete
   :bind ((:map icomplete-minibuffer-map
            ("C-n" . icomplete-forward-completions)
            ("C-p" . icomplete-backward-completions)
            ("C-v" . icomplete-vertical-toggle)
+           ("TAB" . icomplete-force-complete)
+           ("C-j" . exit-minibuffer)
            ("RET" . icomplete-force-complete-and-exit))
           (:map icomplete-vertical-mode-minibuffer-map
             ("C-n" . icomplete-forward-completions)
@@ -832,11 +846,11 @@ Return an event vector."
             ("C-j" . exit-minibuffer))
           );; So we can exit commands like
   ;; `multi-file-replace-regexp-as-diff'
-  :hook
-  (after-init-hook .
-    (lambda ()
-      (fido-mode -1)
-      (icomplete-vertical-mode 1)))
+  ;; :hook
+  ;; (after-init-hook .
+  ;;   (lambda ()
+  ;;     (fido-mode -1)
+  ;;     (icomplete-vertical-mode -1)))
   :config
   (defun my/icomplete-force-complete-and-exit ()
     (interactive)
@@ -876,8 +890,8 @@ Return an event vector."
   (setq icomplete-max-delay-chars 0)
   (setq icomplete-scroll t)
 
-  (setq icomplete-vertical-in-buffer-adjust-list t)
-  (setq icomplete-vertical-render-prefix-indicator t)
+  ;; (setq icomplete-vertical-in-buffer-adjust-list t)
+  ;; (setq icomplete-vertical-render-prefix-indicator t)
 
   )
 
@@ -933,22 +947,35 @@ Looks for .venv directory in project root and activates the Python interpreter."
 ;; URLS: https://ai.pionerds.nl/v1
 ;; api key: (zie pionative keyvault clients/pionative-testllm-api-key)
 ;; model: qwen3.6:35b
+(use-package gptel-inline)
 (use-package gptel
   :ensure t
-  ;; :bind ("C-c ." . gptel-menu)
+  :bind ("C-c l" . gptel-inline)
   :config
-  ;; (gptel-make-openai "Pionative"
-  ;;   :host "ai.pionerds.nl"
-  ;;   :protocol "https"
-  ;;   :key (plist-get (car (auth-source-search :host "ai.pionerds.nl" :type 'pass)) :secret)
-  ;;   :endpoint "/v1/chat/completions"
-  ;;   :stream t
-  ;;   :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
+
+  (gptel-make-openai "mistral"
+    :host "api.mistral.ai"
+    :endpoint "/v1/chat/completions"
+    :protocol "https"
+    :key (auth-source-pass-get 'secret "mistral.ai/mike@pionative.com")
+    :stream t
+    :models '("mistral-small" "mistral-medium"))
+
+  (gptel-make-openai "Pionative"
+    :host "ai.pionerds.nl"
+    :protocol "https"
+    :key (auth-source-pass-get 'secret "ai.pionerds.nl")
+    :endpoint "/v1/chat/completions"
+    :stream t
+    :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
   )
+
 (use-package gptel-agent
   :ensure t)
+
 (use-package acp
   :ensure t)
+
 (use-package agent-shell
   :ensure t
   :bind ("C-c ." . agent-shell)
@@ -1036,4 +1063,40 @@ Looks for .venv directory in project root and activates the Python interpreter."
 
 (use-package noboo
   :bind
-  (("C-c g" . noboo-menu)))
+  (("C-c j" . noboo-menu)))
+
+(use-package yasnippet
+  :config
+  (setq yas-snippet-dirs
+    '("~/.config/emacs/snippets"                 ;; personal snippets
+       ))
+  (yas-global-mode 1)
+  (add-to-list 'warning-suppress-types '(yasnippet backquote-change))
+  (define-key yas-minor-mode-map (kbd "<tab>") nil)
+  (define-key yas-minor-mode-map (kbd "TAB") nil)
+  (define-key yas-minor-mode-map (kbd "SPC") yas-maybe-expand)
+  )
+
+(use-package ghostel
+  :bind (("C-x m" . ghostel)
+         :map ghostel-semi-char-mode-map
+         ("C-s"  . consult-line)
+         ("C-k"  . my/ghostel-send-C-k-and-kill)
+         ;; I'm used to go up/down the shell history with M-n/p from eshell
+         ;; Simulate this behavior in ghostel by sending C-p and C-n
+         ("M-p" . (lambda () (interactive) (ghostel-send-key "p" "ctrl")))
+         ("M-n" . (lambda () (interactive) (ghostel-send-key "n" "ctrl")))
+         :map project-prefix-map
+         ("m" . ghostel-project)
+         ("M" . ghostel-project-list-buffers))
+  :config
+  (defun my/ghostel-send-C-k-and-kill ()
+    "Send `C-k' to ghostel.
+Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
+    (interactive)
+    (kill-ring-save (point) (line-end-position))
+    (ghostel-send-key "k" "ctrl"))
+
+  (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
+  (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
+  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
