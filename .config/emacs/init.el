@@ -242,6 +242,23 @@
   (column-number-mode)
   (repeat-mode)
   (global-display-line-numbers-mode)
+
+  (setq completions-format 'vertical
+    completion-eager-update t
+    completion-eager-display t
+    completions-sort 'historical
+    completions-max-height 20
+    completion-auto-help 'visible
+    minibuffer-visible-completions t)
+
+  (with-eval-after-load 'minibuffer
+    (keymap-unset minibuffer-visible-completions-map "<up>"   t)
+    (keymap-unset minibuffer-visible-completions-map "<down>" t)
+    (keymap-set   minibuffer-visible-completions-map "C-n"
+      (minibuffer-visible-completions--bind #'minibuffer-next-line-completion))
+    (keymap-set   minibuffer-visible-completions-map "C-p"
+      (minibuffer-visible-completions--bind #'minibuffer-previous-line-completion)))
+
   :custom
   (window-sides-vertical t)
   (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
@@ -828,72 +845,71 @@ Return an event vector."
                       (:pyright (:disableOrganizeImports t)
                         :python.analysis (:diagnosticMode "openFilesOnly"))))))
 
-(use-package icomplete
-  :bind ((:map icomplete-minibuffer-map
-           ("C-n" . icomplete-forward-completions)
-           ("C-p" . icomplete-backward-completions)
-           ("C-v" . icomplete-vertical-toggle)
-           ("TAB" . icomplete-force-complete)
-           ("C-j" . exit-minibuffer)
-           ("RET" . icomplete-force-complete-and-exit))
-          (:map icomplete-vertical-mode-minibuffer-map
-            ("C-n" . icomplete-forward-completions)
-            ("C-p" . icomplete-backward-completions)
-            ("C-v" . icomplete-vertical-toggle)
-            ("TAB" . icomplete-force-complete)
-            ;; ("TAB" . minibuffer-complete)
-            ("RET" . my/icomplete-force-complete-and-exit)
-            ("C-j" . exit-minibuffer))
-          );; So we can exit commands like
-  ;; `multi-file-replace-regexp-as-diff'
-  ;; :hook
-  ;; (after-init-hook .
-  ;;   (lambda ()
-  ;;     (fido-mode -1)
-  ;;     (icomplete-vertical-mode -1)))
-  :config
-  (defun my/icomplete-force-complete-and-exit ()
-    (interactive)
-    (if
-      (or
-        (and
-          minibuffer-completing-file-name
-          (string-suffix-p "/" (icomplete--field-string)))
-        (and
-          (equal (icomplete--field-string) icomplete--initial-input)
-          (not (equal icomplete--initial-input ""))))
-      (exit-minibuffer)
-      (icomplete-force-complete-and-exit))
-    )
-  (defun my-find-file-predicate (file)
-    (not (string= file "./")))
-  (defun my-hide-completions-after-capf (&rest _)
-    (unless (minibufferp)
-      (minibuffer-hide-completions)))
-  (advice-add 'completion-at-point
-    :after #'my-hide-completions-after-capf)
+;; (use-package icomplete
+;;   :bind ((:map icomplete-minibuffer-map
+;;            ("C-n" . icomplete-forward-completions)
+;;            ("C-p" . icomplete-backward-completions)
+;;            ("C-v" . icomplete-vertical-toggle)
+;;            ("TAB" . icomplete-force-complete)
+;;            ("C-j" . exit-minibuffer)
+;;            ("RET" . icomplete-force-complete-and-exit))
+;;           (:map icomplete-vertical-mode-minibuffer-map
+;;             ("C-n" . icomplete-forward-completions)
+;;             ("C-p" . icomplete-backward-completions)
+;;             ("C-v" . icomplete-vertical-toggle)
+;;             ("TAB" . icomplete-force-complete)
+;;             ;; ("TAB" . minibuffer-complete)
+;;             ("RET" . my/icomplete-force-complete-and-exit)
+;;             ("C-j" . exit-minibuffer))
+;;           );; So we can exit commands like
+;;   ;; `multi-file-replace-regexp-as-diff'
+;;   ;; :hook
+;;   ;; (after-init-hook .
+;;   ;;   (lambda ()
+;;   ;;     (fido-mode -1)
+;;   ;;     (icomplete-vertical-mode -1)))
+;;   :config
+;;   (defun my/icomplete-force-complete-and-exit ()
+;;     (interactive)
+;;     (if
+;;       (or
+;;         (and
+;;           minibuffer-completing-file-name
+;;           (string-suffix-p "/" (icomplete--field-string)))
+;;         (and
+;;           (equal (icomplete--field-string) icomplete--initial-input)
+;;           (not (equal icomplete--initial-input ""))))
+;;       (exit-minibuffer)
+;;       (icomplete-force-complete-and-exit))
+;;     )
+;;   (defun my-find-file-predicate (file)
+;;     (not (string= file "./")))
+;;   (defun my-hide-completions-after-capf (&rest _)
+;;     (unless (minibufferp)
+;;       (minibuffer-hide-completions)))
+;;   (advice-add 'completion-at-point
+;;     :after #'my-hide-completions-after-capf)
 
-  (define-advice find-file-read-args
-    (:override (prompt mustmatch) filter-dot-slash)
-    (list
-      (read-file-name prompt nil default-directory mustmatch nil
-        #'my-find-file-predicate)
-      t))
-  (setq icomplete-delay-completions-threshold 0)
-  (setq icomplete-compute-delay 0)
-  (setq icomplete-show-matches-on-no-input t)
-  (setq icomplete-hide-common-prefix nil)
-  (setq icomplete-prospects-height 10)
-  (setq icomplete-separator " . ")
-  (setq icomplete-with-completion-tables t)
-  (setq icomplete-in-buffer t)
-  (setq icomplete-max-delay-chars 0)
-  (setq icomplete-scroll t)
+;;   (define-advice find-file-read-args
+;;     (:override (prompt mustmatch) filter-dot-slash)
+;;     (list
+;;       (read-file-name prompt nil default-directory mustmatch nil
+;;         #'my-find-file-predicate)
+;;       t))
+;;   (setq icomplete-delay-completions-threshold 0)
+;;   (setq icomplete-compute-delay 0)
+;;   (setq icomplete-show-matches-on-no-input t)
+;;   (setq icomplete-hide-common-prefix nil)
+;;   (setq icomplete-prospects-height 10)
+;;   (setq icomplete-separator " . ")
+;;   (setq icomplete-with-completion-tables t)
+;;   (setq icomplete-in-buffer t)
+;;   (setq icomplete-max-delay-chars 0)
+;;   (setq icomplete-scroll t)
 
-  ;; (setq icomplete-vertical-in-buffer-adjust-list t)
-  ;; (setq icomplete-vertical-render-prefix-indicator t)
-
-  )
+;;   ;; (setq icomplete-vertical-in-buffer-adjust-list t)
+;;   (setq icomplete-vertical-render-prefix-indicator t)
+;;   )
 
 (defun uv-activate ()
   "Activate Python environment managed by uv based on current project directory.
@@ -1001,37 +1017,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
                       labels)))
       (when (< (length filtered) (length labels))
 	(forge--set-topic-labels (forge-get-repository "https://github.com/pionative/quickstart") topic filtered)))))
-
-;; (use-package denote
-;;   :ensure t
-;;   :hook (dired-mode . denote-dired-mode)
-;;   :bind
-;;   (("C-c l n" . denote)
-;;     ("C-c l r" . denote-rename-file)
-;;     ("C-c l l" . denote-link)
-;;     ("C-c l b" . denote-backlinks)
-;;     ("C-c l d" . denote-dired)
-;;     ("C-c l g" . denote-grep))
-;;   :config
-;;   (setq denote-sort-dired-extra-prompts '());; sort-by-component reverse-sort)
-;;   (setq denote-excluded-files-regexp ".tex$")
-;;   (setq xref-search-program
-;;       (cond
-;;        ((or (executable-find "ripgrep")
-;;             (executable-find "rg"))
-;;         'ripgrep)
-;;        ((executable-find "ugrep")
-;;         'ugrep)
-;;        (t
-;;         'grep)))
-;;   (setq denote-directory (expand-file-name "~/Sync/my/notes/denote"))
-
-;;   ;; Automatically rename Denote buffers when opening them so that
-;;   ;; instead of their long file name they have, for example, a literal
-;;   ;; "[D]" followed by the file's title.  Read the doc string of
-;;   ;; `denote-rename-buffer-format' for how to modify this.
-;;   (denote-rename-buffer-mode 1))
-
 
 ;;;; The emacsclient call depends on the daemon or `server-mode' (I use the latter)
 (use-package server
