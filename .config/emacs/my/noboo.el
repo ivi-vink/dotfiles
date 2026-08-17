@@ -12,9 +12,13 @@
   ["Noboo"
     [("e" "Edit" noboo-edit)
       ("i" "Insert" noboo-insert)
-      ("l" "Log" noboo-roam-capture-log)]
+      ("l" "Log" noboo-roam-capture-log)
+      ("f" "New Figure" noboo-figure)
+      ("a" "Add to agenda files" noboo--menu-add-to-agenda)
+      ("A" "Remove from agenda files" noboo--menu-remove-from-agenda)]
     [("E" "Edit current" noboo-roam-capture-log)
-      ("I" "Insert current" noboo-roam-capture-log)]])
+      ("I" "Insert current" noboo-roam-capture-log)
+      ("F" "Link Figure" noboo-figure)]])
 
 (transient-define-infix noboo--menu-flag-mode () "--mode"
   :class 'transient-switches
@@ -29,15 +33,16 @@
   :description "Book"
   :key "-b"
   :argument "--book="
-  :init-value (lambda (obj)
-                (when-let* ((file-name (expand-file-name default-directory))
-                             (books-dir (plist-get (noboo--read-config) :books-dir))
-                             ((< (length books-dir) (length file-name)))
-                             (rel (substring-no-properties file-name (+ 1 (length books-dir))))
-                             (book (seq-filter
-                                     (lambda (book-name) (string-match-p (regexp-quote book-name) rel))
-                                     (cdr (process-lines "noboo" "get" "books")))))
-                  (oset obj value (car book))))
+  :init-value
+  (lambda (obj)
+    (when-let* ((file-name (expand-file-name default-directory))
+                 (books-dir (plist-get (noboo--read-config) :books-dir))
+                 ((< (length books-dir) (length file-name)))
+                 (rel (substring-no-properties file-name (+ 1 (length books-dir))))
+                 (book (seq-filter
+                         (lambda (book-name) (string-prefix-p book-name rel))
+                         (cdr (process-lines "noboo" "get" "books")))))
+      (oset obj value (car book))))
   :reader (lambda (prompt initial-input history)
             (funcall
               (noboo--pick-line-from-command "noboo" "get" "books")
@@ -48,15 +53,29 @@
   :description "Chapter"
   :key "-c"
   :argument "--chapter="
-  ;; :init-value (lambda (obj) (oset obj value "log"))
+  :init-value
+  (lambda (obj)
+    (when-let* ((file-name (expand-file-name default-directory))
+                 (books-dir (plist-get (noboo--read-config) :books-dir))
+                 ((< (length books-dir) (length file-name)))
+                 (rel (substring-no-properties file-name (+ 1 (length books-dir))))
+                 (book (seq-filter
+                         (lambda (book-name) (string-prefix-p book-name rel))
+                         (cdr (process-lines "noboo" "get" "books"))))
+                 (chapter (seq-filter
+                            (lambda (chapter-name) (string-prefix-p (concat (car book) "/" chapter-name) rel))
+                            (cdr (process-lines "noboo" "get" "chapters" (concat "--book=" (car book)))))))
+      (oset obj value (car chapter))))
   :reader
   (lambda (prompt initial-input history)
     (let* ((book-value
-             (when-let* ((suffix (car (seq-filter
-                                   (lambda (s)
-                                     (when (cl-typep s 'transient-option)
-                                       (equal (oref s argument) "--book=")))
-                                   transient--suffixes))))
+             (when-let*
+               ((suffix
+                  (car (seq-filter
+                         (lambda (s)
+                           (when (cl-typep s 'transient-option)
+                             (equal (oref s argument) "--book=")))
+                         transient--suffixes))))
                (oref suffix value))))
       (funcall
         (apply #'noboo--pick-line-from-command
@@ -89,18 +108,150 @@
   (let* ((lines (seq-filter (lambda (l) (> (length l) 0))
                   (apply #'process-lines (append (list program) args)))))
     (lambda (prompt initial-input history)
-      (completing-read prompt (cdr lines) nil nil initial-input history))))
+      (let ((l (length (cdr lines))))
+        (cond
+          ((> l 1) (completing-read prompt (cdr lines) nil nil initial-input history))
+          ((equal l 1) (car (cdr lines)))
+          ((< l 1) (error "No lines received from noboo")))))))
+
+(defun noboo-figure ()
+  (interactive)
+  (let* (
+          (args (transient-args 'noboo-menu))
+          (figure-name (s-trim (buffer-substring (line-beginning-position) (point))))
+          (process
+            (make-process
+              :name "noboo"
+              :command (append
+                         (list "noboo" "edit" "--mode=figure" (concat "--figure-name=+" figure-name)
+                           (concat "--name=" (f-base (f-dirname (buffer-file-name)))))
+                         args)
+              :stderr "*noboo*"
+              :sentinel
+              (lambda (process change)
+                (let ((c (s-trim change)))
+                  (pcase c
+                    ((rx string-start "exited abnormally") (error c))
+                    (_ c))))
+              :filter
+              (lambda (process output)
+                (mapc
+                  (lambda (line)
+                    (when-let* (((string-prefix-p "edittee=" line))
+                                 (path (substring line (length "edittee=")))
+                                 (rel (f-relative path (f-dirname (buffer-file-name))))
+                                 )
+                      (delete-region (line-beginning-position) (point))
+                      ;; (insert (concat "[[" (substring line (length "edittee=")) "]]"))
+                      (pp rel)
+                      (org-insert-link nil rel nil)
+                      (org-display-inline-images)))
+                  (string-lines output)))
+              ))
+          )
+    )
+  )
 
 (defun noboo-edit ()
   (interactive)
   (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "edit") (transient-args 'noboo-menu))))
+
+(defun noboo-remove-from-agenda (&optional book chapter name)
+  (interactive)
+  (when-let*
+    ((books-dir (plist-get (noboo--read-config) :books-dir))
+      (notes (noboo-get-notes book chapter name)))
+    (mapc (lambda (note)
+
+            (setq org-agenda-files (remove (concat
+                                             (file-name-as-directory books-dir)
+                                             (file-name-as-directory (plist-get note :book))
+                                             (file-name-as-directory (plist-get note :chapter))
+                                             (file-name-as-directory (plist-get note :name))
+                                             )
+                                     org-agenda-files))
+            )
+      notes
+      )
+    )
+  )
+
+
+(defun noboo--flag-value (prefix)
+  (when-let
+    (
+      (args (transient-args 'noboo-menu))
+      (value (mapcar
+               (lambda (arg) (s-chop-prefix "=" (s-chop-prefix prefix arg)))
+               (seq-filter
+                 (lambda (arg) (s-prefix-p prefix arg)) args))))
+    (car value)
+    ))
+
+(defun noboo--menu-add-to-agenda (&optional book chapter name)
+  (interactive)
+  (let* (
+          (args (transient-args 'noboo-menu))
+          (book (noboo--flag-value "--book"))
+          (chapter (noboo--flag-value "--chapter"))
+          )
+    (noboo-add-to-agenda book chapter)
+    )
+  )
+
+(defun noboo--menu-remove-from-agenda (&optional book chapter name)
+  (interactive)
+  (let* (
+          (args (transient-args 'noboo-menu))
+          (book (noboo--flag-value "--book"))
+          (chapter (noboo--flag-value "--chapter"))
+          )
+    (noboo-remove-from-agenda book chapter)
+    )
+  )
+
+(defun noboo-add-to-agenda (&optional book chapter name)
+  (interactive)
+  (when-let*
+    ((books-dir (plist-get (noboo--read-config) :books-dir))
+      (notes (noboo-get-notes book chapter name)))
+    (mapc (lambda (note)
+            (add-to-list 'org-agenda-files (concat
+                           (file-name-as-directory books-dir)
+                           (file-name-as-directory (plist-get note :book))
+                           (file-name-as-directory (plist-get note :chapter))
+                           (file-name-as-directory (plist-get note :name))
+                           ))
+            )
+      notes
+      )
+    )
+  )
 
 (defun noboo-insert ()
   (interactive)
   (when (> (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "insert") (transient-args 'noboo-menu))) 0)
       (error "tectonic compile error")))
 
-(defun noboo-get-notes (book chapter name)
+(defun noboo-get-notes (&optional book chapter name)
+  (interactive)
+  (let ((bookflag (if book (list "-book" book) '()))
+         (chapterflag (if chapter (list "-chapter" chapter) '()))
+         (nameflag (if name (list "-name" name) '())))
+
+    (let* ((lines (cdr (seq-filter (lambda (l) (> (length l) 0))
+                    (apply #'process-lines (append '("noboo" "get" "notes") bookflag chapterflag nameflag)))))
+            (rows (mapcar (lambda (line) (noboo--parse-note-row line)) lines))
+            )
+      rows
+      )
+    ;; (noboo--parse-note-row
+    ;;   (let ((reader (apply #'noboo--pick-line-from-command
+    ;;                   (append '("noboo" "get" "notes") bookflag chapterflag nameflag))))
+    ;;     (funcall reader "Note: " nil nil)))
+    ))
+
+(defun noboo-pick-note (&optional book chapter name)
   (interactive)
   (let ((bookflag (if book (list "-book" book) '()))
          (chapterflag (if chapter (list "-chapter" chapter) '()))
@@ -110,27 +261,38 @@
                       (append '("noboo" "get" "notes") bookflag chapterflag nameflag))))
         (funcall reader "Note: " nil nil)))))
 
+(defun noboo--weeklog-template ())
+
 (defun noboo-roam-capture-log ()
   (interactive)
-  (let
-    ((org-capture-templates
-       (list (list "l" "WorkLog"
-               'entry
-               (list 'file
-                 (let ((note (noboo-get-notes nil "log" nil)))
-                   (string-join
-                     (list
-                       (plist-get (noboo--read-config) :books-dir)
-                       (plist-get note :book)
-                       (plist-get note :chapter)
-                       (plist-get note :name)
-                       (plist-get note :file))
-                     "/")))
-               "* %t
+  (pp (transient-args 'noboo-menu))
+  (let*
+    (
+      (note (noboo-pick-note nil "log"))
+      (file (string-join
+              (list
+                (plist-get (noboo--read-config) :books-dir)
+                (plist-get note :book)
+                (plist-get note :chapter)
+                (plist-get note :name)
+                (plist-get note :file))
+              "/"))
+      (org-capture-templates
+        (list
+          (list "w" "Weeklog"
+            'entry
+            (list 'file file)
+            (noboo--weeklog-template (plist-get note :book) (plist-get note :chapter))
+            :unnarrowed t)
+          (list "l" "WorkLog"
+            'entry
+            (list 'file file)
+            "* %t
 
 %?"
-               :unnarrowed t))))
-    (org-capture nil "l")))
+            :unnarrowed t)))
+      )
+    (org-capture)))
 
 ;; inkscape menu
 (setq noboo--inkscape-style-pixels 1.327)
@@ -605,5 +767,26 @@ Also see `noboo--window-delete-popup-frame'." command)
 
 (noboo--define-with-popup-frame noboo-inkscape-menu)
 (add-hook 'transient-quit-hook #'noboo--inkscape-return)
+
+(defun noboo--org-export-svg (contents backend info)
+  "Replace \\includegraphics with \\incfig for noboo _figures/*.svg files during LaTeX export."
+  (when (eq backend 'latex)
+    (pp "replacing includegraphics")
+    (replace-regexp-in-string
+     "\\\\includesvg\\(\\[.\*\\]\\)\?{.\*_figures/\\(.\*\\)}"
+     "\\\\incfig{\\2}"
+      contents)))
+
+(defun noboo-add-note-to-agenda ()
+  "Replace \\includegraphics with \\incfig for noboo _figures/*.svg files during LaTeX export."
+  (when (eq backend 'latex)
+    (pp "replacing includegraphics")
+    (replace-regexp-in-string
+     "\\\\includesvg\\(\\[.\*\\]\\)\?{.\*_figures/\\(.\*\\)}"
+     "\\\\incfig{\\2}"
+     contents)))
+
+(require 'ox)
+(add-to-list 'org-export-filter-final-output-functions #'noboo--org-export-svg)
 
 (provide 'noboo)
