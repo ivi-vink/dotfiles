@@ -173,16 +173,19 @@
     '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED" "NOTPLANNED")))
   (setq org-export-backends '(ascii html icalendar latex odt md))
   (setq org-agenda-files (list org-directory))
+  (setq org-refile-targets
+    '((nil :maxlevel . 3)
+       (org-agenda-files :maxlevel . 3)))
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-folded t)
-  (setq org-default-notes-file (concat org-directory "/notes.org"))
+  (setq org-default-notes-file (concat org-directory "/agenda.org"))
   (setq org-datetree-add-timestamp t)
   (setq org-capture-templates
-    '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+    '(("j" "Journal" entry (file+olp+datetree "~/Sync/my/notes/agenda.org")
         "* %?\n  Entered on %U\n  %i\n  %a")
-       ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+       ("e" "Event" entry (file+olp+datetree "~/Sync/my/notes/agenda.org")
          "* %?\n  SCHEDULED: %T\n %i\n  %a")
-       ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/notes.org")
+       ("d" "Deadline" entry (file+olp+datetree "~/Sync/my/notes/agenda.org")
          "* %?\n  DEADLINE: %T\n %i\n  %a")))
   (defun my/goto-today-journal-entry ()
     "Go to today's journal entry in the datetree and narrow to subtree."
@@ -243,7 +246,8 @@
   (repeat-mode)
   (global-display-line-numbers-mode)
 
-  (setq completions-format 'vertical
+  (setq
+    completions-format 'vertical
     completion-eager-update t
     completion-eager-display t
     completions-sort 'historical
@@ -556,6 +560,7 @@ Return an event vector."
   (add-to-list 'project-vc-extra-root-markers "go.mod"))
 
 (use-package dape
+  :vc (:url "https://github.com/svaante/dape" :rev "0.26.0")
   :ensure t
   :preface
   ;; By default dape shares the same keybinding prefix as `gud'
@@ -977,6 +982,17 @@ Looks for .venv directory in project root and activates the Python interpreter."
     :stream t
     :models '("mistral-small" "mistral-medium"))
 
+  ;; OpenRouter offers an OpenAI compatible API
+  (gptel-make-openai "OpenRouter"               ;Any name you want
+    :host "openrouter.ai"
+    :endpoint "/api/v1/chat/completions"
+    :stream t
+    :key (auth-source-pass-get 'secret "openrouter.ai/mike1994vink@gmail.com^key")
+    :models '(
+               moonshotai/kimi-k3
+               moonshotai/kimi-k2.7-code
+               ))
+
   (gptel-make-openai "Pionative"
     :host "ai.pionerds.nl"
     :protocol "https"
@@ -1048,7 +1064,9 @@ Looks for .venv directory in project root and activates the Python interpreter."
 
 (use-package noboo
   :bind
-  (("C-c j" . noboo-menu)))
+  (("C-c j" . noboo-menu))
+  :config
+  (noboo-add-to-agenda nil nil "agenda"))
 
 (use-package yasnippet
   :config
@@ -1085,3 +1103,6 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
   (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
   (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
+
+(use-package citeproc)
+(use-package ox-hugo)
