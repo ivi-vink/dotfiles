@@ -385,10 +385,12 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
   (column-number-mode)
   (repeat-mode)
   (global-display-line-numbers-mode)
+  (load-theme 'doom-gruvbox)
 
   :custom
   (window-sides-vertical t)
   (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
+  (grep-find-command (cons "fd --no-ignore-vcs --ignore-case '' ." 36))
 
   ;; Enable indentation+completion using the TAB key.
   ;; `completion-at-point' is often bound to M-TAB.
@@ -908,10 +910,10 @@ Return an event vector."
     ;; run that function again next hour
     (run-at-time (format "%02d:%02d" (+ hour 1) 0) nil 'y/auto-update-theme)))
 
-(use-package gruber-darker-theme
-  :ensure t
-  :config
-  (load-theme 'gruber-darker t))
+;; (use-package gruber-darker-theme
+;;   :ensure t
+;;   :config
+;;   (load-theme 'gruber-darker t))
 
 (use-package lsp-pyright
   :ensure t
@@ -1156,28 +1158,70 @@ Looks for .venv directory in project root and activates the Python interpreter."
   (require 'agent-recall)
   (require 'agent-shell-manager)
 
+  (defun my/agent-shell-review (context)
+    "Start an agent-shell in the project root and review CONTEXT."
+    (agent-shell-insert
+     :text (concat "Use the code-review skill to review " context ".")
+     :submit t
+     :shell-buffer (agent-shell--new-shell
+                    :location (project-root (project-current t)))))
+
+  (defun my/agent-shell-review-file-name ()
+    (or buffer-file-name (user-error "Buffer is not visiting a file")))
+
+  (defmacro my/def-review (name &rest context)
+    "Define review command NAME; CONTEXT is evaluated when it runs."
+    `(defun ,name () (interactive) (my/agent-shell-review (progn ,@context))))
+
+  (my/def-review my/review-worktree "the uncommitted changes in this git worktree")
+  (my/def-review my/review-staged "the staged changes (git diff --cached)")
+  (my/def-review my/review-last-commit "the last commit (HEAD)")
+  (my/def-review my/review-branch "all changes on the current branch since it diverged from the default branch")
+  (my/def-review my/review-pr (format "GitHub PR #%s" (read-string "PR number: ")))
+  (my/def-review my/review-file (format "the file %s" (my/agent-shell-review-file-name)))
+  (my/def-review my/review-region
+    (unless (use-region-p) (user-error "No active region"))
+    (format "lines %d-%d of %s"
+            (line-number-at-pos (region-beginning))
+            (line-number-at-pos (region-end))
+            (my/agent-shell-review-file-name)))
+
+  (transient-define-prefix agent-shell-review-menu ()
+    "Review different contexts with the code-review skill."
+    [["Git"
+      ("w" "Worktree" my/review-worktree)
+      ("s" "Staged" my/review-staged)
+      ("c" "Last commit" my/review-last-commit)
+      ("b" "Branch" my/review-branch)
+      ("p" "PR" my/review-pr)]
+     ["Buffer"
+      ("f" "File" my/review-file)
+      ("r" "Region" my/review-region)]])
+
   (transient-define-prefix agent-shell-menu ()
     "Agent shell commands."
     [["Shell"
-      ("a" "Start/switch" agent-shell)
-      ("n" "New shell" agent-shell-new-shell)
-      ("t" "Toggle" agent-shell-toggle)
-      ("b" "Switch buffer" agent-shell-switch-buffer)
-      ("f" "Fork" agent-shell-fork)
-      ("o" "Manager" agent-shell-manager-toggle)]
-     ["Send"
-      ("s" "File" agent-shell-send-file)
-      ("r" "Region" agent-shell-send-region-to)
-      ("i" "Screenshot" agent-shell-send-screenshot)]
-     ["Session"
-      ("k" "Interrupt" agent-shell-interrupt)
-      ("m" "Model" agent-shell-set-session-model)
-      ("M" "Mode" agent-shell-set-session-mode)
-      ("?" "Help" agent-shell-help-menu)]
-     ["Recall"
-      ("/" "Search" agent-recall-search-live)
-      ("B" "Browse" agent-recall-browse)
-      ("R" "Resume" agent-recall-resume)]])
+       ("a" "Start/switch" agent-shell)
+       ("n" "New shell" agent-shell-new-shell)
+       ("t" "Toggle" agent-shell-toggle)
+       ("b" "Switch buffer" agent-shell-switch-buffer)
+       ("f" "Fork" agent-shell-fork)
+       ("o" "Manager" agent-shell-manager-toggle)]
+      ["Send"
+        ("s" "File" agent-shell-send-file-to)
+        ("SPC" "Region" agent-shell-send-region-to)
+        ("i" "Screenshot" agent-shell-send-screenshot-to)]
+      ["Session"
+        ("r" "Review…" agent-shell-review-menu)
+        ("k" "Interrupt" agent-shell-interrupt)
+        ("m" "Model" agent-shell-set-session-model)
+        ("M" "Mode" agent-shell-set-session-mode)
+        ("?" "Help" agent-shell-help-menu)]
+      ["Recall"
+        ("/" "Search" agent-recall-search-live)
+        ("B" "Browse" agent-recall-browse)
+        ("L" "Load" agent-recall-resume)]])
+  (setq agent-shell-preferred-agent-config 'claude-code)
   (setq agent-shell-pi-environment
     (agent-shell-make-environment-variables
       "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
