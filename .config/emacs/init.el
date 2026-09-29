@@ -390,7 +390,7 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
   :custom
   (window-sides-vertical t)
   (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
-  (grep-find-command (cons "fd --no-ignore-vcs --ignore-case '' ." 36))
+  (grep-find-command (cons "fd --no-ignore-vcs --ignore-case '' ." 35))
 
   ;; Enable indentation+completion using the TAB key.
   ;; `completion-at-point' is often bound to M-TAB.
