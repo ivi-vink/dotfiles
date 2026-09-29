@@ -1,3 +1,4 @@
 *.so
 *.o
 *.img
+/.local/share/homebrew/Formula/*.rb
