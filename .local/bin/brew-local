@@ -1,0 +1,32 @@
+#!/bin/sh
+# Install a formula from the local/local tap.
+# Usage: brew-local [formula]   (no formula: pick one with fzf)
+set -e
+
+tap=local/local
+
+list_formulae() {
+	brew tap-info --json "$tap" | jq -r '.[0].formula_names[]'
+}
+
+stable_version() {
+	brew info --json=v2 "$1" | jq -r '.formulae[0].versions.stable // empty'
+}
+
+if [ -n "$1" ]; then
+	formula=$1
+else
+	formula=$(list_formulae | fzf --prompt="$tap> " --preview='brew info {}') || exit 0
+fi
+
+# Prefix the tap unless a full name was given
+case $formula in
+	*/*) ;;
+	*) formula=$tap/$formula ;;
+esac
+
+if [ -n "$(stable_version "$formula")" ]; then
+	brew install "$formula"
+else
+	brew install --HEAD "$formula"
+fi

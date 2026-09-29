@@ -5,6 +5,8 @@ if [ -d "$HOME/.local/src/dotfiles/.git" ]; then
 		"$HOME/.local/src/dotfiles/xxx" \
 		 "$HOME"
         ln -sf "$HOME/.gnupg/gpg-agent.conf.$(uname -s)" "$HOME/.gnupg/gpg-agent.conf"
+        brew tap-new local/local || true
+        ln -sf "$HOME/.local/share/homebrew/Formula" "$(brew --repository)/Library/Taps/local/homebrew-local"
 else
 	putgitrepo \
 		https://github.com/ivi-vink/dotfiles.git \
