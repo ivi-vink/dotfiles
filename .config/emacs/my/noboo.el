@@ -5,19 +5,25 @@
 ;; noboo menu
 (transient-define-prefix noboo-menu ()
   "Interact with notes db"
+  ["Noboo"
+    [("n" "Note" noboo-note-menu)
+      ("l" "Log" noboo-log-menu)]
+    ])
+
+(transient-define-prefix noboo-note-menu ()
+  "Interact with notes db"
   ["Flags"
     (noboo--menu-flag-mode)
     (noboo--menu-flag-book)
     (noboo--menu-flag-chapter)]
-  ["Noboo"
+  ["Actions"
     [("e" "Edit" noboo-edit)
       ("i" "Insert" noboo-insert)
-      ("l" "Log" noboo-roam-capture-log)
       ("f" "New Figure" noboo-figure)
       ("a" "Add to agenda files" noboo--menu-add-to-agenda)
       ("A" "Remove from agenda files" noboo--menu-remove-from-agenda)]
-    [("E" "Edit current" noboo-roam-capture-log)
-      ("I" "Insert current" noboo-roam-capture-log)
+    [("E" "Edit all" noboo-edit)
+      ("I" "Insert all" noboo-insert)
       ("F" "Link Figure" noboo-figure)]])
 
 (transient-define-infix noboo--menu-flag-mode () "--mode"
@@ -82,6 +88,53 @@
           (append '("noboo" "get" "chapters")
             (when book-value (list "--book" book-value))))
         prompt initial-input history))))
+
+(defun noboo--log-menu-edit ()
+  (interactive)
+  (find-file (f-join
+               (plist-get (noboo--read-config) :books-dir)
+               (noboo--flag-value 'noboo-log-menu "--current"))))
+
+(transient-define-prefix noboo-log-menu ()
+  "Interact with log"
+  ["Flags"
+    (noboo--log-menu-current)]
+  ["Actions"
+    [("e" "Edit" noboo--log-menu-edit)
+      ("k" "Capture" noboo-log-capture)
+      ("a" "Agenda" noboo--log-menu-agenda)
+      ("q" "Quit" transient-quit-all)]
+    ])
+
+(defun noboo--log-menu-agenda ()
+  (interactive)
+  (find-file (f-join
+               (plist-get (noboo--read-config) :books-dir)
+               (noboo--note-path
+                 (noboo-pick-note nil nil "agenda")
+                 ))))
+
+(transient-define-infix noboo--log-menu-current () "--current"
+  :class 'transient-option
+  :description "Current Log"
+  :key "-c"
+  :argument "--current="
+  :init-value
+  (lambda (obj)
+    (when-let* ((custom noboo-log-note))
+      (oset obj value custom)))
+  :reader (lambda (prompt initial-input history)
+            (setq noboo-log-note
+              (noboo--note-path (noboo-pick-note nil "log")))))
+
+(defun noboo--note-path (note)
+  (f-join
+    (plist-get note :book)
+    (plist-get note :chapter)
+    (plist-get note :name)
+    (plist-get note :file)
+    ))
+
 
 (setq noboo--config nil)
 (defun noboo--read-config ()
@@ -154,7 +207,7 @@
 
 (defun noboo-edit ()
   (interactive)
-  (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "edit") (transient-args 'noboo-menu))))
+  (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "edit") (transient-args 'noboo-note-menu))))
 
 (defun noboo-remove-from-agenda (&optional book chapter name)
   (interactive)
@@ -177,10 +230,10 @@
   )
 
 
-(defun noboo--flag-value (prefix)
+(defun noboo--flag-value (menu prefix)
   (when-let
     (
-      (args (transient-args 'noboo-menu))
+      (args (transient-args menu))
       (value (mapcar
                (lambda (arg) (s-chop-prefix "=" (s-chop-prefix prefix arg)))
                (seq-filter
@@ -192,8 +245,8 @@
   (interactive)
   (let* (
           (args (transient-args 'noboo-menu))
-          (book (noboo--flag-value "--book"))
-          (chapter (noboo--flag-value "--chapter"))
+          (book (noboo--flag-value 'noboo-note-menu "--book"))
+          (chapter (noboo--flag-value 'noboo-note-menu "--chapter"))
           )
     (noboo-add-to-agenda book chapter)
     )
@@ -203,8 +256,8 @@
   (interactive)
   (let* (
           (args (transient-args 'noboo-menu))
-          (book (noboo--flag-value "--book"))
-          (chapter (noboo--flag-value "--chapter"))
+          (book (noboo--flag-value 'noboo-note-menu "--book"))
+          (chapter (noboo--flag-value 'noboo-note-menu "--chapter"))
           )
     (noboo-remove-from-agenda book chapter)
     )
@@ -230,8 +283,22 @@
 
 (defun noboo-insert ()
   (interactive)
-  (when (> (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "insert") (transient-args 'noboo-menu))) 0)
+  (when (> (apply #'start-process (append (list "noboo" "*noboo*" "noboo" "insert") (transient-args 'noboo-note-menu))) 0)
       (error "tectonic compile error")))
+
+(defun noboo-get-paths (&optional book chapter name)
+  (when-let*
+    ((books-dir (plist-get (noboo--read-config) :books-dir)))
+    (mapcar
+      (lambda (note)
+        (concat
+          (file-name-as-directory books-dir)
+          (file-name-as-directory (plist-get note :book))
+          (file-name-as-directory (plist-get note :chapter))
+          (file-name-as-directory (plist-get note :name))
+          (plist-get note :file))
+        )
+      (noboo-get-notes book chapter name))))
 
 (defun noboo-get-notes (&optional book chapter name)
   (interactive)
@@ -251,48 +318,145 @@
     ;;     (funcall reader "Note: " nil nil)))
     ))
 
-(defun noboo-pick-note (&optional book chapter name)
+(defun noboo-pick-note (&optional book chapter name prompt initial-input history)
   (interactive)
   (let ((bookflag (if book (list "-book" book) '()))
          (chapterflag (if chapter (list "-chapter" chapter) '()))
-         (nameflag (if name (list "-name" name) '())))
+         (nameflag (if name (list "-name" name) '()))
+         (prompt (if prompt prompt "Note: ")))
     (noboo--parse-note-row
       (let ((reader (apply #'noboo--pick-line-from-command
                       (append '("noboo" "get" "notes") bookflag chapterflag nameflag))))
-        (funcall reader "Note: " nil nil)))))
+        (funcall reader prompt initial-input history)))))
 
-(defun noboo--weeklog-template ())
+(defun noboo--weeklog-template (book chapter)
+  (let ((bookflag (if book (list "-book" book) '()))
+         (chapterflag (if chapter (list "-chapter" chapter) '())))
+    (s-join "\n" (apply #'process-lines (append '("noboo" "get" "template" "-f" "weeklog") bookflag chapterflag)))))
 
-(defun noboo-roam-capture-log ()
+
+(defcustom noboo-log-note
+  nil
+  "Log note"
+  :group 'noboo-log-note
+  :type 'string)
+
+(defun noboo--heading-this-week-p (heading)
+  "Return non-nil if HEADING contains an Org timestamp from the current week."
+  (when (string-match org-ts-regexp-both heading)
+    (let* ((ts-days (time-to-days (org-time-string-to-time (match-string 0 heading))))
+           (now-days (time-to-days (current-time)))
+           ;; Monday = 0 ... Sunday = 6
+           (dow (mod (1- now-days) 7)))
+      (<= (- now-days dow) ts-days (+ (- now-days dow) 6)))))
+
+(defun noboo--heading-this-day-p (heading)
+  "Return non-nil if HEADING contains an Org timestamp from the current day."
+  (when (string-match org-ts-regexp-both heading)
+    (let* ((ts-days (time-to-days (org-time-string-to-time (match-string 0 heading))))
+           (now-days (time-to-days (current-time)))
+           )
+      (equal ts-days now-days))))
+
+(defun noboo--goto-or-create-heading (prefix)
+  (let* (
+          (result
+            (org-map-entries
+              (lambda () (substring-no-properties (org-get-heading t t t t)))
+              "LEVEL=1" 'file))
+          (last (-last (lambda (s)
+                         (pcase prefix
+                           ("week" (when (and (s-prefix-p prefix s)
+                                           (noboo--heading-this-week-p s))
+                                     s))
+                           ("day" (when (and (s-prefix-p prefix s)
+                                           (noboo--heading-this-day-p s))
+                                     s))
+                           ))
+                  result))
+          )
+    last))
+
+(defun noboo--find-note-for-path (path &optional rel)
+  (let* ((parent (f-dirname path))
+          (rel (append (list (f-filename path)) rel)))
+    (cond
+      ((f-exists? (f-join parent ".noboo" "book"))
+        (let* (
+                (is-file? (f-file? (apply #'f-join parent rel)))
+                (chapter (cond
+                           (is-file?
+                             (f-base (f-dirname (f-dirname (apply #'f-join rel)))))
+                           ))
+                (note (cond
+                        (is-file?
+                          (f-base (f-dirname (f-relative (apply #'f-join rel) chapter))))))
+                (file (cond
+                        (is-file?
+                          (f-filename (apply #'f-join rel)))))
+                )
+          `(:book ,(f-relative parent (file-name-as-directory (plist-get (noboo--read-config) :books-dir)))
+             :chapter ,chapter
+             :name ,note
+             :file ,file))
+        )
+      (t
+        (noboo--find-note-for-path parent rel)
+        )
+      )))
+
+(defun noboo--org-capture-reveal () (org-overview) (org-fold-show-set-visibility 'canonical))
+
+(defun noboo-log-capture ()
   (interactive)
-  (pp (transient-args 'noboo-menu))
+  (pp (transient-args 'noboo-log-menu))
   (let*
     (
-      (note (noboo-pick-note nil "log"))
-      (file (string-join
-              (list
-                (plist-get (noboo--read-config) :books-dir)
-                (plist-get note :book)
-                (plist-get note :chapter)
-                (plist-get note :name)
-                (plist-get note :file))
-              "/"))
+      (books-dir (plist-get (noboo--read-config) :books-dir))
+      (current (noboo--flag-value 'noboo-log-menu "--current"))
+      (note (if current
+              (noboo--find-note-for-path (f-join books-dir current))
+              (noboo-pick-note nil "log")))
+      (print (pp note))
+      (file (f-join
+              books-dir
+              (noboo--note-path note)))
       (org-capture-templates
         (list
           (list "w" "Weeklog"
             'entry
+            (list 'file+headline file
+              (lambda ()
+                (noboo--goto-or-create-heading "week")))
+            "* %?
+
+%a
+
+%c"
+            :unnarrowed t)
+          (list "W" "New Weeklog"
+            'entry
             (list 'file file)
             (noboo--weeklog-template (plist-get note :book) (plist-get note :chapter))
             :unnarrowed t)
-          (list "l" "WorkLog"
+          (list "l" "Log"
+            'plain
+            (list 'file+headline file
+              (lambda ()
+                (noboo--goto-or-create-heading "day")))
+            ""
+            :unnarrowed t)
+          (list "L" "New Log"
             'entry
             (list 'file file)
-            "* %t
+            "* day %u
 
 %?"
             :unnarrowed t)))
       )
-    (org-capture)))
+    (add-hook 'org-capture-mode-hook #'noboo--org-capture-reveal)
+    (org-capture)
+    (remove-hook 'org-capture-mode-hook #'noboo--org-capture-reveal)))
 
 ;; inkscape menu
 (setq noboo--inkscape-style-pixels 1.327)
@@ -785,6 +949,14 @@ Also see `noboo--window-delete-popup-frame'." command)
      "\\\\includesvg\\(\\[.\*\\]\\)\?{.\*_figures/\\(.\*\\)}"
      "\\\\incfig{\\2}"
      contents)))
+
+(defun noboo-khalorg-new (calendar)
+  (interactive
+    (list
+      (completing-read "Choose: " (process-lines "khal" "printcalendars"))
+      ))
+  (org-mark-subtree)
+  (shell-command-on-region (region-beginning) (region-end) (concat "khalorg new " calendar) "*noboo*" 'replace "*noboo*" 'show-errors))
 
 (require 'ox)
 (add-to-list 'org-export-filter-final-output-functions #'noboo--org-export-svg)

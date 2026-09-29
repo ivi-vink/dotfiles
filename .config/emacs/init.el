@@ -6,6 +6,10 @@
 (put 'upcase-region 'disabled nil)
 (set-scroll-bar-mode nil)
 (add-to-list 'load-path  "~/.config/emacs/my")
+(let ((dir "~/.config/emacs/my/")
+      (file "~/.config/emacs/my/my-loaddefs.el"))
+  (loaddefs-generate dir file)
+  (load file nil t))
 (setq custom-file "~/.config/emacs/custom.el")
 (load custom-file)
 (setq backup-directory-alist `(("." . "~/.config/emacs/saves")))
@@ -27,7 +31,7 @@
   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
   ;; (use-package org
   :bind
-  (("C-c a" . org-agenda))
+  (("C-c x" . org-agenda))
   :config
   ;; Increase preview width
   (plist-put
@@ -114,15 +118,15 @@
   (setq org-preview-latex-default-process 'mydvisvgm)
   (add-to-list 'org-preview-latex-process-alist
     '(mydvisvgm :programs ("latex" "dvisvgm") :description "dvi > svg"
-	  :message
-	  "you need to install the programs: latex and dvisvgm."
-	  :image-input-type "dvi" :image-output-type "svg"
-	  :latex-compiler
-	  ("%l -interaction nonstopmode -output-directory %o %f")
-	  :latex-precompiler
-	  ("%l -output-directory %o -ini -jobname=%b \"&%L\" mylatexformat.ltx %f")
-	  :image-converter
-	  ("dvisvgm --page=1- --optimize --clipjoin --relative --no-fonts -v3 --message='processing page {?pageno}: output written to {?svgpath}' --exact-bbox --bbox=preview -o %B-%%9p.svg %f")))
+       :message
+       "you need to install the programs: latex and dvisvgm."
+       :image-input-type "dvi" :image-output-type "svg"
+       :latex-compiler
+       ("%l -interaction nonstopmode -output-directory %o %f")
+       :latex-precompiler
+       ("%l -output-directory %o -ini -jobname=%b \"&%L\" mylatexformat.ltx %f")
+       :image-converter
+       ("dvisvgm --page=1- --optimize --clipjoin --relative --no-fonts -v3 --message='processing page {?pageno}: output written to {?svgpath}' --exact-bbox --bbox=preview -o %B-%%9p.svg %f")))
   (add-to-list 'project-vc-extra-root-markers "Tectonic.toml")
   (add-to-list 'org-preview-latex-process-alist
     '(tectonic
@@ -139,7 +143,7 @@
 
   (defun my/org-create-and-open-drawing ()
     "Insert a timestamped SVG drawing link, create the file, and open in Inkscape."
-   (interactive)
+    (interactive)
     (let* ((dir "drawings/")
             (filename (concat "sketch-" (format-time-string "%Y%m%d-%H%M%S") ".svg"))
             (fullpath (expand-file-name filename dir)))
@@ -167,15 +171,83 @@
       ((equal this-command nil)
         (org-display-inline-images))))
 
+
   (add-hook 'post-command-hook #'my/postcommand t)
   (setq org-directory "~/Sync/my/notes")
+  (setq org-use-speed-commands t)
   (setq org-todo-keywords
-    '((sequence "TODO" "FEEDBACK" "VERIFY" "|" "DONE" "DELEGATED" "NOTPLANNED")))
+    '((sequence "TODO" "|" "DONE" "NOTPLANNED")))
   (setq org-export-backends '(ascii html icalendar latex odt md))
-  (setq org-agenda-files (list org-directory))
+
+  (defvar my/org-agenda--updating-clockreport nil
+    "Guard to prevent advice recursion when we trigger a redo.")
+
+  (defun my/org-agenda-update-clockreport-match (&rest _)
+    "After any agenda filter change, refresh :match in
+`org-agenda-clockreport-parameter-plist' to reflect it."
+    (pp "update clockreport match")
+    (when (and (derived-mode-p 'org-agenda-mode)
+            (not my/org-agenda--updating-clockreport))
+      (let* ((match (mapconcat #'identity org-agenda-filter "&"))
+              (my/org-agenda--updating-clockreport t))
+        (setq org-agenda-clockreport-parameter-plist
+          (plist-put (copy-sequence org-agenda-clockreport-parameter-plist)
+            :match (unless (string-empty-p match) match)))
+        (pp org-agenda-clockreport-parameter-plist))))
+
+  (defun my/org-timestamp-up-or-insert ()
+    (interactive)
+    (if (org-at-timestamp-p 'lax)
+      (call-interactively #'org-timestamp-up)
+      (call-interactively #'self-insert-command)))
+
+  (defun my/org-timestamp-down-or-insert ()
+    (interactive)
+    (if (org-at-timestamp-p 'lax)
+      (call-interactively #'org-timestamp-down)
+      (call-interactively #'self-insert-command)))
+
+  (defun my/org-timestamp-down-day-or-insert ()
+    (interactive)
+    (if (org-at-timestamp-p 'lax)
+      (call-interactively #'org-timestamp-down-day)
+      (call-interactively #'self-insert-command)))
+
+  (defun my/org-timestamp-up-day-or-insert ()
+    (interactive)
+    (if (org-at-timestamp-p 'lax)
+      (call-interactively #'org-timestamp-up-day)
+      (call-interactively #'self-insert-command)))
+
+  (define-key org-mode-map (kbd "M-p") #'org-metaup)
+  (define-key org-mode-map (kbd "M-n") #'org-metadown)
+
+
+  (define-key org-mode-map (kbd "K") #'my/org-timestamp-up-or-insert)
+  (define-key org-mode-map (kbd "J") #'my/org-timestamp-down-or-insert)
+  (define-key org-mode-map (kbd "H") #'my/org-timestamp-down-day-or-insert)
+  (define-key org-mode-map (kbd "L") #'my/org-timestamp-up-day-or-insert)
+  (let ((map org-read-date-minibuffer-local-map))
+    ;; day
+    (define-key map (kbd "L")
+      (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-day 1))))
+    (define-key map (kbd "H")
+      (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-day 1))))
+    ;; week
+    (define-key map (kbd "J")
+      (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-week 1))))
+    (define-key map (kbd "K")
+      (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-week 1)))))
+
+  (advice-add 'org-agenda-filter :after #'my/org-agenda-update-clockreport-match)
+
+  (setq org-fold-show-context-detail '((default . canonical)))
   (setq org-refile-targets
-    '((nil :maxlevel . 3)
-       (org-agenda-files :maxlevel . 3)))
+    `((nil :maxlevel . 3)
+       (,(append
+           (noboo-get-paths nil nil "agenda")
+           (noboo-get-paths nil "log"))
+         :maxlevel . 1)))
   (setq org-confirm-babel-evaluate nil)
   (setq org-startup-folded t)
   (setq org-default-notes-file (concat org-directory "/agenda.org"))
@@ -194,7 +266,11 @@
     (widen)
     (org-datetree-find-date-create (calendar-current-date))
     (org-narrow-to-subtree))
-  (setq org-export-async-init-file "~/.config/emacs/org-async-init.el"))
+  (setq org-export-async-init-file "~/.config/emacs/org-async-init.el")
+  (add-hook 'org-mode-hook 'org-indent-mode)
+  (defvar-keymap my/org/repeat
+    :repeat t
+    "t" #'org-todo))
 
 (use-package visual-regexp
   :ensure t)
@@ -233,12 +309,76 @@
   :config
   (global-clipetty-mode))
 
+(defun my/flex-noinsert-try-completion (string table pred point)
+  "Flex `try-completion' that never auto-extends the input on TAB.
+
+Keeps flex's filtering and scoring but suppresses the merge:
+
+  - no candidates           -> nil   (no match)
+  - exactly one candidate   -> complete it fully
+  - two or more candidates  -> return STRING unchanged, so TAB only
+							   pops the *Completions* list.
+
+STRING, TABLE, PRED and POINT are the usual `try-completion' args."
+  (let ((all (completion-flex-all-completions string table pred point)))
+	(cond
+	 ((null all) nil)
+	 ((= (safe-length all) 1)
+	  (let ((sole (car all)))
+		(if (string= sole string) t (cons sole (length sole)))))
+	 (t (cons string point)))))
+
+;; Register the `flex-noinsert' style: same filtering/sorting as
+;; `flex', but with the wrapper above as its try function.
+(add-to-list 'completion-styles-alist
+			 '(flex-noinsert
+			   my/flex-noinsert-try-completion
+			   completion-flex-all-completions
+			   "Flex matching that never extends input on TAB."))
+
+;; Reuse flex's metadata tweak so *Completions* sorts by flex score.
+(put 'flex-noinsert 'completion--adjust-metadata
+	 'completion--flex-adjust-metadata)
+
+(defun my/minibuffer-truncate-lines ()
+  "Keep minibuffer lines unwrapped."
+  (setq truncate-lines t))
+
+(use-package minibuffer
+  :ensure nil
+  :bind ( :map minibuffer-visible-completions-up-down-map
+		  ("C-n" . minibuffer-next-completion)
+		  ("C-p" . minibuffer-previous-completion))
+  :hook ((minibuffer-setup . cursor-intangible-mode)
+		 (minibuffer-setup . my/minibuffer-truncate-lines))
+  :custom
+  (tab-always-indent 'complete)
+  (completion-auto-help t)
+  (completion-auto-select 'second-tab)
+  (completion-eager-update t)
+  (completion-eager-display t)
+  (minibuffer-visible-completions 'up-down)
+  (completion-ignore-case t)
+  (completion-show-help nil)
+  (completion-show-inline-help nil)
+  (completion-styles '(partial-completion flex initials))
+  (completion-category-overrides '((eglot-capf (styles flex-noinsert))))
+  (completions-format 'one-column)
+  (completions-max-height 10)
+  (completions-sort 'historical)
+  (enable-recursive-minibuffers t)
+  (read-buffer-completion-ignore-case t)
+  (read-file-name-completion-ignore-case t)
+  (minibuffer-prompt-properties
+   '(read-only t intangible t cursor-intangible t face minibuffer-prompt))
+  (minibuffer-depth-indicate-mode t)
+  (minibuffer-electric-default-mode t))
+
 ;; Emacs minibuffer configurations.
 (use-package emacs
   :ensure t
   :bind
   (("C-c f" . find-file-at-point)
-    ("C-c c" . my/code)
     ("C-c o" . my/open))
   :config
   (setenv "PICKER" "dmenu.emacs")
@@ -246,28 +386,9 @@
   (repeat-mode)
   (global-display-line-numbers-mode)
 
-  (setq
-    completions-format 'vertical
-    completion-eager-update t
-    completion-eager-display t
-    completions-sort 'historical
-    completions-max-height 20
-    completion-auto-help 'visible
-    minibuffer-visible-completions t)
-
-  (with-eval-after-load 'minibuffer
-    (keymap-unset minibuffer-visible-completions-map "<up>"   t)
-    (keymap-unset minibuffer-visible-completions-map "<down>" t)
-    (keymap-set   minibuffer-visible-completions-map "C-n"
-      (minibuffer-visible-completions--bind #'minibuffer-next-line-completion))
-    (keymap-set   minibuffer-visible-completions-map "C-p"
-      (minibuffer-visible-completions--bind #'minibuffer-previous-line-completion)))
-
   :custom
   (window-sides-vertical t)
   (grep-command (cons "rg -i --no-ignore-vcs --vimgrep --no-column '' ." 46))
-  ;; TAB cycle if there are only few candidates
-  ;; (completion-cycle-threshold 3)
 
   ;; Enable indentation+completion using the TAB key.
   ;; `completion-at-point' is often bound to M-TAB.
@@ -328,7 +449,7 @@
 (use-package tramp
   :config
   (setq tramp-remote-process-environment
-    '("ENV=''"
+    '("ENV='/etc/profile'"
        "TMOUT=0"
        "LC_CTYPE=''"
        "CDPATH="
@@ -670,6 +791,8 @@ Return an event vector."
 
 (use-package magit
   :ensure t
+  :bind
+  ("C-x g" . magit-status)
   :config
   (transient-append-suffix 'magit-commit "c" '("I" "Issue commit" my/issue-commit)))
 
@@ -968,50 +1091,93 @@ Looks for .venv directory in project root and activates the Python interpreter."
 ;; URLS: https://ai.pionerds.nl/v1
 ;; api key: (zie pionative keyvault clients/pionative-testllm-api-key)
 ;; model: qwen3.6:35b
-(use-package gptel-inline)
-(use-package gptel
-  :ensure t
-  :bind ("C-c l" . gptel-inline)
-  :config
+;; (use-package gptel-inline)
+;; (use-package gptel
+;;   :ensure t
+;;   :bind ("C-c l" . gptel-inline)
+;;   :config
 
-  (gptel-make-openai "mistral"
-    :host "api.mistral.ai"
-    :endpoint "/v1/chat/completions"
-    :protocol "https"
-    :key (auth-source-pass-get 'secret "mistral.ai/mike@pionative.com")
-    :stream t
-    :models '("mistral-small" "mistral-medium"))
+;;   (gptel-make-openai "mistral"
+;;     :host "api.mistral.ai"
+;;     :endpoint "/v1/chat/completions"
+;;     :protocol "https"
+;;     :key (auth-source-pass-get 'secret "mistral.ai/mike@pionative.com")
+;;     :stream t
+;;     :models '("mistral-small" "mistral-medium"))
 
-  ;; OpenRouter offers an OpenAI compatible API
-  (gptel-make-openai "OpenRouter"               ;Any name you want
-    :host "openrouter.ai"
-    :endpoint "/api/v1/chat/completions"
-    :stream t
-    :key (auth-source-pass-get 'secret "openrouter.ai/mike1994vink@gmail.com^key")
-    :models '(
-               moonshotai/kimi-k3
-               moonshotai/kimi-k2.7-code
-               ))
+;;   ;; OpenRouter offers an OpenAI compatible API
+;;   (gptel-make-openai "OpenRouter"               ;Any name you want
+;;     :host "openrouter.ai"
+;;     :endpoint "/api/v1/chat/completions"
+;;     :stream t
+;;     :key (auth-source-pass-get 'secret "openrouter.ai/mike1994vink@gmail.com^key")
+;;     :models '(
+;;                moonshotai/kimi-k3
+;;                moonshotai/kimi-k2.7-code
+;;                ))
 
-  (gptel-make-openai "Pionative"
-    :host "ai.pionerds.nl"
-    :protocol "https"
-    :key (auth-source-pass-get 'secret "ai.pionerds.nl")
-    :endpoint "/v1/chat/completions"
-    :stream t
-    :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
-  )
+;;   (gptel-make-openai "Pionative"
+;;     :host "ai.pionerds.nl"
+;;     :protocol "https"
+;;     :key (auth-source-pass-get 'secret "ai.pionerds.nl")
+;;     :endpoint "/v1/chat/completions"
+;;     :stream t
+;;     :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
+;;   )
 
-(use-package gptel-agent
-  :ensure t)
+;; (use-package gptel-agent
+;;   :ensure t)
 
 (use-package acp
   :ensure t)
 
+(use-package agent-recall
+  :ensure t
+  :after agent-shell
+  :config
+  (setq agent-recall-search-paths '("~/Programming/")))
+
+(use-package agent-shell-tramp
+  :vc (:url "https://github.com/junyi-hou/agent-shell-tramp")
+  :after agent-shell
+  :config
+  (agent-shell-tramp-mode 1))
+
+(use-package agent-shell-org-transcript
+  :after agent-shell)
+
+(use-package agent-shell-manager
+  :after agent-shell)
+
 (use-package agent-shell
   :ensure t
-  :bind ("C-c ." . agent-shell)
+  :bind ("C-c a" . agent-shell-menu)
   :config
+  (require 'agent-recall)
+  (require 'agent-shell-manager)
+
+  (transient-define-prefix agent-shell-menu ()
+    "Agent shell commands."
+    [["Shell"
+      ("a" "Start/switch" agent-shell)
+      ("n" "New shell" agent-shell-new-shell)
+      ("t" "Toggle" agent-shell-toggle)
+      ("b" "Switch buffer" agent-shell-switch-buffer)
+      ("f" "Fork" agent-shell-fork)
+      ("o" "Manager" agent-shell-manager-toggle)]
+     ["Send"
+      ("s" "File" agent-shell-send-file)
+      ("r" "Region" agent-shell-send-region-to)
+      ("i" "Screenshot" agent-shell-send-screenshot)]
+     ["Session"
+      ("k" "Interrupt" agent-shell-interrupt)
+      ("m" "Model" agent-shell-set-session-model)
+      ("M" "Mode" agent-shell-set-session-mode)
+      ("?" "Help" agent-shell-help-menu)]
+     ["Recall"
+      ("/" "Search" agent-recall-search-live)
+      ("B" "Browse" agent-recall-browse)
+      ("R" "Resume" agent-recall-resume)]])
   (setq agent-shell-pi-environment
     (agent-shell-make-environment-variables
       "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
@@ -1019,8 +1185,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
     (agent-shell-make-environment-variables
       "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
   )
-(use-package agent-review
-  :ensure t)
 
 (defun my/remove-labels ()
   (dolist (topic (forge--list-topics
@@ -1064,8 +1228,10 @@ Looks for .venv directory in project root and activates the Python interpreter."
 
 (use-package noboo
   :bind
-  (("C-c j" . noboo-menu))
+  (;; ("C-c j" . noboo-menu)
+    ("C-c g" . noboo-log-menu))
   :config
+  (noboo-add-to-agenda nil "log")
   (noboo-add-to-agenda nil nil "agenda"))
 
 (use-package yasnippet
@@ -1106,3 +1272,49 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
 (use-package citeproc)
 (use-package ox-hugo)
+
+
+(defun stefanv/org-plan-next ()
+  "Create a new day plan entry following on the current or previous lines's active timestamp."
+  (interactive)
+  (let* ((ts-found (save-excursion
+                     (end-of-line)
+                     (when (re-search-backward org-ts-regexp0 nil t)
+                       (let ((ctx (org-element-context)))
+                         (when (eq (org-element-type ctx) 'timestamp) ctx)))))
+         (is-blank (string-blank-p (buffer-substring (line-beginning-position) (line-end-position))))
+         (is-header (org-at-heading-p))
+         ;; Check if the found timestamp is actually on the current line
+         (on-current-line (and ts-found
+                               (>= (org-element-property :begin ts-found)
+                                   (line-beginning-position)))))
+    (if (not ts-found)
+        (user-error "No timestamp found above point")
+      (cond
+       ;; Already has TS OR is plain text -> new heading below
+       ((or on-current-line (and (not is-blank) (not is-header)))
+        (end-of-line)
+        (org-insert-heading)
+        (save-excursion (stefanv/insert-formatted-org-ts ts-found)))
+
+       ;; Current line is blank -> turn into heading here
+       (is-blank
+        (org-insert-heading)
+        (save-excursion (stefanv/insert-formatted-org-ts ts-found)))
+
+       ;; Current line is a header (no TS) -> append TS and return cursor
+       (t
+        (save-excursion
+          (end-of-line)
+          (stefanv/insert-formatted-org-ts ts-found)))))))
+
+(defun stefanv/insert-formatted-org-ts (ts)
+  "Helper to insert formatted timestamp with exactly one preceding space."
+  (just-one-space)
+  (insert (format "<%s %02d:%02d>"
+                  (org-format-timestamp ts "%Y-%m-%d %a")
+                  (or (org-element-property :hour-end ts)
+                      (org-element-property :hour-start ts) 0)
+                  (or (org-element-property :minute-end ts)
+                      (org-element-property :minute-start ts) 0))))
+(keymap-set org-mode-map "C-c C-x p" #'stefanv/org-plan-next)

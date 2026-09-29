@@ -1,5 +1,6 @@
 [default]
   default_calendar = home
+  print_new = event
 [calendars]
   [[calendars]]
     type = discover
