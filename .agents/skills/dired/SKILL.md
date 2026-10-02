@@ -16,7 +16,7 @@ Determine whether the relevant files all reside in the same directory or span mu
 - **Same directory**: `:dir` is the directory, `:files` are basenames. Opens dired at that directory with the files marked in context.
 - **Multiple directories**: `:dir` is the common ancestor, `:files` are relative paths. Creates a curated `*agent-files*` buffer with all files marked.
 
-First, locate `agent-skill-dired.el` which lives alongside this skill file at `skills/dired/agent-skill-dired.el` in the emacs-skills plugin directory.
+First, locate `agent-skill-dired.el` which lives alongside this skill file at `skills/dired/agent-skill-dired.el`.
 
 ```sh
 emacsclient --eval '
