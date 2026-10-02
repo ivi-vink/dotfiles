@@ -13,7 +13,7 @@ Commit git index with magit using `emacsclient --eval`. If index is empty adds a
 
 1. Read the changes to be committed: `git -C <repo> diff --cached`. If that is empty, read `git -C <repo> diff` and `git -C <repo> status` instead, since everything will be staged.
 2. Invoke the `ponytail` skill and write the commit message from those changes.
-3. Locate `agent-skill-magit-commit.el`, which lives alongside this skill file at `skills/magit-commit/agent-skill-magit-commit.el`, and run:
+3. Load `agent-skill-magit-commit.el` from this skill's base directory and run:
 
 ```sh
 emacsclient --eval "$(cat <<'EOF'
@@ -32,5 +32,4 @@ EOF
 
 - Escape `"` as `\"` and `\` as `\\` inside the `:message` string.
 - Pass the absolute path of the repo you mean as `:repo` and to `git -C`; do not rely on the shell's working directory.
-- Locate `agent-skill-magit-commit.el` relative to this skill file's directory.
 - Run the `emacsclient --eval` command via the Bash tool.
