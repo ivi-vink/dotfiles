@@ -1,6 +1,13 @@
 source ~/.config/subscriptions.muttrc
 
 macro index \\ "|mutt-limit-from\n:source /tmp/mutt-limit-from\nE"
+macro index \e\\ "|mutt-limit-from T\n:source /tmp/mutt-limit-from\nE"
+macro index,pager X ":set confirmappend=no delete=yes resolve=no\n<tag-prefix><clear-flag>N<tag-prefix><delete-message>:set confirmappend=yes delete=ask-yes resolve=yes\n<next-undeleted>"
+
+macro index,pager gf "<change-folder>=facturen<enter>" "go to inbox"
+macro index,pager Mf ";<save-message>=facturen<enter>" "move mail to inbox"
+macro index,pager Cf ";<copy-message>=facturen<enter>" "copy mail to inbox"
+
 set use_threads=yes
 set sort=reverse-last-date
 set pager_stop=yes

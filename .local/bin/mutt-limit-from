@@ -2,4 +2,4 @@
 grep ^From |
     sed -E 's/.*<(.*)>.*/\1/' |
     sed -E 's/From:\s*//' |
-    xargs -I{} printf '%s\n' "macro index E L\"~f {}\"" >/tmp/mutt-limit-from
+    xargs -I{} printf '%s\n' "macro index E ${1:-L}\"~f {}\"" >/tmp/mutt-limit-from
