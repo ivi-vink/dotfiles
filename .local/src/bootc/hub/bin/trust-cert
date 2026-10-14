@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Trust a certificate in the macOS trust bundle.
+#
+# Adds the given certificate(s) to the System keychain as trust roots -- the
+# trust store macOS (Safari, curl, and the VM behind "podman machine") checks
+# TLS connections against. Useful for a self-signed certificate such as a local
+# registry or a locally built hub.
+#
+# Usage:
+#   bin/trust-cert cert.pem [cert.pem ...]   trust certificate file(s)
+#   bin/trust-cert -s host[:port]            fetch and trust a server's chain
+#
+# Environment:
+#   KEYCHAIN   keychain to modify (default: /Library/Keychains/System.keychain)
+#   SECURITY   security(1) binary to run (default: security)
+#
+# The System keychain needs root, so this prompts for sudo.
+
+set -eu
+
+KEYCHAIN="${KEYCHAIN:-/Library/Keychains/System.keychain}"
+SECURITY="${SECURITY:-security}"
+
+usage() {
+	printf 'usage: %s cert.pem ... | %s -s host[:port]\n' "$0" "$0" >&2
+	exit 2
+}
+
+# Fetch the certificate chain a TLS server presents.
+fetch() {
+	host=${1%%:*}
+	port=${1#*:}
+	if [ "$port" = "$1" ]; then
+		port=443
+	fi
+	openssl s_client -connect "$host:$port" -servername "$host" -showcerts </dev/null 2>/dev/null |
+		awk '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/'
+}
+
+# add-trusted-cert with -d stores the trust for all users (admin domain); -r
+# trustRoot makes the certificate a root so entire chains signed by it verify.
+add() {
+	sudo "$SECURITY" add-trusted-cert -d -r trustRoot -k "$KEYCHAIN" "$1"
+}
+
+if [ "${1:-}" = "-s" ]; then
+	[ $# -eq 2 ] || usage
+	cert=$(mktemp)
+	trap 'rm -f "$cert"' EXIT
+	fetch "$2" >"$cert"
+	[ -s "$cert" ] || { echo "trust-cert: no certificate presented by $2" >&2; exit 1; }
+	add "$cert"
+else
+	[ $# -gt 0 ] || usage
+	for cert in "$@"; do
+		[ -f "$cert" ] || { echo "trust-cert: no such file: $cert" >&2; exit 1; }
+		add "$cert"
+	done
+fi

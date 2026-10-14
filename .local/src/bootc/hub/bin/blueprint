@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+cat <<EOF
+[[customizations.user]]
+name = "ivi"
+key = "$(ssh-add -L | head -n1)"
+groups = ["wheel"]
+EOF
