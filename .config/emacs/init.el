@@ -444,14 +444,14 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
   (defun my-capf-prepend-cape-dabbrev ()
     "Make `cape-dabbrev` the first CAPF in this buffer."
     (setq-local completion-at-point-functions
-      (cons #'cape-dabbrev
+      (append (list #'cape-file #'cape-dabbrev)
         (remove #'cape-dabbrev completion-at-point-functions))))
   (add-hook 'after-change-major-mode-hook #'my-capf-prepend-cape-dabbrev))
 
 (use-package tramp
   :config
   (setq tramp-remote-process-environment
-    '("ENV='/etc/profile'"
+    '("ENV=''"
        "TMOUT=0"
        "LC_CTYPE=''"
        "CDPATH="
@@ -463,7 +463,36 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
        "autocorrect="
        "correct="))
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
-  (add-hook 'after-change-major-mode-hook #'editorconfig-major-mode-hook))
+  (add-hook 'after-change-major-mode-hook #'editorconfig-major-mode-hook)
+
+  (connection-local-set-profile-variables
+    'my-remote-direct-async
+    '((tramp-direct-async-process . t)))
+
+  (connection-local-set-profiles
+    '(:protocol "ssh")            ; or narrow to ':protocol "ssh" :host "91.92.141.13"
+    'my-remote-direct-async)
+
+  ;; The ssh method defaults `tramp-direct-async' to ("-t" "-t"), which
+  ;; allocates a pty.  Terminals (e.g. ghostel) need that pty, but pipe-based
+  ;; clients such as agent-shell/acp speak JSON over stdin/stdout and break
+  ;; when a pty is allocated.  So use "-T" (no pty) only for pipe processes.
+  (defun my/tramp-direct-async-no-pty (orig-fn &rest args)
+    "Disable pty allocation for TRAMP direct-async pipe processes."
+    (let* ((connection-type (or (plist-get args :connection-type)
+                                process-connection-type))
+           (cell (assq 'tramp-direct-async
+                       (cdr (assoc "ssh" tramp-methods)))))
+      (if (and (eq connection-type 'pipe) cell)
+          (let ((old (cdr cell)))
+            (setcdr cell '("-T"))
+            (unwind-protect (apply orig-fn args)
+              (setcdr cell old)))
+        (apply orig-fn args))))
+
+  (with-eval-after-load 'tramp-sh
+    (advice-add 'tramp-handle-make-process :around
+                #'my/tramp-direct-async-no-pty)))
 
 (use-package yaml-pro
   :ensure t
@@ -1137,7 +1166,9 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :ensure t
   :after agent-shell
   :config
-  (setq agent-recall-search-paths '("~/Programming/")))
+  (setq agent-recall-search-paths '("~/Programming/"))
+  (setq agent-recall-extra-transcript-dirs
+    '((:dir "~/Sync/my/notes/roam"))))
 
 (use-package agent-shell-tramp
   :vc (:url "https://github.com/junyi-hou/agent-shell-tramp")
@@ -1221,14 +1252,12 @@ Looks for .venv directory in project root and activates the Python interpreter."
         ("/" "Search" agent-recall-search-live)
         ("B" "Browse" agent-recall-browse)
         ("L" "Load" agent-recall-resume)]])
-  (setq agent-shell-preferred-agent-config 'claude-code)
+  (add-to-list 'exec-path "~/.opencode/bin/")
+  (setq agent-shell-opencode-default-model-id "opencode-go/deepseek-v4.1-flash")
+  (setq agent-shell-preferred-agent-config '(auto . claude))
   (setq agent-shell-pi-environment
     (agent-shell-make-environment-variables
-      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
-  (setq agent-shell-opencode-environment
-    (agent-shell-make-environment-variables
-      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl")))
-  )
+      "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl"))))
 
 (defun my/remove-labels ()
   (dolist (topic (forge--list-topics
