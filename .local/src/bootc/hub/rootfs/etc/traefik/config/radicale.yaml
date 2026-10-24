@@ -1,0 +1,16 @@
+# Traefik serves the hub over TLS on the websecure entry point (see
+# entrypoints.yaml); this route exposes Radicale behind
+# https://radicale.local.localhost and proxies to its loopback listener.
+http:
+  routers:
+    radicale:
+      rule: "Host(`radicale.local.localhost`)"
+      entryPoints:
+      - websecure
+      service: radicale
+
+  services:
+    radicale:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:5232"

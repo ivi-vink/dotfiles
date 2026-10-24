@@ -4,6 +4,7 @@
 #   make build	       build the bootable container image
 #   make qcow2	       build output/hub.qcow2 from the container image
 #   make virt-install  boot the qcow2 in a local libvirt/KVM VM
+#   make portforward   forward localhost:80/443 to the VM's Traefik over SSH
 #   make install-exo   install the Exoscale CLI (exo)
 #   make sos-upload    upload the qcow2 to Exoscale Object Storage, public
 #   make sos-public    (re)apply a public-read ACL to the uploaded object
@@ -40,6 +41,22 @@ export PODMAN CONTAINERS_STORAGE OUTPUT_DIR IMAGE_BUILDER
 
 # --- VM ---------------------------------------------------------------------
 OS_VARIANT ?= almalinux9
+
+# --- Port forwarding --------------------------------------------------------
+# The VM's Traefik listens on its own localhost:80 and localhost:443. ssh
+# forwards those to unprivileged ports here; on macOS pf redirects the
+# privileged ports 80/443 on loopback to them (see portforward below).
+# Without VM_HOST, ask libvirt for the address of the VM created above;
+# override it when virsh cannot find the VM, e.g.
+#   make portforward VM_HOST=192.168.122.42 VM_USER=root
+VM_NAME ?= $(IMAGE_NAME)-bootc
+VM_USER ?= ivi
+VM_HOST ?= $(shell virsh -q domifaddr $(VM_NAME) 2>/dev/null | awk '$$3 == "ipv4" { sub(/\/.*/, "", $$4); print $$4; exit }')
+SSH	 ?= ssh
+SSH_DEST ?= $(VM_USER)@$(VM_HOST)
+PORT_HTTP  ?= 8080
+PORT_HTTPS ?= 8443
+PF_ANCHOR  ?= com.apple/local-dev.local.localhost
 
 # --- Exoscale CLI / Object Storage (SOS) ------------------------------------
 # https://community.exoscale.com/tools/command-line-interface/
@@ -112,6 +129,32 @@ virt-install: qcow2
 		--noautoconsole \
 		--os-variant $(OS_VARIANT) \
 		--network network=default
+
+# Forward the VM's localhost:80 and localhost:443 to this machine, so that
+# http://localhost and https://localhost reach Traefik. ssh listens on the
+# unprivileged PORT_HTTP/PORT_HTTPS; on macOS pf redirects ports 80/443 on lo0
+# to those ports, which needs sudo. Runs in the foreground; Ctrl-C stops
+# forwarding (the pf rules stay loaded).
+portforward:
+	@test -n "$(VM_HOST)" || { \
+		echo "portforward: no VM address; set VM_HOST=host (or VM_NAME=<domain>)" >&2; \
+		exit 1; \
+	}
+ifeq ($(shell uname -s),Darwin)
+	@sudo pfctl -e 2>/dev/null || true
+	@printf '%s\n' \
+		'rdr pass on lo0 proto tcp from any to any port 80 -> 127.0.0.1 port $(PORT_HTTP)' \
+		'rdr pass on lo0 proto tcp from any to any port 443 -> 127.0.0.1 port $(PORT_HTTPS)' | \
+		sudo pfctl -a '$(PF_ANCHOR)' -f -
+else
+	@echo "portforward: not macOS, skipping pf; forwarding on :$(PORT_HTTP) and :$(PORT_HTTPS)" >&2
+endif
+	@echo "http://localhost  -> $(SSH_DEST):80  (local :$(PORT_HTTP))"
+	@echo "https://localhost -> $(SSH_DEST):443 (local :$(PORT_HTTPS))"
+	$(SSH) -N -o ExitOnForwardFailure=yes \
+		-L $(PORT_HTTP):localhost:80 \
+		-L $(PORT_HTTPS):localhost:443 \
+		$(SSH_DEST)
 
 # Install the official Exoscale CLI. On apt/dnf-based distributions the
 # installer sets up a package repository and needs root (sudo/doas); see the

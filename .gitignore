@@ -2,3 +2,4 @@
 *.o
 *.img
 /.local/share/homebrew/Formula/*.rb
+/.local/src/bootc/hub/output/

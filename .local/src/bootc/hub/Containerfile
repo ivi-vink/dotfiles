@@ -1,4 +1,24 @@
+# Traefik is not packaged for Enterprise Linux; pull its statically linked
+# binary out of the official image in a throwaway build stage.
+FROM docker.io/traefik:v3 AS traefik
+
 FROM quay.io/almalinuxorg/almalinux-bootc:10
+
+# Radicale 3 (CalDAV/CardDAV) is only packaged in EPEL. Install epel-release in
+# its own transaction so the epel repository is available to resolve radicale3.
+RUN dnf -y install epel-release && \
+    dnf -y install radicale3 && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/log/dnf* /var/log/hawkey.log
+
+COPY --from=traefik --chown=root:root /usr/local/bin/traefik /usr/local/bin/traefik
+
+# Image configuration: the Traefik static/dynamic config with its certificate,
+# the Radicale config and the systemd units under rootfs/.
+COPY rootfs/ /
+
+# Start Traefik and Radicale with the system.
+RUN systemctl enable radicale traefik
 
 # https://bootc-dev.github.io/bootc/bootc-images.html#standard-metadata-for-bootc-compatible-images
 LABEL containers.bootc 1

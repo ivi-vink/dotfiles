@@ -1,0 +1,19 @@
+# Radicale is reached through the Traefik reverse proxy, so it only listens on
+# loopback; TLS and the public hostname are handled by Traefik.
+# https://radicale.org/v3.html#configuration
+
+[server]
+hosts = 127.0.0.1:5232
+
+# Populate /etc/radicale/users with entries created by htpasswd, e.g.
+#   htpasswd -5 /etc/radicale/users ivi
+[auth]
+type = htpasswd
+htpasswd_filename = /etc/radicale/users
+htpasswd_encryption = autodetect
+
+[storage]
+filesystem_folder = /var/lib/radicale/collections
+
+[rights]
+type = owner_only

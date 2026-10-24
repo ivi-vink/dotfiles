@@ -1,3 +1,26 @@
+# Static configuration. Entry points must be defined here: they are read once
+# at startup and are not part of the dynamic configuration that the file
+# provider below loads.
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+    observability:
+      accessLogs: false
+      metrics: false
+      tracing: false
+
+  websecure:
+    address: :443
+    http:
+      tls: {}
+
+# Dynamic configuration (routers, services, certificates) is loaded from here.
 providers:
   file:
     directory: "/etc/traefik/config"
