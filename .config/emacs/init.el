@@ -23,23 +23,36 @@
 (add-to-list 'package-archives '("gnu" . "https://elpa.gnu.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
+;; (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/"))
 
 (package-initialize)
 
+(use-package noboo
+  :demand t
+  :bind
+  (;; ("C-c j" . noboo-menu)
+    ("C-c g" . noboo-log-menu))
+  :config
+  (noboo-add-to-agenda nil "log")
+  (noboo-add-to-agenda nil nil "agenda"))
+
+(use-package project
+  :demand t)
+
 (use-package org-latex-preview
-  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
-  ;; (use-package org
+  :load-path "~/Programming/ThirdParty/org-mode/lisp"
+  :demand t
+  :config
+  ;; Increase preview width
+  (plist-put org-latex-preview-appearance-options :page-width 0.8)
+  (plist-put org-latex-preview-appearance-options :zoom 1.6))
+
+(use-package org
+  ;; Local checkout; run `make autoloads' there after pulling.
+  :load-path "~/Programming/ThirdParty/org-mode/lisp"
   :bind
   (("C-c x" . org-agenda))
   :config
-  ;; Increase preview width
-  (plist-put
-    org-latex-preview-appearance-options
-    :page-width 0.8)
-  (plist-put
-    org-latex-preview-appearance-options
-    :zoom 1.6)
   (setq org-image-actual-width 0.8)
 
   ;; ;; Use dvisvgm to generate previews
@@ -497,52 +510,52 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
 (use-package yaml-pro
   :ensure t
   :config
-  ;; (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-  ;; (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-  ;; (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
 
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
 
-  ;; (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
-  ;; (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
-  ;; (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
 
-  ;; (defvar-keymap my/yaml-pro/tree-repeat-mapo
-  ;;   :repeat t
-  ;;   "n" #'yaml-pro-ts-next-subtree
-  ;;   "p" #'yaml-pro-ts-prev-subtree
-  ;;   "u" #'yaml-pro-ts-up-level
-  ;;   "d" #'yaml-pro-ts-down-level
-  ;;   "m" #'yaml-pro-ts-mark-subtree
-  ;;   "k" #'yaml-pro-ts-kill-subtree
-  ;;   "a" #'yaml-pro-ts-first-sibling
-  ;;   "e" #'yaml-pro-ts-last-sibling
-  ;;   "SPC" #'my/yaml-pro/set-mark
-  ;;   "f" #'yaml-pro-fold-at-point
-  ;;   "o" #'yaml-pro-unfold-at-point
-  ;;   )
+  (defvar-keymap my/yaml-pro/tree-repeat-mapo
+    :repeat t
+    "n" #'yaml-pro-ts-next-subtree
+    "p" #'yaml-pro-ts-prev-subtree
+    "u" #'yaml-pro-ts-up-level
+    "d" #'yaml-pro-ts-down-level
+    "m" #'yaml-pro-ts-mark-subtree
+    "k" #'yaml-pro-ts-kill-subtree
+    "a" #'yaml-pro-ts-first-sibling
+    "e" #'yaml-pro-ts-last-sibling
+    "SPC" #'my/yaml-pro/set-mark
+    "f" #'yaml-pro-fold-at-point
+    "o" #'yaml-pro-unfold-at-point
+    )
 
-  ;; (defun my/yaml-pro/set-mark ()
-  ;;   (interactive)
-  ;;   (my/region/set-mark 'my/yaml-pro/set-mark))
+  (defun my/yaml-pro/set-mark ()
+    (interactive)
+    (my/region/set-mark 'my/yaml-pro/set-mark))
 
-  ;; (defun my/region/set-mark (command-name)
-  ;;   (if (eq last-command command-name)
-  ;;     (if (region-active-p)
-  ;;       (progn
-  ;;         (deactivate-mark)
-  ;;         (message "Mark deactivated"))
-  ;;       (activate-mark)
-  ;;       (message "Mark activated"))
-  ;;     (set-mark-command nil)))
+  (defun my/region/set-mark (command-name)
+    (if (eq last-command command-name)
+      (if (region-active-p)
+        (progn
+          (deactivate-mark)
+          (message "Mark deactivated"))
+        (activate-mark)
+        (message "Mark activated"))
+      (set-mark-command nil)))
   )
 
 (use-package editorconfig
@@ -1004,72 +1017,6 @@ Return an event vector."
                       (:pyright (:disableOrganizeImports t)
                         :python.analysis (:diagnosticMode "openFilesOnly"))))))
 
-;; (use-package icomplete
-;;   :bind ((:map icomplete-minibuffer-map
-;;            ("C-n" . icomplete-forward-completions)
-;;            ("C-p" . icomplete-backward-completions)
-;;            ("C-v" . icomplete-vertical-toggle)
-;;            ("TAB" . icomplete-force-complete)
-;;            ("C-j" . exit-minibuffer)
-;;            ("RET" . icomplete-force-complete-and-exit))
-;;           (:map icomplete-vertical-mode-minibuffer-map
-;;             ("C-n" . icomplete-forward-completions)
-;;             ("C-p" . icomplete-backward-completions)
-;;             ("C-v" . icomplete-vertical-toggle)
-;;             ("TAB" . icomplete-force-complete)
-;;             ;; ("TAB" . minibuffer-complete)
-;;             ("RET" . my/icomplete-force-complete-and-exit)
-;;             ("C-j" . exit-minibuffer))
-;;           );; So we can exit commands like
-;;   ;; `multi-file-replace-regexp-as-diff'
-;;   ;; :hook
-;;   ;; (after-init-hook .
-;;   ;;   (lambda ()
-;;   ;;     (fido-mode -1)
-;;   ;;     (icomplete-vertical-mode -1)))
-;;   :config
-;;   (defun my/icomplete-force-complete-and-exit ()
-;;     (interactive)
-;;     (if
-;;       (or
-;;         (and
-;;           minibuffer-completing-file-name
-;;           (string-suffix-p "/" (icomplete--field-string)))
-;;         (and
-;;           (equal (icomplete--field-string) icomplete--initial-input)
-;;           (not (equal icomplete--initial-input ""))))
-;;       (exit-minibuffer)
-;;       (icomplete-force-complete-and-exit))
-;;     )
-;;   (defun my-find-file-predicate (file)
-;;     (not (string= file "./")))
-;;   (defun my-hide-completions-after-capf (&rest _)
-;;     (unless (minibufferp)
-;;       (minibuffer-hide-completions)))
-;;   (advice-add 'completion-at-point
-;;     :after #'my-hide-completions-after-capf)
-
-;;   (define-advice find-file-read-args
-;;     (:override (prompt mustmatch) filter-dot-slash)
-;;     (list
-;;       (read-file-name prompt nil default-directory mustmatch nil
-;;         #'my-find-file-predicate)
-;;       t))
-;;   (setq icomplete-delay-completions-threshold 0)
-;;   (setq icomplete-compute-delay 0)
-;;   (setq icomplete-show-matches-on-no-input t)
-;;   (setq icomplete-hide-common-prefix nil)
-;;   (setq icomplete-prospects-height 10)
-;;   (setq icomplete-separator " . ")
-;;   (setq icomplete-with-completion-tables t)
-;;   (setq icomplete-in-buffer t)
-;;   (setq icomplete-max-delay-chars 0)
-;;   (setq icomplete-scroll t)
-
-;;   ;; (setq icomplete-vertical-in-buffer-adjust-list t)
-;;   (setq icomplete-vertical-render-prefix-indicator t)
-;;   )
-
 (defun uv-activate ()
   "Activate Python environment managed by uv based on current project directory.
 Looks for .venv directory in project root and activates the Python interpreter."
@@ -1113,52 +1060,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
 (use-package vterm
   :ensure t)
 
-;; (use-package claude-code-ide
-;;   :vc (:urls "https://github.com/manzaltu/claude-code-ide.el" :rev :newest)
-;;   :bind ("C-c C-'" . claude-code-ide-menu) ; Set your favorite keybinding
-;;   :config
-;;   (claude-code-ide-emacs-tools-setup)) ; Optionally enable Emacs MCP tools
-
-;; URLS: https://ai.pionerds.nl/v1
-;; api key: (zie pionative keyvault clients/pionative-testllm-api-key)
-;; model: qwen3.6:35b
-;; (use-package gptel-inline)
-;; (use-package gptel
-;;   :ensure t
-;;   :bind ("C-c l" . gptel-inline)
-;;   :config
-
-;;   (gptel-make-openai "mistral"
-;;     :host "api.mistral.ai"
-;;     :endpoint "/v1/chat/completions"
-;;     :protocol "https"
-;;     :key (auth-source-pass-get 'secret "mistral.ai/mike@pionative.com")
-;;     :stream t
-;;     :models '("mistral-small" "mistral-medium"))
-
-;;   ;; OpenRouter offers an OpenAI compatible API
-;;   (gptel-make-openai "OpenRouter"               ;Any name you want
-;;     :host "openrouter.ai"
-;;     :endpoint "/api/v1/chat/completions"
-;;     :stream t
-;;     :key (auth-source-pass-get 'secret "openrouter.ai/mike1994vink@gmail.com^key")
-;;     :models '(
-;;                moonshotai/kimi-k3
-;;                moonshotai/kimi-k2.7-code
-;;                ))
-
-;;   (gptel-make-openai "Pionative"
-;;     :host "ai.pionerds.nl"
-;;     :protocol "https"
-;;     :key (auth-source-pass-get 'secret "ai.pionerds.nl")
-;;     :endpoint "/v1/chat/completions"
-;;     :stream t
-;;     :models '("qwen3.6:35b" "qwen2.5-coder:32b"))
-;;   )
-
-;; (use-package gptel-agent
-;;   :ensure t)
-
 (use-package acp
   :ensure t)
 
@@ -1168,7 +1069,12 @@ Looks for .venv directory in project root and activates the Python interpreter."
   :config
   (setq agent-recall-search-paths '("~/Programming/"))
   (setq agent-recall-extra-transcript-dirs
-    '((:dir "~/Sync/my/notes/roam"))))
+    '((:dir "~/Sync/my/notes/roam")))
+  (add-hook 'agent-shell-mode-hook #'agent-recall-track-sessions)
+  ;; Session-id matching probes the transcript's Working_Directory; for
+  ;; /ssh: transcripts that opens a TRAMP connection during reindex.
+  (advice-add 'agent-recall--project-root-for-session :around
+              (lambda (fn file) (let ((tramp-mode nil)) (funcall fn file)))))
 
 (use-package agent-shell-tramp
   :vc (:url "https://github.com/junyi-hou/agent-shell-tramp")
@@ -1229,12 +1135,24 @@ Looks for .venv directory in project root and activates the Python interpreter."
       ("f" "File" my/review-file)
       ("r" "Region" my/review-region)]])
 
+  (transient-define-infix my/agent-shell-preferred-agent ()
+    :class 'transient-lisp-variable
+    :variable 'agent-shell-preferred-agent-config
+    :description "Agent"
+    :reader (lambda (prompt _initial _history)
+              (cons 'auto
+                    (intern (completing-read
+                             prompt
+                             (mapcar (lambda (config) (map-elt config :identifier))
+                                     (agent-shell--resolved-agent-configs))
+                             nil t)))))
+
   (transient-define-prefix agent-shell-menu ()
     "Agent shell commands."
     [["Shell"
        ("a" "Start/switch" agent-shell)
        ("n" "New shell" agent-shell-new-shell)
-       ("t" "Toggle" agent-shell-toggle)
+       ("A" my/agent-shell-preferred-agent)       ("t" "Toggle" agent-shell-toggle)
        ("b" "Switch buffer" agent-shell-switch-buffer)
        ("f" "Fork" agent-shell-fork)
        ("o" "Manager" agent-shell-manager-toggle)]
@@ -1254,7 +1172,7 @@ Looks for .venv directory in project root and activates the Python interpreter."
         ("L" "Load" agent-recall-resume)]])
   (add-to-list 'exec-path "~/.opencode/bin/")
   (setq agent-shell-opencode-default-model-id "opencode-go/deepseek-v4.1-flash")
-  (setq agent-shell-preferred-agent-config '(auto . claude))
+  (setq agent-shell-preferred-agent-config '(auto . claude-code))
   (setq agent-shell-pi-environment
     (agent-shell-make-environment-variables
       "PIONATIVE_AI_KEY" (auth-source-pass-get 'secret "ai.pionerds.nl"))))
@@ -1299,14 +1217,6 @@ Looks for .venv directory in project root and activates the Python interpreter."
     (concat "${title:*} "
       (propertize "${tags:10}" 'face 'org-tag))))
 
-(use-package noboo
-  :bind
-  (;; ("C-c j" . noboo-menu)
-    ("C-c g" . noboo-log-menu))
-  :config
-  (noboo-add-to-agenda nil "log")
-  (noboo-add-to-agenda nil nil "agenda"))
-
 (use-package yasnippet
   :config
   (setq yas-snippet-dirs
@@ -1345,7 +1255,6 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
 (use-package citeproc)
 (use-package ox-hugo)
-
 
 (defun stefanv/org-plan-next ()
   "Create a new day plan entry following on the current or previous lines's active timestamp."
@@ -1391,3 +1300,18 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
                   (or (org-element-property :minute-end ts)
                       (org-element-property :minute-start ts) 0))))
 (keymap-set org-mode-map "C-c C-x p" #'stefanv/org-plan-next)
+
+(defun my/markdown-indent-keep-point (fn)
+  "Call FN without leaving point at indentation.
+`markdown-indent-line' always jumps to indentation, so
+`tab-always-indent' never falls through to completion."
+  (if (eq this-command 'markdown-cycle)
+      (funcall fn)
+    (let ((pos (point-marker)))
+      (funcall fn)
+      (goto-char (max pos (save-excursion (back-to-indentation) (point)))))))
+
+(use-package markdown-mode
+  :bind (:map markdown-mode-map ("TAB" . nil))
+  :config
+  (advice-add 'markdown-indent-line :around #'my/markdown-indent-keep-point))
