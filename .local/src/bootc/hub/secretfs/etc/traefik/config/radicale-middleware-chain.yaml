@@ -4,14 +4,15 @@ http:
             chain:
                 middlewares:
                     - ENC[AES256_GCM,data:ktReAj0dSfK4jA==,iv:HW/NfYCOPOceP3u2ZuH+jwbcDEtHUz8iyO1zvKcxk7M=,tag:owvp6RgUx8fCN6P6OIykKA==,type:str]
+                    - ENC[AES256_GCM,data:kM3U3dENkyMiGyVbmLg=,iv:ak30u3G2I/Qcxz7cEpW9zbbWo9KQuCWGECyGZv6NuFY=,tag:rXT77I+HTVAhQtfwFyJsnQ==,type:str]
         radicale-users:
             basicAuth:
                 users:
                     - ENC[AES256_GCM,data:kbabSAntMXpHDRSwib1mSc9OWXQ+mmR6l7yywQxxUzpQ8vB71tMIOo/PO/HvP50dAVfXgK/2O3fmW/EL3mR8Vqo=,iv:8o4fZ8XdcuTAVy3VGxV36h862uax41C36vwuOcjcnUE=,tag:EcIR3Qlji/2vw6LOTWNFNw==,type:str]
                     - ENC[AES256_GCM,data:Db8ResXEZbj8u5psyyv3XZsq+NscNkz+NnwJQ2L9LhK8h5QgEz1KRImvNK2vw9eMqTeq7zuWaJM1U/BciG7648X4fY0=,iv:gdKtJasGRqsCivU7eerGhPvk7pNXAdq4+RcBKJ6Zcg4=,tag:rT5VavvZp/eesCcTeyJoCA==,type:str]
 sops:
-    lastmodified: "2026-10-25T10:45:40Z"
-    mac: ENC[AES256_GCM,data:Nxz8VvLLBkE63K2Hk4gFiKyURoSrxHBnpIt95GX2FYb4XixnlaS4+kLdJApLqJJ66bvyt5FPyNljgx6Z9/XRuzR/C61CyQVORJ7+fgyN7jxxRdmTpS2FpnZr8WIXu2phL6YiILDtrnQrB34gLRF5jRz2jzMVQ5q5HolGTo/qBIY=,iv:NNXvEvylS0E8bO7YoMUbSFrGUL/2xH69ryloljZXs2k=,tag:BdvLPY4F4yhDTmQaTawGyA==,type:str]
+    lastmodified: "2026-10-25T12:30:17Z"
+    mac: ENC[AES256_GCM,data:tylsDIPpirnuxIeIBiASjqmZlKL7plqpvsurQ79sJnF7VF6NhLLmHxzrSiB0hKSjgAwdEvh/eijHMF8YqLjFkVLr55envIeVTgSAlaA3fkXz69XqbQxLZ+xT9/GjlNAZ75+vQRTOS82Upb7GjVZstP8kAvyOVs3vdtspm/eYf9M=,iv:BMCdtZHnzG+owzYhhUuiQEnN8m4Zb5Zd3LwNLEVLLvc=,tag:G1IDWSG+XE7Cnsw2EaYGXg==,type:str]
     pgp:
         - created_at: "2026-10-25T10:38:43Z"
           enc: |-
