@@ -4,6 +4,16 @@
 http:
   routers:
     radicale:
+      rule: "Host(`hub.vinkies.net`) && PathPrefix(`/calendar`)"
+      entryPoints:
+      - websecure
+      middlewares:
+      - radicale-chain
+      - radicale-script-name
+      - radicale-strip-prefix
+      service: radicale-local
+
+    radicale-local:
       rule: "Host(`hub.local.localhost`) && PathPrefix(`/calendar`)"
       entryPoints:
       - websecure

@@ -1,3 +1,13 @@
+certificatesResolvers:
+  le:
+    acme:
+      email: ivi@vinkies.net
+      # ACME state (account key, certificates) is mutable and lives in /var,
+      # which bootc keeps untouched across image updates. The directory is
+      # created at boot by systemd-tmpfiles (usr/lib/tmpfiles.d/traefik.conf).
+      storage: /var/lib/traefik/acme.json
+      httpchallenge:
+        entrypoint: web
 tls:
   stores:
     default:
