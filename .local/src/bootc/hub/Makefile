@@ -5,6 +5,8 @@
 #   make qcow2	       build output/hub.qcow2 from the container image
 #   make virt-install  boot the qcow2 in a local libvirt/KVM VM
 #   make portforward   forward localhost:80/443 to the VM's Traefik over SSH
+#   make trust-cert    trust the VM's Traefik root certificate on macOS
+#   make run           run the image as a container with podman, host network
 #   make install-exo   install the Exoscale CLI (exo)
 #   make sos-upload    upload the qcow2 to Exoscale Object Storage, public
 #   make sos-public    (re)apply a public-read ACL to the uploaded object
@@ -116,6 +118,23 @@ qcow2: build output/blueprint.toml
 			--output-name $(IMAGE_NAME) \
 			qcow2
 
+# Run the container image directly with podman and host networking, as an
+# alternative to virt-install + portforward: Traefik binds to this host's
+# localhost:80/443 and Radicale to localhost:5232, so no SSH forwarding is
+# needed. The bootc image starts systemd as PID 1, which podman handles
+# automatically. This is a VM image, so its services ship systemd sandboxing
+# (PrivateDevices, ProtectKernel*, ...) that expects the capabilities of a
+# booted VM; grant them instead of weakening the units. On SELinux hosts the
+# container label must be disabled too, or mount namespaces are denied.
+# Uses the existing image (no rebuild); Ctrl-C stops it.
+RUN_FLAGS   ?=
+RUN_CAPS    ?= SYS_ADMIN
+RUN_SECOPTS ?= label=disable
+run:
+	$(PODMAN) run --rm --network host $(addprefix --cap-add ,$(RUN_CAPS)) \
+		$(addprefix --security-opt ,$(RUN_SECOPTS)) \
+		--name $(IMAGE_NAME) $(RUN_FLAGS) $(IMAGE_NAME):$(IMAGE_TAG)
+
 # Boot the built qcow2 in a local libvirt/KVM VM.
 virt-install: qcow2
 	sudo virt-install \
@@ -155,6 +174,24 @@ endif
 		-L $(PORT_HTTP):localhost:80 \
 		-L $(PORT_HTTPS):localhost:443 \
 		$(SSH_DEST)
+
+# Fetch the VM's Traefik root certificate over SSH and trust it as a root in
+# the macOS System keychain (bin/trust-cert does the keychain work), so
+# browsers and curl accept https://localhost and https://*.$(CERT_DOMAIN)
+# served by portforward above. macOS-only; prompts for sudo. Undo by deleting
+# the certificate in Keychain Access.
+trust-cert:
+	@test -n "$(VM_HOST)" || { \
+		echo "trust-cert: no VM address; set VM_HOST=host (or VM_NAME=<domain>)" >&2; \
+		exit 1; \
+	}
+ifeq ($(shell uname -s),Darwin)
+	@tmp=$$(mktemp -t traefik-root) && trap 'rm -f "$$tmp"' EXIT; \
+	$(SSH) $(SSH_DEST) cat /etc/traefik/certs/root.crt > "$$tmp" && \
+	bin/trust-cert "$$tmp"
+else
+	@echo "trust-cert: not macOS, skipping keychain import" >&2
+endif
 
 # Install the official Exoscale CLI. On apt/dnf-based distributions the
 # installer sets up a package repository and needs root (sudo/doas); see the
