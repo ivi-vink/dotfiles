@@ -76,7 +76,9 @@ SOS_URL	   ?= https://sos-$(SOS_ZONE).exo.io/$(SOS_BUCKET)/$(SOS_OBJECT)
 # Self-signed wildcard certificate that Traefik serves as its default
 # certificate (see rootfs/etc/traefik/config/tls.yaml). It is generated into
 # the image build context, which the Containerfile installs at
-# /etc/traefik/certs/. root.crt is the certificate clients must trust.
+# /etc/traefik/certs/. root.crt is the certificate clients must trust. It
+# must be an end-entity certificate (CA:FALSE): browsers reject a CA
+# certificate served as the server certificate once it is trusted as a root.
 CERT_DIR    ?= rootfs/etc/traefik/certs
 CERT_DOMAIN ?= local.localhost
 # Where CERT_DIR ends up inside the built image (and thus on the VM): the
@@ -97,7 +99,10 @@ $(CERT_DIR):
 		-out $(CERT_DIR)/root.crt \
 		-days $(CERT_DAYS) \
 		-subj "/CN=$(CERT_DOMAIN)" \
-		-addext "subjectAltName=DNS:$(CERT_DOMAIN),DNS:*.$(CERT_DOMAIN)"
+		-addext "subjectAltName=DNS:$(CERT_DOMAIN),DNS:*.$(CERT_DOMAIN)" \
+		-addext "basicConstraints=critical,CA:FALSE" \
+		-addext "keyUsage=critical,digitalSignature,keyEncipherment" \
+		-addext "extendedKeyUsage=serverAuth"
 	chmod 600 $(CERT_DIR)/root.key
 
 # Build the bootable container image everything else is derived from.
