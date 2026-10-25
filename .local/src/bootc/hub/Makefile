@@ -5,7 +5,7 @@
 #   make build	       build the bootable container image
 #   make qcow2	       build output/hub.qcow2 from the container image
 #   make virt-install  boot the qcow2 in a local libvirt/KVM VM
-#   make portforward   forward localhost:80/443 to the VM's Traefik over SSH
+#   make portforward   forward the VM's 80/443 here and the gpg-agent to the VM
 #   make trust-cert    trust the VM's Traefik root certificate on macOS
 #   make run           run the image as a container with podman, host network
 #   make install-exo   install the Exoscale CLI (exo)
@@ -61,6 +61,15 @@ SSH_DEST ?= $(VM_USER)@$(VM_HOST)
 PORT_HTTP  ?= 8080
 PORT_HTTPS ?= 8443
 PF_ANCHOR  ?= com.apple/local-dev.local.localhost
+
+# portforward also reverse-forwards this machine's gpg-agent into the VM:
+# sshd in the VM listens on VM_GPG_SOCK and tunnels connections back to
+# GPG_AGENT_SOCK here, so the VM's gpg (sops, git signing, ...) uses this
+# machine's agent and keys. ssh only accepts an absolute path for the remote
+# socket, hence the /home/$(VM_USER) default; e.g. for root override with
+#   make portforward VM_USER=root VM_GPG_SOCK=/root/.gnupg/S.gpg-agent
+GPG_AGENT_SOCK ?= $(HOME)/.gnupg/S.gpg-agent
+VM_GPG_SOCK    ?= $(if $(filter root,$(VM_USER)),/root,/home/$(VM_USER))/.gnupg/S.gpg-agent
 
 # --- Exoscale CLI / Object Storage (SOS) ------------------------------------
 # https://community.exoscale.com/tools/command-line-interface/
@@ -160,10 +169,14 @@ virt-install: qcow2
 		--network network=default
 
 # Forward the VM's localhost:80 and localhost:443 to this machine, so that
-# http://localhost and https://localhost reach Traefik. ssh listens on the
-# unprivileged PORT_HTTP/PORT_HTTPS; on macOS pf redirects ports 80/443 on lo0
-# to those ports, which needs sudo. Runs in the foreground; Ctrl-C stops
-# forwarding (the pf rules stay loaded).
+# http://localhost and https://localhost reach Traefik, and reverse-forward
+# this machine's gpg-agent socket to the VM, so that gpg in the VM uses this
+# machine's agent and keys. ssh listens on the unprivileged
+# PORT_HTTP/PORT_HTTPS; on macOS pf redirects ports 80/443 on lo0 to those
+# ports, which needs sudo. Runs in the foreground; Ctrl-C stops forwarding
+# (the pf rules stay loaded). If the gpg-agent socket does not exist here,
+# only the HTTP/HTTPS forwards are set up. sshd on the VM needs
+# 'StreamLocalBindUnlink yes' to replace a socket that already exists there.
 portforward:
 	@test -n "$(VM_HOST)" || { \
 		echo "portforward: no VM address; set VM_HOST=host (or VM_NAME=<domain>)" >&2; \
@@ -180,9 +193,18 @@ else
 endif
 	@echo "http://localhost  -> $(SSH_DEST):80  (local :$(PORT_HTTP))"
 	@echo "https://localhost -> $(SSH_DEST):443 (local :$(PORT_HTTPS))"
+	@if test -S "$(GPG_AGENT_SOCK)"; then \
+		$(SSH) $(SSH_DEST) 'mkdir -p $$(dirname "$(VM_GPG_SOCK)")'; \
+		echo "$(GPG_AGENT_SOCK) -> $(SSH_DEST):$(VM_GPG_SOCK)"; \
+		gpg_fwd='-R $(VM_GPG_SOCK):$(GPG_AGENT_SOCK)'; \
+	else \
+		echo "portforward: $(GPG_AGENT_SOCK) is not a socket; skipping gpg-agent forward (is gpg-agent running?)" >&2; \
+		gpg_fwd=''; \
+	fi; \
 	$(SSH) -N -o ExitOnForwardFailure=yes \
 		-L $(PORT_HTTP):localhost:80 \
 		-L $(PORT_HTTPS):localhost:443 \
+		$$gpg_fwd \
 		$(SSH_DEST)
 
 # Fetch the VM's Traefik root certificate over SSH and trust it as a root in
