@@ -1,0 +1,124 @@
+#!/bin/sh
+# Daily duplicity backup of the hub's state to an S3-compatible object
+# store (RustFS in the test stack, anything S3-compatible in production).
+#
+# Configuration is loaded from /etc/duplicity/backup.env by
+# duplicity-backup.service; the defaults target the RustFS test stack in
+# this directory's compose.yaml. Run it manually with:
+#   systemctl start duplicity-backup.service
+#   journalctl -u duplicity-backup -f
+set -eu
+
+# --- Configuration ----------------------------------------------------------
+# Values here are only fallbacks; /etc/duplicity/backup.env overrides them.
+S3_HOST=${S3_HOST:-rustfs}
+S3_PORT=${S3_PORT:-9000}
+S3_BUCKET=${S3_BUCKET:-backups}
+S3_PREFIX=${S3_PREFIX:-hub}
+S3_ACCESS_KEY=${S3_ACCESS_KEY:-rustfsadmin}
+S3_SECRET_KEY=${S3_SECRET_KEY:-rustfsadmin}
+PASSPHRASE=${PASSPHRASE:-}
+SOURCES=${SOURCES:-/var/lib/radicale /var/lib/traefik /var/lib/homepage /etc/traefik}
+FULL_AFTER=${FULL_AFTER:-7D}
+KEEP_FOR=${KEEP_FOR:-90D}
+ARCHIVE_DIR=${ARCHIVE_DIR:-/var/cache/duplicity}
+
+export S3_ENDPOINT="http://${S3_HOST}:${S3_PORT}"
+
+# boto3 reads these from the environment (duplicity's s3 backend too).
+export AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
+export AWS_SECRET_ACCESS_KEY=${S3_SECRET_KEY}
+
+# boto3 >= 1.36 signs requests with checksums that some third-party S3
+# implementations (RustFS, MinIO, ...) reject. Harmless with plain S3:
+# https://gitlab.com/duplicity/duplicity/-/issues/870
+export AWS_REQUEST_CHECKSUM_CALCULATION=when_required
+export AWS_RESPONSE_CHECKSUM_VALIDATION=when_required
+
+if [ -n "${PASSPHRASE}" ]; then
+    export PASSPHRASE
+    encryption=
+else
+    encryption=--no-encryption
+fi
+
+# duplicity 3 refuses to work with a bucket that does not exist yet, so
+# create it on first run.
+if ! python3 - "${S3_BUCKET}" <<'PY'
+import os
+import sys
+
+import boto3
+
+bucket = sys.argv[1]
+s3 = boto3.client(
+    "s3",
+    endpoint_url=os.environ["S3_ENDPOINT"],
+    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    region_name="us-east-1",
+)
+try:
+    s3.head_bucket(Bucket=bucket)
+except Exception:
+    s3.create_bucket(Bucket=bucket)
+    print(f"created bucket {bucket}", flush=True)
+PY
+then
+    echo "failed to create S3 bucket ${S3_BUCKET}" >&2
+    exit 1
+fi
+
+TARGET_BASE="s3://${S3_BUCKET}/${S3_PREFIX}"
+
+# FULL_AFTER accepts plain seconds or a suffix: ND (days), NW (weeks),
+# NM (months). duplicity 3 takes a single source path per run, so each
+# directory gets its own chain (and target prefix) with its own stamp
+# tracking the last successful full: run a full when it is older than
+# FULL_AFTER, otherwise use the `backup` action (incremental, which falls
+# back to a full itself when no chain exists - duplicity 3 removed
+# --full-if-older-than).
+full_after_secs() {
+    case "$FULL_AFTER" in
+        *D|*d) echo $(( ${FULL_AFTER%[Dd]} * 86400 )) ;;
+        *W|*w) echo $(( ${FULL_AFTER%[Ww]} * 604800 )) ;;
+        *M|*m) echo $(( ${FULL_AFTER%[Mm]} * 2592000 )) ;;
+        *) echo "$FULL_AFTER" ;;
+    esac
+}
+
+for src in ${SOURCES}; do
+    chain=$(printf '%s' "$src" | tr '/ ' '__')
+    target="${TARGET_BASE}/${chain}"
+
+    last_full=$(cat "${ARCHIVE_DIR}/last-full-${chain}" 2>/dev/null || echo 0)
+    case "$last_full" in
+        *[!0-9]*|'') last_full=0 ;;
+    esac
+
+    if [ $(( $(date +%s) - last_full )) -ge "$(full_after_secs)" ]; then
+        action=full
+    else
+        action=backup
+    fi
+
+    # Backup (full, or incremental with automatic full fallback).
+    # shellcheck disable=SC2086
+    duplicity "$action" \
+        --archive-dir "${ARCHIVE_DIR}" \
+        --num-retries 3 \
+        --s3-endpoint-url "${S3_ENDPOINT}" \
+        --s3-unencrypted-connection \
+        ${encryption} \
+        "$src" \
+        "$target"
+
+    [ "$action" != full ] || date +%s > "${ARCHIVE_DIR}/last-full-${chain}"
+
+    # Prune chains older than KEEP_FOR.
+    duplicity remove-older-than "${KEEP_FOR}" --force \
+        --archive-dir "${ARCHIVE_DIR}" \
+        --s3-endpoint-url "${S3_ENDPOINT}" \
+        --s3-unencrypted-connection \
+        "$target"
+done

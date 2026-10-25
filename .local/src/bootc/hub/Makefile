@@ -8,6 +8,7 @@
 #   make portforward   forward the VM's 80/443 here and the gpg-agent to the VM
 #   make trust-cert    trust the VM's Traefik root certificate on macOS
 #   make run           run the image as a container with podman, host network
+#   make up/down       start/stop the RustFS backup test stack (compose.yaml)
 #   make install-exo   install the Exoscale CLI (exo)
 #   make sos-upload    upload the qcow2 to Exoscale Object Storage, public
 #   make sos-public    (re)apply a public-read ACL to the uploaded object
@@ -31,6 +32,7 @@ ARCH	 ?= x86_64
 
 # --- Container runtime ------------------------------------------------------
 PODMAN		   ?= podman
+COMPOSE		   ?= $(PODMAN) compose
 CONTAINERS_STORAGE ?= /var/lib/containers/storage
 
 # --- image-builder ----------------------------------------------------------
@@ -167,6 +169,20 @@ run:
 		$(addprefix --security-opt ,$(RUN_SECOPTS)) \
 		--volume "$(CONTAINERS_STORAGE)":/var/lib/containers/storage \
 		--name $(IMAGE_NAME) $(RUN_FLAGS) $(IMAGE_NAME):$(IMAGE_TAG)
+
+# --- Compose test stack ------------------------------------------------------
+# Stand up the RustFS backup test stack from compose.yaml (hub + rustfs) and
+# tear it down again. The hub image is built from the Containerfile when it
+# is not in local storage yet; force a rebuild with `make build` first (both
+# use IMAGE_NAME/IMAGE_TAG) or `$(COMPOSE) up --build`. Named volumes hold
+# the RustFS data, so backups survive `make down`.
+.PHONY: up down
+
+up:
+	$(COMPOSE) up -d
+
+down:
+	$(COMPOSE) down
 
 # Boot the built qcow2 in a local libvirt/KVM VM.
 virt-install: qcow2

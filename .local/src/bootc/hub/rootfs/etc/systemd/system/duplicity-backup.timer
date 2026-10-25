@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily duplicity backup of hub state
+
+[Timer]
+OnCalendar=daily
+# Spread the run across the day; Persistent runs it at the next boot
+# whenever the daily slot was missed.
+RandomizedDelaySec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

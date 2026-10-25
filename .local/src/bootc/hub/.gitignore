@@ -1,1 +1,3 @@
 /rootfs/etc/traefik/config/radicale-middleware-chain.yaml
+# Local override for the baked rootfs/etc/duplicity/backup.env (compose.yaml)
+/duplicity-backup.env

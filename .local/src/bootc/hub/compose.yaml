@@ -1,0 +1,114 @@
+# Test stack: the hub bootc image together with RustFS, an S3-compatible
+# object store, so the hub's daily duplicity backups
+# (duplicity-backup.timer inside the hub) can be exercised end to end
+# without an external service.
+#
+# Prerequisites (run from this directory):
+#   make secrets   # decrypt secretfs/ into rootfs/ (only if not done yet)
+#   make build     # or let compose build the image itself
+#
+# Usage:
+#   podman compose up -d
+#   podman compose exec hub systemctl start duplicity-backup.service
+#   podman compose exec hub journalctl -u duplicity-backup -f
+#   podman compose down
+#
+# The RustFS console is on http://localhost:9001 (test credentials are
+# rustfsadmin/rustfsadmin; see the rustfs service below).
+#
+# Restore test (inside the hub container; one chain per source directory,
+# named after the source path with / replaced by _):
+#   duplicity restore --no-encryption \
+#       --s3-endpoint-url http://rustfs:9000 \
+#       --s3-unencrypted-connection \
+#       s3://backups/hub/_var_lib_radicale /restore
+
+services:
+  hub:
+    build:
+      context: .
+      dockerfile: Containerfile
+    platform: linux/amd64
+    # Same ref the Makefile build target produces, so `make build` &&
+    # `make up` reuse one image.
+    image: ${IMAGE_NAME:-hub}:${IMAGE_TAG:-latest}
+    # The image is a bootable VM image; its services expect a VM's
+    # capabilities, and homepage.service nests podman. Same rationale as
+    # the `run` target in the Makefile.
+    privileged: true
+    security_opt:
+      - label=disable
+    # systemd is PID 1; SIGRTMIN+3 is its clean shutdown signal.
+    stop_signal: SIGRTMIN+3
+    ports:
+      - "80:80"     # Traefik
+      - "443:443"   # Traefik (TLS)
+      - "3000:3000" # Homepage
+    volumes:
+      # Nested podman (homepage.service) shares the host's container
+      # storage; the overlay graph driver cannot stack on the
+      # container's overlayfs root.
+      - ${CONTAINERS_STORAGE:-/var/lib/containers/storage}:/var/lib/containers/storage
+      # Optional: override the duplicity configuration baked into the
+      # image (rootfs/etc/duplicity/backup.env), e.g. for real keys.
+      # - ./duplicity-backup.env:/etc/duplicity/backup.env:ro
+    restart: unless-stopped
+
+  rustfs:
+    image: docker.io/rustfs/rustfs:latest
+    depends_on:
+      rustfs-volume-fix:
+        condition: service_completed_successfully
+    ports:
+      - "9000:9000" # S3 API (duplicity talks to this)
+      - "9001:9001" # Web console
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs{0...3}
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      # RustFS refuses to start when its volumes share one physical disk
+      # (erasure coding safety check). This is a test stack on one disk,
+      # so bypass it; set false for real deployments.
+      RUSTFS_UNSAFE_BYPASS_DISK_CHECK: ${RUSTFS_UNSAFE_BYPASS_DISK_CHECK:-true}
+      # CHANGEME. Keep in sync with S3_ACCESS_KEY/S3_SECRET_KEY in
+      # rootfs/etc/duplicity/backup.env (and the mounted override).
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+      RUSTFS_OBS_LOGGER_LEVEL: info
+      RUSTFS_OBS_LOG_DIRECTORY: /app/logs
+    volumes:
+      - rustfs_data_0:/data/rustfs0
+      - rustfs_data_1:/data/rustfs1
+      - rustfs_data_2:/data/rustfs2
+      - rustfs_data_3:/data/rustfs3
+      - rustfs_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # RustFS runs as uid/gid 10001; named volumes start root-owned, so fix
+  # their ownership once before the server starts (same pattern as the
+  # upstream docker-compose-simple.yml).
+  rustfs-volume-fix:
+    image: alpine:latest
+    volumes:
+      - rustfs_data_0:/data/rustfs0
+      - rustfs_data_1:/data/rustfs1
+      - rustfs_data_2:/data/rustfs2
+      - rustfs_data_3:/data/rustfs3
+      - rustfs_logs:/app/logs
+    command: >
+      sh -c "chown -R 10001:10001 /data/rustfs0 /data/rustfs1 /data/rustfs2 /data/rustfs3 /app/logs"
+    restart: "no"
+
+volumes:
+  rustfs_data_0:
+  rustfs_data_1:
+  rustfs_data_2:
+  rustfs_data_3:
+  rustfs_logs:

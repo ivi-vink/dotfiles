@@ -4,18 +4,29 @@ FROM docker.io/traefik:v3 AS traefik
 
 FROM quay.io/almalinuxorg/almalinux-bootc:10
 
-# Radicale 3 (CalDAV/CardDAV) is only packaged in EPEL. Install epel-release in
-# its own transaction so the epel repository is available to resolve radicale3.
+# Radicale 3 (CalDAV/CardDAV) and podman-compose come from EPEL; duplicity
+# comes from PyPI. EPEL 10.2 - which AlmaLinux 10.2's epel-release pins to -
+# has no duplicity package (it only entered EPEL with the 10.3 build), so
+# install the manylinux wheel instead. --no-deps keeps out the cloud SDKs
+# the wheel lists as hard requirements: duplicity imports every backend's
+# dependencies lazily and only needs fasteners (locks) plus boto3/botocore
+# for the S3 backend (RustFS backups). gnupg2 provides the gpg binary used
+# when PASSPHRASE is set; pip installs into /usr/local, which is baked
+# image content.
 # Scrub everything the transaction dropped into runtime/state directories:
 # the base image ships an almost empty /var, and /run is tmpfs at boot (bootc
 # lint: nonempty-run-tmp, var-tmpfiles). The radicale user is removed from
 # /etc/passwd & co. again: it is created at boot by systemd-sysusers instead
 # (bootc lint: sysusers; see rootfs/usr/lib/sysusers.d/radicale.conf).
 RUN dnf -y install epel-release && \
-    dnf -y install radicale3 && \
+    dnf -y install radicale3 podman-compose python3-pip gnupg2 && \
+    python3 -m pip install --break-system-packages --no-cache-dir \
+        --no-deps duplicity==3.2.1 && \
+    python3 -m pip install --break-system-packages --no-cache-dir \
+        fasteners boto3 botocore && \
     dnf clean all && \
     rm -rf /var/cache /var/log /var/lib/dnf /var/lib/selinux \
-           /var/lib/radicale /run/radicale && \
+           /var/lib/radicale /run/radicale /root/.cache && \
     sed -i '/^radicale:/d' /etc/passwd /etc/shadow /etc/group /etc/gshadow
 
 COPY --from=traefik --chown=root:root /usr/local/bin/traefik /usr/local/bin/traefik
@@ -30,7 +41,7 @@ RUN chmod -R u=rwX,g=rX,o= /etc/traefik
 
 # Start Traefik, Radicale and Homepage with the system. podman.socket gives
 # Homepage read access to the container list (mounted as /var/run/docker.sock).
-RUN systemctl enable radicale traefik homepage podman.socket
+RUN systemctl enable radicale traefik homepage podman.socket duplicity-backup.timer
 
 # https://bootc-dev.github.io/bootc/bootc-images.html#standard-metadata-for-bootc-compatible-images
 LABEL containers.bootc 1

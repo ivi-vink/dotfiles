@@ -1,0 +1,51 @@
+[Unit]
+Description=Backup hub state to RustFS with duplicity
+Documentation=man:duplicity(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/duplicity/backup.env
+# Keep duplicity's cache, lock files and (if encryption is enabled) the
+# temporary GnuPG home out of /root: /var/cache/duplicity is the one path
+# this unit may write to (see ReadWritePaths).
+Environment=HOME=/var/cache/duplicity
+ExecStart=/usr/local/bin/duplicity-backup
+
+Nice=10
+IOSchedulingClass=idle
+UMask=0077
+
+# duplicity reads the state directories below /var/lib and uploads volumes
+# over the network; grant it nothing else.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/cache/duplicity
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectProc=invisible
+ProcSubset=pid
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+# duplicity calls setuid/setgid to its own euid/egid at startup (a no-op
+# as root); they are not in @system-service, so re-allow them explicitly.
+SystemCallFilter=setuid setgid
+
+[Install]
+WantedBy=multi-user.target
