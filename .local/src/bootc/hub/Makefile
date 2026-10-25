@@ -79,6 +79,9 @@ SOS_URL	   ?= https://sos-$(SOS_ZONE).exo.io/$(SOS_BUCKET)/$(SOS_OBJECT)
 # /etc/traefik/certs/. root.crt is the certificate clients must trust.
 CERT_DIR    ?= rootfs/etc/traefik/certs
 CERT_DOMAIN ?= local.localhost
+# Where CERT_DIR ends up inside the built image (and thus on the VM): the
+# Containerfile installs the rootfs tree at /.
+VM_CERT_DIR ?= $(CERT_DIR:rootfs%=%)
 # Validity in days. Long-lived is fine for a self-signed certificate trusted
 # locally; macOS only enforces its 398-day limit on certificates issued by a
 # CA in the system trust store.
@@ -187,7 +190,7 @@ trust-cert:
 	}
 ifeq ($(shell uname -s),Darwin)
 	@tmp=$$(mktemp -t traefik-root) && trap 'rm -f "$$tmp"' EXIT; \
-	$(SSH) $(SSH_DEST) cat /etc/traefik/certs/root.crt > "$$tmp" && \
+	$(SSH) $(SSH_DEST) cat $(CERT_DIR)/root.crt > "$$tmp" && \
 	bin/trust-cert "$$tmp"
 else
 	@echo "trust-cert: not macOS, skipping keychain import" >&2
