@@ -1,0 +1,25 @@
+# Traefik serves the hub over TLS on the websecure entry point (see
+# traefik.yaml); this route exposes the Headscale control plane under
+# https://headscale.vinkies.net and https://headscale.local.localhost,
+# proxying to its loopback HTTP listener. No basicAuth middleware: Tailscale
+# nodes speak headscale's own protocol here (noise/pre-auth keys), and the
+# bundled web UI is read-only.
+http:
+  routers:
+    headscale:
+      rule: "Host(`headscale.vinkies.net`)"
+      entryPoints:
+      - websecure
+      service: headscale-local
+
+    headscale-local:
+      rule: "Host(`headscale.local.localhost`)"
+      entryPoints:
+      - websecure
+      service: headscale-local
+
+  services:
+    headscale-local:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"

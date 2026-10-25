@@ -1,0 +1,60 @@
+[Unit]
+Description=Headscale coordination server
+Documentation=https://headscale.net
+After=network-online.target
+Wants=network-online.target
+# Restart when the config baked into the image is replaced on disk.
+X-Restart-Triggers=/etc/headscale/config.yaml
+
+[Service]
+ExecStart=/usr/local/bin/headscale serve
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+User=headscale
+Group=headscale
+# Sandbox mirrors upstream's packaged unit
+# (packaging/systemd/headscale.service in the headscale sources).
+# StateDirectory/RuntimeDirectory create /var/lib/headscale and
+# /run/headscale owned by the service account when the unit starts, and
+# both stay writable under ProtectSystem=strict - the bootc image must not
+# bake state directories (bootc lint: var-tmpfiles, sysusers; see
+# usr/lib/sysusers.d/headscale.conf). The capabilities are upstream's;
+# nothing else is granted.
+WorkingDirectory=/var/lib/headscale
+StateDirectory=headscale
+StateDirectoryMode=0750
+RuntimeDirectory=headscale
+RuntimeDirectoryMode=0750
+ReadWritePaths=/var/lib/headscale
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_CHOWN
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_CHOWN
+NoNewPrivileges=true
+LockPersonality=true
+PrivateDevices=true
+PrivateMounts=true
+PrivateTmp=true
+ProcSubset=pid
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProtectSystem=strict
+RemoveIPC=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+SystemCallFilter=@chown
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

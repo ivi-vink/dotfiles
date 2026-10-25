@@ -2,6 +2,12 @@
 # binary out of the official image in a throwaway build stage.
 FROM docker.io/traefik:v3 AS traefik
 
+# Headscale (the Tailscale control server) is likewise a single statically
+# linked Go binary. Take it from the official ko-built image (ko installs the
+# binary at /ko-app/headscale); the version is pinned like duplicity's below
+# because headscale's config format moves between releases.
+FROM ghcr.io/juanfont/headscale:v0.29.6 AS headscale
+
 FROM quay.io/almalinuxorg/almalinux-bootc:10
 
 # Radicale 3 (CalDAV/CardDAV) and podman-compose come from EPEL; duplicity
@@ -30,18 +36,19 @@ RUN dnf -y install epel-release && \
     sed -i '/^radicale:/d' /etc/passwd /etc/shadow /etc/group /etc/gshadow
 
 COPY --from=traefik --chown=root:root /usr/local/bin/traefik /usr/local/bin/traefik
+COPY --from=headscale --chown=root:root /ko-app/headscale /usr/local/bin/headscale
 
 # Image configuration: the Traefik static/dynamic config with its certificate,
-# the Radicale config and the systemd units under rootfs/.
+# the Radicale and Headscale configs and the systemd units under rootfs/.
 COPY rootfs/ /
 
 # /etc/traefik holds the TLS key and decrypted secrets: no access for others.
 # The traefik group is applied at boot (rootfs/usr/lib/tmpfiles.d/traefik.conf).
 RUN chmod -R u=rwX,g=rX,o= /etc/traefik
 
-# Start Traefik, Radicale and Homepage with the system. podman.socket gives
-# Homepage read access to the container list (mounted as /var/run/docker.sock).
-RUN systemctl enable radicale traefik homepage podman.socket duplicity-backup.timer
+# Start Traefik, Radicale, Headscale and Homepage with the system. podman.socket
+# gives Homepage read access to the container list (mounted as /var/run/docker.sock).
+RUN systemctl enable radicale traefik headscale homepage podman.socket duplicity-backup.timer
 
 # https://bootc-dev.github.io/bootc/bootc-images.html#standard-metadata-for-bootc-compatible-images
 LABEL containers.bootc 1

@@ -6,8 +6,16 @@
         href: https://hub.vinkies.net/calendar
         description: Radicale CalDAV/CardDAV
         icon: radicale.png
+    - VPN:
+        href: https://headscale.vinkies.net
+        description: Headscale (Tailscale) control server
+        icon: tailscale.png
 - Local:
     - Calendar:
         href: https://hub.local.localhost/calendar
         description: Radicale CalDAV/CardDAV
         icon: radicale.png
+    - VPN:
+        href: https://headscale.local.localhost
+        description: Headscale (Tailscale) control server
+        icon: tailscale.png
