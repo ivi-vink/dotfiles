@@ -5,12 +5,19 @@
 [server]
 hosts = 127.0.0.1:5232
 
-# Populate /etc/radicale/users with entries created by htpasswd, e.g.
-#   htpasswd -5 /etc/radicale/users ivi
+# Trust the Traefik reverse proxy for authentication: Traefik's basicAuth
+# middleware verifies credentials and sets X-Remote-User (headerField), which
+# Radicale takes as the authenticated username. Radicale's own HTTP auth is
+# disabled. Only safe because Radicale listens on loopback (see above).
 [auth]
-type = htpasswd
-htpasswd_filename = /etc/radicale/users
-htpasswd_encryption = autodetect
+type = http_x_remote_user
+
+# The web UI probes for existing authentication (e.g. the X-Remote-User set
+# by Traefik's basicAuth) with a request that includes the browser's cached
+# Basic credentials. Otherwise the probe is unauthenticated, Traefik rejects
+# it, and the UI always shows its (redundant) login form.
+[web]
+prefer_browser_login = True
 
 [storage]
 filesystem_folder = /var/lib/radicale/collections

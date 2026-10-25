@@ -1,15 +1,33 @@
 # Traefik serves the hub over TLS on the websecure entry point (see
-# entrypoints.yaml); this route exposes Radicale behind
-# https://radicale.local.localhost and proxies to its loopback listener.
+# entrypoints.yaml); this route exposes Radicale under
+# https://hub.local.localhost/calendar and proxies to its loopback listener.
 http:
   routers:
     radicale:
-      rule: "Host(`radicale.local.localhost`)"
+      rule: "Host(`hub.local.localhost`) && PathPrefix(`/calendar`)"
       entryPoints:
       - websecure
       middlewares:
       - radicale-chain
+      - radicale-script-name
+      - radicale-strip-prefix
       service: radicale-local
+
+  middlewares:
+    # Radicale takes the script name to strip from the request URI from the
+    # X-Script-Name header (WSGI SCRIPT_NAME), so it generates correct
+    # absolute paths under /calendar while seeing the unprefixed URI.
+    radicale-script-name:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "/calendar"
+
+    # Per the Radicale docs (https://radicale.org/v3.html#reverse-proxy) the
+    # proxy must remove the location from the URL path forwarded upstream.
+    radicale-strip-prefix:
+      stripPrefix:
+        prefixes:
+        - /calendar
 
   services:
     radicale-local:
