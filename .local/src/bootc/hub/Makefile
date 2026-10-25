@@ -1,6 +1,7 @@
 # Build the AlmaLinux-based "hub" bootc image and a bootable qcow2.
 #
 # Run from this directory (or: make -C .local/src/bootc/hub <target>):
+#   make		       (default) encrypt secrets.yaml with sops + gpg
 #   make build	       build the bootable container image
 #   make qcow2	       build output/hub.qcow2 from the container image
 #   make virt-install  boot the qcow2 in a local libvirt/KVM VM
@@ -224,6 +225,33 @@ sos-public:
 # (Re)apply a private-read ACL to an already-uploaded object.
 sos-private:
 	$(EXO) storage setacl sos://$(SOS_BUCKET)/$(SOS_OBJECT) private
+
+# --- SOPS -------------------------------------------------------------------
+# Encrypt secrets.yaml (relative to this hub directory) in place with a PGP
+# identity, so only holders of that key can decrypt it (sops wraps the file's
+# key with the PGP key):
+#   make SOPS_PGP_FP=<fingerprint>
+#   make SOPS_PGP_FP=<fingerprint> FILE=path/to/secrets.yaml
+# Get the fingerprint with: gpg --list-secret-keys
+# https://getsops.io/docs/usage/identities/pgp/
+SOPS_PGP_FP ?= 2DC703F3C6A10B29FA5FF66A086EBC0D7040B10B
+FILE	    ?= secrets.yaml
+
+.PHONY: secrets
+secrets:
+	@command -v sops >/dev/null 2>&1 || { \
+		echo "secrets: sops is not installed" >&2; \
+		exit 1; \
+	}
+	@test -n "$(SOPS_PGP_FP)" || { \
+		echo "secrets: set SOPS_PGP_FP (fingerprint from 'gpg --list-secret-keys')" >&2; \
+		exit 1; \
+	}
+	@test -n "$(FILE)" || { \
+		echo "secrets: set FILE (e.g. make SOPS_PGP_FP=<fp> FILE=secrets.yaml)" >&2; \
+		exit 1; \
+	}
+	sops --encrypt --pgp "$(SOPS_PGP_FP)" --in-place "$(FILE)"
 
 clean:
 	rm -rf $(OUTPUT_DIR)
