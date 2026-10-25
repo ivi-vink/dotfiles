@@ -1,0 +1,11 @@
+# Homepage settings (https://gethomepage.dev/configs/settings/). Seeded into
+# /var/lib/homepage on boot by tmpfiles.d/homepage.conf; existing files are
+# not overwritten, so edit the live copy at /var/lib/homepage/settings.yaml.
+---
+# Groups listed here are displayed first, in the order given; groups not
+# listed follow in services.yaml order. So Hub must be listed to keep it
+# above Local.
+layout:
+  Hub: {}
+  Local:
+    initiallyCollapsed: true

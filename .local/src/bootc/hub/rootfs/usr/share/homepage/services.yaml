@@ -6,3 +6,8 @@
         href: https://hub.vinkies.net/calendar
         description: Radicale CalDAV/CardDAV
         icon: radicale.png
+- Local:
+    - Calendar:
+        href: https://hub.local.localhost/calendar
+        description: Radicale CalDAV/CardDAV
+        icon: radicale.png

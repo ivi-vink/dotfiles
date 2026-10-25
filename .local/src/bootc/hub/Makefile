@@ -149,13 +149,23 @@ qcow2: build output/blueprint.toml
 # (PrivateDevices, ProtectKernel*, ...) that expects the capabilities of a
 # booted VM; grant them instead of weakening the units. On SELinux hosts the
 # container label must be disabled too, or mount namespaces are denied.
-# Uses the existing image (no rebuild); Ctrl-C stops it.
+# Nested podman (homepage.service) also gets its storage from the host: the
+# container's /var/lib/containers/storage sits on the container's overlayfs
+# root, and the overlay graph driver cannot stack on overlayfs. The same
+# bind mount feeds podman-in-container in bin/image-builder.
+# Uses the existing image (no rebuild); Ctrl-C stops it. The container
+# needs more than the default powers: systemd's sandboxed services expect
+# a booted VM's capabilities, and nested podman (homepage.service) needs
+# NET_ADMIN for netavark's network namespace, MKNOD for crun's /dev/null
+# and the other device nodes, and a read-write /proc/sys for netavark's
+# sysctls, which podman mounts read-only otherwise. --privileged grants
+# all of these.
 RUN_FLAGS   ?=
-RUN_CAPS    ?= SYS_ADMIN
 RUN_SECOPTS ?= label=disable
 run:
-	$(PODMAN) run --replace --rm --network host $(addprefix --cap-add ,$(RUN_CAPS)) \
+	$(PODMAN) run --replace --rm --privileged --network host \
 		$(addprefix --security-opt ,$(RUN_SECOPTS)) \
+		--volume "$(CONTAINERS_STORAGE)":/var/lib/containers/storage \
 		--name $(IMAGE_NAME) $(RUN_FLAGS) $(IMAGE_NAME):$(IMAGE_TAG)
 
 # Boot the built qcow2 in a local libvirt/KVM VM.
