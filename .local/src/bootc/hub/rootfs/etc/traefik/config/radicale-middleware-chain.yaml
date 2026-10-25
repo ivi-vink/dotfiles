@@ -1,0 +1,6 @@
+http:
+  middlewares:
+    radicale-chain:
+      chain:
+        middlewares:
+        - https-only

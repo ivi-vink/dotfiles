@@ -7,10 +7,12 @@ http:
       rule: "Host(`radicale.local.localhost`)"
       entryPoints:
       - websecure
-      service: radicale
+      middlewares:
+      - radicale-chain
+      service: radicale-local
 
   services:
-    radicale:
+    radicale-local:
       loadBalancer:
         servers:
           - url: "http://127.0.0.1:5232"

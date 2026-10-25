@@ -1,7 +1,7 @@
 # Build the AlmaLinux-based "hub" bootc image and a bootable qcow2.
 #
 # Run from this directory (or: make -C .local/src/bootc/hub <target>):
-#   make		       (default) encrypt secrets.yaml with sops + gpg
+#   make secrets       decrypt secretfs/ into rootfs/ with sops
 #   make build	       build the bootable container image
 #   make qcow2	       build output/hub.qcow2 from the container image
 #   make virt-install  boot the qcow2 in a local libvirt/KVM VM
@@ -11,7 +11,8 @@
 #   make install-exo   install the Exoscale CLI (exo)
 #   make sos-upload    upload the qcow2 to Exoscale Object Storage, public
 #   make sos-public    (re)apply a public-read ACL to the uploaded object
-#   make clean	       remove build output
+#   make passwd        print a bcrypt hash for Traefik basic auth
+#   make clean       remove build output
 #
 # Override any variable on the command line, e.g.
 #   make PODMAN='sudo podman' qcow2
@@ -226,16 +227,25 @@ sos-public:
 sos-private:
 	$(EXO) storage setacl sos://$(SOS_BUCKET)/$(SOS_OBJECT) private
 
+# --- Basic auth --------------------------------------------------------------
+# Read a password from stdin and print its salted bcrypt hash for a Traefik
+# basicAuth middleware's users list ("user:<hash>"). Traefik 3 has no argon2
+# support: basicAuth only accepts bcrypt, MD5 (apr1) and SHA1 hashes.
+BCRYPT_COST ?= 12
+
+.PHONY: passwd
+passwd:
+	@htpasswd -niB -C $(BCRYPT_COST) user | cut -d: -f2-
+
 # --- SOPS -------------------------------------------------------------------
-# Encrypt secrets.yaml (relative to this hub directory) in place with a PGP
-# identity, so only holders of that key can decrypt it (sops wraps the file's
-# key with the PGP key):
-#   make SOPS_PGP_FP=<fingerprint>
-#   make SOPS_PGP_FP=<fingerprint> FILE=path/to/secrets.yaml
-# Get the fingerprint with: gpg --list-secret-keys
-# https://getsops.io/docs/usage/identities/pgp/
-SOPS_PGP_FP ?= 2DC703F3C6A10B29FA5FF66A086EBC0D7040B10B
-FILE	    ?= secrets.yaml
+# Decrypt every file under secretfs/ to the same path under rootfs/, which the
+# Containerfile installs at /. sops publish cannot do this: its destination
+# rules only target S3, GCS and Vault. Create or edit a secret with
+#   sops edit secretfs/etc/<path>
+# .sops.yaml picks the PGP key. Decrypted paths are added to .gitignore so the
+# plaintext never gets committed.
+SECRET_DIR ?= secretfs
+ROOTFS_DIR ?= rootfs
 
 .PHONY: secrets
 secrets:
@@ -243,15 +253,13 @@ secrets:
 		echo "secrets: sops is not installed" >&2; \
 		exit 1; \
 	}
-	@test -n "$(SOPS_PGP_FP)" || { \
-		echo "secrets: set SOPS_PGP_FP (fingerprint from 'gpg --list-secret-keys')" >&2; \
-		exit 1; \
-	}
-	@test -n "$(FILE)" || { \
-		echo "secrets: set FILE (e.g. make SOPS_PGP_FP=<fp> FILE=secrets.yaml)" >&2; \
-		exit 1; \
-	}
-	sops --encrypt --pgp "$(SOPS_PGP_FP)" --in-place "$(FILE)"
+	@find $(SECRET_DIR) -type f | while read -r src; do \
+		dst=$(ROOTFS_DIR)/$${src#$(SECRET_DIR)/}; \
+		echo "$$src -> $$dst"; \
+		mkdir -p "$${dst%/*}" && \
+		(umask 077 && sops --decrypt "$$src" > "$$dst") || exit 1; \
+		grep -qxF "/$$dst" .gitignore 2>/dev/null || echo "/$$dst" >> .gitignore; \
+	done
 
 clean:
 	rm -rf $(OUTPUT_DIR)

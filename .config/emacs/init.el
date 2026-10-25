@@ -1230,7 +1230,7 @@ Looks for .venv directory in project root and activates the Python interpreter."
   )
 
 (use-package ghostel
-  :bind (("C-x m" . ghostel)
+  :bind (("C-x m" . ghostel-menu)
          :map ghostel-semi-char-mode-map
          ("C-s"  . consult-line)
          ("C-k"  . my/ghostel-send-C-k-and-kill)
@@ -1251,7 +1251,120 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
   (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
   (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
-  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
+  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer))
+
+  (require 'consult)
+  (require 'transient)
+
+  (defun my/ghostel-new ()
+    "Create a new ghostel terminal in the current project's root."
+    (interactive)
+    (ghostel t))
+
+  (defun my/ghostel-buffer-project (name)
+    "Return the project root of ghostel buffer NAME, or nil."
+    (when-let* ((buf (get-buffer name)))
+      (or (cdr (assq 'project-root (buffer-local-value 'ghostel-identity buf)))
+          (let ((dir (buffer-local-value 'default-directory buf)))
+            (ignore-errors
+              (when-let* ((proj (and dir (project-current nil dir))))
+                (project-root proj)))))))
+
+  (defun my/ghostel-buffer-group-title (name)
+    "Completion group title for ghostel buffer NAME."
+    (if-let* ((root (my/ghostel-buffer-project name)))
+        (file-name-nondirectory (directory-file-name root))
+      "No project"))
+
+  (defun my/ghostel-buffer-group (cand transform)
+    "Group-function grouping ghostel buffer completions by project."
+    (if transform
+        cand
+      (my/ghostel-buffer-group-title cand)))
+
+  (defun my/ghostel-current-project-root ()
+    "Return the normalized project root of the current buffer, or nil."
+    (ignore-errors
+      (when-let* ((proj (project-current nil default-directory)))
+        (ghostel--normalize-root (project-root proj)))))
+
+  (defun my/ghostel-sort-buffers (bufs)
+    "Sort BUFS for display: current project first, then project, then name."
+    (let ((cur (my/ghostel-current-project-root)))
+      (sort bufs
+            (lambda (a b)
+              (let ((pa (when-let* ((root (my/ghostel-buffer-project
+                                            (buffer-name a))))
+                          (ghostel--normalize-root root)))
+                    (pb (when-let* ((root (my/ghostel-buffer-project
+                                            (buffer-name b))))
+                          (ghostel--normalize-root root))))
+                (cond
+                 ((equal pa pb)
+                  (string< (buffer-name a) (buffer-name b)))
+                 ((and cur (equal pa cur)) t)
+                 ((and cur (equal pb cur)) nil)
+                 (t (string<
+                     (my/ghostel-buffer-group-title (buffer-name a))
+                     (my/ghostel-buffer-group-title (buffer-name b))))))))))
+
+  (defun my/ghostel-read-buffer (prompt bufs &optional group-p)
+    "Select a ghostel buffer from BUFS with Consult preview.
+BUFS is a list of live `ghostel-mode' buffers.  Returns the chosen
+buffer.  Defaults to the buffer `ghostel-next' would land on, so
+RET matches the forward-cycle direction.  When GROUP-P is non-nil,
+group candidates by project, with the current project first."
+    (unless bufs
+      (user-error "No ghostel buffers"))
+    (let* ((current (current-buffer))
+           (idx (cl-position current bufs))
+           (default (buffer-name (if idx
+                                     (nth (mod (1+ idx) (length bufs)) bufs)
+                                   (car bufs))))
+           (sorted (if group-p
+                       (my/ghostel-sort-buffers (copy-sequence bufs))
+                     bufs))
+           (names (mapcar #'buffer-name sorted)))
+      (let ((completions-group t))
+        (consult--read
+         names
+         :prompt prompt
+         :default default
+         :require-match t
+         :category 'buffer
+         :annotate #'ghostel-annotate-buffer
+         :sort nil
+         :group (when group-p #'my/ghostel-buffer-group)
+         :state (consult--buffer-preview)
+         :lookup (lambda (selected _cands _input _narrow)
+                   (get-buffer selected))))))
+
+  (defun my/ghostel-list-buffers ()
+    "Pick a ghostel buffer to switch to.
+Buffers are grouped by project, with the current project first."
+    (interactive)
+    (pop-to-buffer (my/ghostel-read-buffer "Ghostel buffer: " (ghostel-buffer-list) t)
+                   (append display-buffer--same-window-action
+                           '((category . comint)))))
+
+  (defun my/ghostel-project-list-buffers ()
+    "Pick a ghostel buffer in the current project to switch to."
+    (interactive)
+    (pop-to-buffer (my/ghostel-read-buffer "Project ghostel buffer: "
+                                           (ghostel-project-buffer-list))
+                   (append display-buffer--same-window-action
+                           '((category . comint)))))
+
+  (transient-define-prefix ghostel-menu ()
+    "Ghostel terminal commands."
+    [["Start"
+      ("a" "Start/switch" ghostel)
+      ("o" "Other" ghostel-other)
+      ("n" "Start" my/ghostel-new)
+      ("N" "Project root" ghostel-project)]
+     ["Switch"
+      ;; ("b" "Project buffers" my/ghostel-project-list-buffers)
+      ("b" "List buffers" my/ghostel-list-buffers)]]))
 
 (use-package citeproc)
 (use-package ox-hugo)

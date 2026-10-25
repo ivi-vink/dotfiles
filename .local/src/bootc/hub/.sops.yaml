@@ -1,0 +1,5 @@
+# Files under secretfs/ (any depth) mirror the rootfs/ tree and are encrypted
+# with the same PGP key as the Makefile's `secrets` target (SOPS_PGP_FP).
+creation_rules:
+  - path_regex: ^secretfs/.*
+    pgp: 2DC703F3C6A10B29FA5FF66A086EBC0D7040B10B

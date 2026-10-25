@@ -17,6 +17,10 @@ COPY --from=traefik --chown=root:root /usr/local/bin/traefik /usr/local/bin/trae
 # the Radicale config and the systemd units under rootfs/.
 COPY rootfs/ /
 
+# /etc/traefik holds the TLS key and decrypted secrets: no access for others.
+# The traefik group is applied at boot (rootfs/usr/lib/tmpfiles.d/traefik.conf).
+RUN chmod -R u=rwX,g=rX,o= /etc/traefik
+
 # Start Traefik and Radicale with the system.
 RUN systemctl enable radicale traefik
 
