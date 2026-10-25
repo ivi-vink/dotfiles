@@ -68,8 +68,12 @@ PF_ANCHOR  ?= com.apple/local-dev.local.localhost
 # machine's agent and keys. ssh only accepts an absolute path for the remote
 # socket, hence the /home/$(VM_USER) default; e.g. for root override with
 #   make portforward VM_USER=root VM_GPG_SOCK=/root/.gnupg/S.gpg-agent
-GPG_AGENT_SOCK ?= $(HOME)/.gnupg/S.gpg-agent
-VM_GPG_SOCK    ?= $(if $(filter root,$(VM_USER)),/root,/home/$(VM_USER))/.gnupg/S.gpg-agent
+# The public keys and ownertrust in GNUPGHOME are imported into the VM too;
+# the private keys stay behind the forwarded agent.
+GNUPGHOME      ?= $(HOME)/.gnupg
+GPG            ?= gpg
+GPG_AGENT_SOCK ?= $(GNUPGHOME)/S.gpg-agent.extra
+VM_GPG_SOCK    ?= /run/user/0/gnupg/S.gpg-agent
 
 # --- Exoscale CLI / Object Storage (SOS) ------------------------------------
 # https://community.exoscale.com/tools/command-line-interface/
@@ -150,7 +154,7 @@ RUN_FLAGS   ?=
 RUN_CAPS    ?= SYS_ADMIN
 RUN_SECOPTS ?= label=disable
 run:
-	$(PODMAN) run --rm --network host $(addprefix --cap-add ,$(RUN_CAPS)) \
+	$(PODMAN) run --replace --rm --network host $(addprefix --cap-add ,$(RUN_CAPS)) \
 		$(addprefix --security-opt ,$(RUN_SECOPTS)) \
 		--name $(IMAGE_NAME) $(RUN_FLAGS) $(IMAGE_NAME):$(IMAGE_TAG)
 
@@ -175,8 +179,9 @@ virt-install: qcow2
 # PORT_HTTP/PORT_HTTPS; on macOS pf redirects ports 80/443 on lo0 to those
 # ports, which needs sudo. Runs in the foreground; Ctrl-C stops forwarding
 # (the pf rules stay loaded). If the gpg-agent socket does not exist here,
-# only the HTTP/HTTPS forwards are set up. sshd on the VM needs
-# 'StreamLocalBindUnlink yes' to replace a socket that already exists there.
+# only the HTTP/HTTPS forwards are set up. The image's sshd sets
+# 'StreamLocalBindUnlink yes' (rootfs/etc/ssh/sshd_config.d/) so a stale
+# socket left there by a dropped session is replaced.
 portforward:
 	@test -n "$(VM_HOST)" || { \
 		echo "portforward: no VM address; set VM_HOST=host (or VM_NAME=<domain>)" >&2; \
@@ -195,6 +200,9 @@ endif
 	@echo "https://localhost -> $(SSH_DEST):443 (local :$(PORT_HTTPS))"
 	@if test -S "$(GPG_AGENT_SOCK)"; then \
 		$(SSH) $(SSH_DEST) 'mkdir -p $$(dirname "$(VM_GPG_SOCK)")'; \
+		echo "$(GNUPGHOME) public keys -> $(SSH_DEST)"; \
+		GNUPGHOME='$(GNUPGHOME)' $(GPG) --export | $(SSH) $(SSH_DEST) gpg --import; \
+		GNUPGHOME='$(GNUPGHOME)' $(GPG) --export-ownertrust | $(SSH) $(SSH_DEST) gpg --import-ownertrust; \
 		echo "$(GPG_AGENT_SOCK) -> $(SSH_DEST):$(VM_GPG_SOCK)"; \
 		gpg_fwd='-R $(VM_GPG_SOCK):$(GPG_AGENT_SOCK)'; \
 	else \
