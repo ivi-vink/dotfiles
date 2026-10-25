@@ -1,0 +1,30 @@
+[Unit]
+Description=Homepage dashboard
+Documentation=https://gethomepage.dev
+After=network-online.target podman.socket
+Wants=network-online.target
+# The container talks to rootful podman through the socket mounted at
+# /var/run/docker.sock.
+Requires=podman.socket
+
+[Service]
+# --rm replaces docker's --restart unless-stopped: systemd restarts the
+# service, podman removes the container on exit. rm -f clears a stale
+# container left by an unclean shutdown so --name does not collide.
+ExecStartPre=-/usr/bin/podman rm -f homepage
+ExecStart=/usr/bin/podman run --rm --name homepage \
+    -e HOMEPAGE_ALLOWED_HOSTS=hub.vinkies.net,hub.local.localhost,localhost \
+    -e PUID=1000 \
+    -e PGID=1000 \
+    -p 3000:3000 \
+    -v /var/lib/homepage:/app/config:Z \
+    -v /run/podman/podman.sock:/var/run/docker.sock:ro \
+    ghcr.io/gethomepage/homepage:latest
+ExecStop=/usr/bin/podman stop -t 10 homepage
+Restart=on-failure
+RestartSec=5
+# The first start pulls the image, which can take a while.
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

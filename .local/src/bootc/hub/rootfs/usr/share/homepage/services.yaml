@@ -1,0 +1,8 @@
+# Homepage services (https://gethomepage.dev/configs/services/). Seeded into
+# /var/lib/homepage on boot by tmpfiles.d/homepage.conf; existing files are
+# not overwritten, so edit the live copy at /var/lib/homepage/services.yaml.
+- Hub:
+    - Calendar:
+        href: https://hub.vinkies.net/calendar
+        description: Radicale CalDAV/CardDAV
+        icon: radicale.png

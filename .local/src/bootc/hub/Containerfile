@@ -6,10 +6,17 @@ FROM quay.io/almalinuxorg/almalinux-bootc:10
 
 # Radicale 3 (CalDAV/CardDAV) is only packaged in EPEL. Install epel-release in
 # its own transaction so the epel repository is available to resolve radicale3.
+# Scrub everything the transaction dropped into runtime/state directories:
+# the base image ships an almost empty /var, and /run is tmpfs at boot (bootc
+# lint: nonempty-run-tmp, var-tmpfiles). The radicale user is removed from
+# /etc/passwd & co. again: it is created at boot by systemd-sysusers instead
+# (bootc lint: sysusers; see rootfs/usr/lib/sysusers.d/radicale.conf).
 RUN dnf -y install epel-release && \
     dnf -y install radicale3 && \
     dnf clean all && \
-    rm -rf /var/cache/dnf/* /var/lib/dnf/* /var/log/dnf* /var/log/hawkey.log
+    rm -rf /var/cache /var/log /var/lib/dnf /var/lib/selinux \
+           /var/lib/radicale /run/radicale && \
+    sed -i '/^radicale:/d' /etc/passwd /etc/shadow /etc/group /etc/gshadow
 
 COPY --from=traefik --chown=root:root /usr/local/bin/traefik /usr/local/bin/traefik
 
@@ -21,8 +28,9 @@ COPY rootfs/ /
 # The traefik group is applied at boot (rootfs/usr/lib/tmpfiles.d/traefik.conf).
 RUN chmod -R u=rwX,g=rX,o= /etc/traefik
 
-# Start Traefik and Radicale with the system.
-RUN systemctl enable radicale traefik
+# Start Traefik, Radicale and Homepage with the system. podman.socket gives
+# Homepage read access to the container list (mounted as /var/run/docker.sock).
+RUN systemctl enable radicale traefik homepage podman.socket
 
 # https://bootc-dev.github.io/bootc/bootc-images.html#standard-metadata-for-bootc-compatible-images
 LABEL containers.bootc 1
