@@ -238,6 +238,7 @@ endif
 	$(SSH) -N -o ExitOnForwardFailure=yes \
 		-L $(PORT_HTTP):localhost:80 \
 		-L $(PORT_HTTPS):localhost:443 \
+	  -L 9001:localhost:9001 \
 		$$gpg_fwd \
 		$(SSH_DEST)
 

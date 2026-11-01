@@ -285,6 +285,10 @@
     :repeat t
     "t" #'org-todo))
 
+(use-package dayblock
+  :load-path "~/Programming/Probe/dayblock"
+  :bind ("C-c b" . dayblock))
+
 (use-package visual-regexp
   :ensure t)
 
@@ -507,56 +511,56 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
     (advice-add 'tramp-handle-make-process :around
                 #'my/tramp-direct-async-no-pty)))
 
-(use-package yaml-pro
-  :ensure t
-  :config
-  (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
-  (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
-  (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
+; (use-package yaml-pro
+;   :ensure t
+;   :config
+;   (add-hook 'yaml-mode-hook 'yaml-ts-mode 100)
+;   (add-hook 'yaml-ts-mode-hook 'yaml-pro-ts-mode 100)
+;   (add-hook 'yaml-pro-ts-mode-hook (lambda () (setq-local indent-line-function 'yaml-indent-line)) 100)
 
-  (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
-  (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
-  (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
-  (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-n" #'yaml-pro-ts-next-subtree)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-p" #'yaml-pro-ts-prev-subtree)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-u" #'yaml-pro-ts-up-level)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-d" #'yaml-pro-ts-down-level)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-k" #'yaml-pro-ts-kill-subtree)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-<backspace>" #'yaml-pro-ts-kill-subtree)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-a" #'yaml-pro-ts-first-sibling)
+;   (keymap-set yaml-pro-ts-mode-map "C-M-e" #'yaml-pro-ts-last-sibling)
 
-  (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
-  (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
-  (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
+;   (keymap-set yaml-pro-ts-mode-map "M-<up>" #'yaml-pro-ts-move-subtree-up)
+;   (keymap-set yaml-pro-ts-mode-map "M-<down>" #'yaml-pro-ts-move-subtree-down)
+;   (keymap-set yaml-pro-ts-mode-map "C-c C-f" #'yaml-pro-fold-at-point)
+;   (keymap-set yaml-pro-ts-mode-map "C-c C-o" #'yaml-pro-unfold-at-point)
 
-  (defvar-keymap my/yaml-pro/tree-repeat-mapo
-    :repeat t
-    "n" #'yaml-pro-ts-next-subtree
-    "p" #'yaml-pro-ts-prev-subtree
-    "u" #'yaml-pro-ts-up-level
-    "d" #'yaml-pro-ts-down-level
-    "m" #'yaml-pro-ts-mark-subtree
-    "k" #'yaml-pro-ts-kill-subtree
-    "a" #'yaml-pro-ts-first-sibling
-    "e" #'yaml-pro-ts-last-sibling
-    "SPC" #'my/yaml-pro/set-mark
-    "f" #'yaml-pro-fold-at-point
-    "o" #'yaml-pro-unfold-at-point
-    )
+;   (defvar-keymap my/yaml-pro/tree-repeat-mapo
+;     :repeat t
+;     "n" #'yaml-pro-ts-next-subtree
+;     "p" #'yaml-pro-ts-prev-subtree
+;     "u" #'yaml-pro-ts-up-level
+;     "d" #'yaml-pro-ts-down-level
+;     "m" #'yaml-pro-ts-mark-subtree
+;     "k" #'yaml-pro-ts-kill-subtree
+;     "a" #'yaml-pro-ts-first-sibling
+;     "e" #'yaml-pro-ts-last-sibling
+;     "SPC" #'my/yaml-pro/set-mark
+;     "f" #'yaml-pro-fold-at-point
+;     "o" #'yaml-pro-unfold-at-point
+;     )
 
-  (defun my/yaml-pro/set-mark ()
-    (interactive)
-    (my/region/set-mark 'my/yaml-pro/set-mark))
+;   (defun my/yaml-pro/set-mark ()
+;     (interactive)
+;     (my/region/set-mark 'my/yaml-pro/set-mark))
 
-  (defun my/region/set-mark (command-name)
-    (if (eq last-command command-name)
-      (if (region-active-p)
-        (progn
-          (deactivate-mark)
-          (message "Mark deactivated"))
-        (activate-mark)
-        (message "Mark activated"))
-      (set-mark-command nil)))
-  )
+;   (defun my/region/set-mark (command-name)
+;     (if (eq last-command command-name)
+;       (if (region-active-p)
+;         (progn
+;           (deactivate-mark)
+;           (message "Mark deactivated"))
+;         (activate-mark)
+;         (message "Mark activated"))
+;       (set-mark-command nil)))
+;   )
 
 (use-package editorconfig
   :ensure t
@@ -1270,6 +1274,15 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
               (when-let* ((proj (and dir (project-current nil dir))))
                 (project-root proj)))))))
 
+  (defun my/ghostel-display-name (buf)
+    "Pretty display name for ghostel buffer BUF.
+The terminal title if set (truncated like the picker annotation),
+else the abbreviated `default-directory', else the buffer name."
+    (with-current-buffer buf
+      (or ghostel-title
+          (abbreviate-file-name (directory-file-name default-directory))
+          (buffer-name))))
+
   (defun my/ghostel-buffer-group-title (name)
     "Completion group title for ghostel buffer NAME."
     (if-let* ((root (my/ghostel-buffer-project name)))
@@ -1277,9 +1290,13 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
       "No project"))
 
   (defun my/ghostel-buffer-group (cand transform)
-    "Group-function grouping ghostel buffer completions by project."
+    "Group-function grouping ghostel buffer completions by project.
+CAND is a buffer name.  TRANSFORM non-nil returns CAND's display
+name; nil returns its group title."
     (if transform
-        cand
+        (if-let* ((buf (get-buffer cand)))
+            (my/ghostel-display-name buf)
+          cand)
       (my/ghostel-buffer-group-title cand)))
 
   (defun my/ghostel-current-project-root ()
@@ -1313,7 +1330,8 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 BUFS is a list of live `ghostel-mode' buffers.  Returns the chosen
 buffer.  Defaults to the buffer `ghostel-next' would land on, so
 RET matches the forward-cycle direction.  When GROUP-P is non-nil,
-group candidates by project, with the current project first."
+display pretty names (title or directory), grouped by project,
+with the current project first."
     (unless bufs
       (user-error "No ghostel buffers"))
     (let* ((current (current-buffer))
@@ -1332,7 +1350,7 @@ group candidates by project, with the current project first."
          :default default
          :require-match t
          :category 'buffer
-         :annotate #'ghostel-annotate-buffer
+         :annotate (unless group-p #'ghostel-annotate-buffer)
          :sort nil
          :group (when group-p #'my/ghostel-buffer-group)
          :state (consult--buffer-preview)
@@ -1354,6 +1372,10 @@ Buffers are grouped by project, with the current project first."
                                            (ghostel-project-buffer-list))
                    (append display-buffer--same-window-action
                            '((category . comint)))))
+
+  (defvar-keymap my/ghostel/repeat
+    :repeat t
+    "o" #'ghostel-other)
 
   (transient-define-prefix ghostel-menu ()
     "Ghostel terminal commands."
