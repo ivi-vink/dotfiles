@@ -1,0 +1,4 @@
+#!/bin/sh
+# List LoadBalancer services and their external IPs. Extra args go to kubectl (e.g. --context).
+kubectl get svc -A "$@" -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,TYPE:.spec.type,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip,PORTS:.spec.ports[*].port' |
+  awk 'NR==1 || $3=="LoadBalancer"'

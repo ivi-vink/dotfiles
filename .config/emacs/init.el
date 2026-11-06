@@ -27,14 +27,14 @@
 
 (package-initialize)
 
-(use-package noboo
+(use-package kladblok
   :demand t
   :bind
   (;; ("C-c j" . noboo-menu)
-    ("C-c g" . noboo-log-menu))
+    ("C-c g" . kladblok-log-menu))
   :config
-  (noboo-add-to-agenda nil "log")
-  (noboo-add-to-agenda nil nil "agenda"))
+  (kladblok-add-to-agenda nil "log")
+  (kladblok-add-to-agenda nil nil "agenda"))
 
 (use-package project
   :demand t)
@@ -357,6 +357,32 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
 (put 'flex-noinsert 'completion--adjust-metadata
 	 'completion--flex-adjust-metadata)
 
+(defun my/completions-select-first (&rest _)
+  "Put point on the first *Completions* candidate if none is selected.
+Skip when there is a default and no input yet, so RET still takes it."
+  (when-let* (((not (and minibuffer-default
+                         (string-empty-p (minibuffer-contents)))))
+              (win (minibuffer--completions-visible)))
+    (with-current-buffer (window-buffer win)
+      (goto-char (window-point win))
+      (unless (get-text-property (point) 'completion--string)
+        (first-completion)
+        (set-window-point win (point))))))
+
+(define-minor-mode my/completions-preselect-mode
+  "Always preselect the first candidate in *Completions*, like Vertico."
+  :global t
+  (if my/completions-preselect-mode
+      (advice-add 'minibuffer-completion-help :after #'my/completions-select-first)
+    (advice-remove 'minibuffer-completion-help #'my/completions-select-first)))
+
+(defun my/completions-sort (completions)
+  "Sort COMPLETIONS by history, but keep \"./\" ahead of \"../\"."
+  (let ((sorted (minibuffer-sort-by-history completions)))
+    (if (member "./" sorted)
+        (cons "./" (delete "./" sorted))
+      sorted)))
+
 (defun my/minibuffer-truncate-lines ()
   "Keep minibuffer lines unwrapped."
   (setq truncate-lines t))
@@ -382,7 +408,7 @@ STRING, TABLE, PRED and POINT are the usual `try-completion' args."
   (completion-category-overrides '((eglot-capf (styles flex-noinsert))))
   (completions-format 'one-column)
   (completions-max-height 10)
-  (completions-sort 'historical)
+  (completions-sort #'my/completions-sort)
   (enable-recursive-minibuffers t)
   (read-buffer-completion-ignore-case t)
   (read-file-name-completion-ignore-case t)
@@ -1450,3 +1476,11 @@ Buffers are grouped by project, with the current project first."
   :bind (:map markdown-mode-map ("TAB" . nil))
   :config
   (advice-add 'markdown-indent-line :around #'my/markdown-indent-keep-point))
+
+;; Glojure (Clojure on Go): no dedicated mode, clojure-mode covers the syntax
+(use-package clojure-mode
+  :ensure t
+  :mode ("\\.glj\\'" . clojure-mode))
+
+(use-package elixir-mode
+  :ensure t)
