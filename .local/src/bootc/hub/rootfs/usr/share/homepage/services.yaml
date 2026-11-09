@@ -8,7 +8,7 @@
         icon: stalwart.png
     - VPN:
         href: https://headscale.vinkies.net
-        description: Headscale (Tailscale) control server
+        description: Headscale control server (no web UI; use the CLI)
         icon: tailscale.png
 - Local:
     - Calendar:
@@ -17,5 +17,5 @@
         icon: stalwart.png
     - VPN:
         href: https://headscale.local.localhost
-        description: Headscale (Tailscale) control server
+        description: Headscale control server (no web UI; use the CLI)
         icon: tailscale.png

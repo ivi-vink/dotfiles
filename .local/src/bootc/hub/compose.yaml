@@ -45,6 +45,10 @@ services:
       - "80:80"     # Traefik
       - "443:443"   # Traefik (TLS)
       - "3000:3000" # Homepage
+      # Stalwart's setup wizard (and recovery mode) on plain HTTP. Bound to
+      # loopback so the unprotected bootstrap listener is not exposed; see
+      # rootfs/etc/stalwart/stalwart.env.
+      - "127.0.0.1:8080:8080"
     volumes:
       # Nested podman (homepage.service) shares the host's container
       # storage; the overlay graph driver cannot stack on the

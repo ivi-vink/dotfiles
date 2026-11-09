@@ -2,8 +2,10 @@
 # traefik.yaml); this route exposes the Headscale control plane under
 # https://headscale.vinkies.net and https://headscale.local.localhost,
 # proxying to its loopback HTTP listener. No basicAuth middleware: Tailscale
-# nodes speak headscale's own protocol here (noise/pre-auth keys), and the
-# bundled web UI is read-only.
+# nodes speak headscale's own protocol here (noise/pre-auth keys). Headscale
+# has no built-in web UI: "/" is an intentionally blank landing page (see
+# BlankHandler in hscontrol/handlers.go), so administer it with the
+# `headscale` CLI or add a third-party UI on its own route/host.
 http:
   routers:
     headscale:
