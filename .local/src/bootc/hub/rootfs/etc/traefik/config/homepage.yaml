@@ -1,9 +1,9 @@
 # Traefik serves the hub over TLS on the websecure entry point (see
 # traefik.yaml); this route exposes Homepage as the dashboard for the hub
 # hosts and proxies to its podman-published loopback listener. Homepage
-# handles its own authentication, so unlike Radicale no basicAuth middleware
-# is needed. The radicale routers have longer rules (Host && PathPrefix), so
-# they keep winning for /calendar.
+# handles its own authentication, so no basicAuth middleware is needed.
+# The calendar, VPN and other services live on their own host names, so
+# there are no path-prefix overlaps with this route.
 http:
   routers:
     homepage:

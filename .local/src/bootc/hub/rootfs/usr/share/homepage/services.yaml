@@ -3,18 +3,18 @@
 # not overwritten, so edit the live copy at /var/lib/homepage/services.yaml.
 - Hub:
     - Calendar:
-        href: https://hub.vinkies.net/calendar
-        description: Radicale CalDAV/CardDAV
-        icon: radicale.png
+        href: https://calendar.vinkies.net/admin
+        description: Stalwart CalDAV/CardDAV
+        icon: stalwart.png
     - VPN:
         href: https://headscale.vinkies.net
         description: Headscale (Tailscale) control server
         icon: tailscale.png
 - Local:
     - Calendar:
-        href: https://hub.local.localhost/calendar
-        description: Radicale CalDAV/CardDAV
-        icon: radicale.png
+        href: https://calendar.local.localhost/admin
+        description: Stalwart CalDAV/CardDAV
+        icon: stalwart.png
     - VPN:
         href: https://headscale.local.localhost
         description: Headscale (Tailscale) control server

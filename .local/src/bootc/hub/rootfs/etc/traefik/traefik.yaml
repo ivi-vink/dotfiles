@@ -24,8 +24,7 @@ entryPoints:
 
 
 # Access logs go to stdout in CLF format, which systemd forwards to the
-# journal (journalctl -u traefik). CLF includes the authenticated user,
-# useful for debugging the basicAuth middleware.
+# journal (journalctl -u traefik).
 accessLog: {}
 
 # Dynamic configuration (routers, services, certificates) is loaded from here.

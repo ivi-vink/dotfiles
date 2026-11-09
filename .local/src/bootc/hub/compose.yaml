@@ -21,7 +21,8 @@
 #   duplicity restore --no-encryption \
 #       --s3-endpoint-url http://rustfs:9000 \
 #       --s3-unencrypted-connection \
-#       s3://backups/hub/_var_lib_radicale /restore
+#       s3://backups/hub/_var_lib_stalwart /restore
+# Stalwart's config.json is in its own chain, s3://backups/hub/_etc_stalwart.
 
 services:
   hub:
