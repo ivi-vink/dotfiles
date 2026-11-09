@@ -11,9 +11,8 @@
 server_url: https://headscale.vinkies.net
 
 # Loopback listeners only; Traefik terminates TLS in front and proxies here
-# (see etc/traefik/config/headscale.yaml). 8081 rather than 8080 because
-# Stalwart's HTTP listener uses 8080.
-listen_addr: 127.0.0.1:8081
+# (see etc/traefik/config/headscale.yaml).
+listen_addr: 127.0.0.1:8080
 metrics_listen_addr: 127.0.0.1:9090
 
 # gRPC admin API. The local headscale CLI does not use it - it talks to the

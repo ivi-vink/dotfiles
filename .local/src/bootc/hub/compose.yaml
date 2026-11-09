@@ -21,8 +21,7 @@
 #   duplicity restore --no-encryption \
 #       --s3-endpoint-url http://rustfs:9000 \
 #       --s3-unencrypted-connection \
-#       s3://backups/hub/_var_lib_stalwart /restore
-# Stalwart's config.json is in its own chain, s3://backups/hub/_etc_stalwart.
+#       s3://backups/hub/_var_lib_radicale /restore
 
 services:
   hub:
@@ -45,10 +44,6 @@ services:
       - "80:80"     # Traefik
       - "443:443"   # Traefik (TLS)
       - "3000:3000" # Homepage
-      # Stalwart's setup wizard (and recovery mode) on plain HTTP. Bound to
-      # loopback so the unprotected bootstrap listener is not exposed; see
-      # rootfs/etc/stalwart/stalwart.env.
-      - "127.0.0.1:8080:8080"
     volumes:
       # Nested podman (homepage.service) shares the host's container
       # storage; the overlay graph driver cannot stack on the

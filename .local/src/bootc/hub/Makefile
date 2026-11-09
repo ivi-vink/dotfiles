@@ -15,9 +15,6 @@
 #   make passwd        print a bcrypt hash for Traefik basic auth
 #   make clean       remove build output
 #
-# Stalwart's first start is its setup wizard; see
-# rootfs/etc/stalwart/stalwart.env for the bootstrap and listener steps.
-#
 # Override any variable on the command line, e.g.
 #   make PODMAN='sudo podman' qcow2
 #   make SOS_BUCKET=my-bucket SOS_ZONE=de-fra-1 sos-upload
@@ -148,7 +145,7 @@ qcow2: build output/blueprint.toml
 
 # Run the container image directly with podman and host networking, as an
 # alternative to virt-install + portforward: Traefik binds to this host's
-# localhost:80/443 and Stalwart to localhost:8080, so no SSH forwarding is
+# localhost:80/443 and Radicale to localhost:5232, so no SSH forwarding is
 # needed. The bootc image starts systemd as PID 1, which podman handles
 # automatically. This is a VM image, so its services ship systemd sandboxing
 # (PrivateDevices, ProtectKernel*, ...) that expects the capabilities of a
@@ -324,7 +321,7 @@ secrets:
 		echo "secrets: sops is not installed" >&2; \
 		exit 1; \
 	}
-	@find $(SECRET_DIR) -type f ! -name '.*' | while read -r src; do \
+	@find $(SECRET_DIR) -type f | while read -r src; do \
 		dst=$(ROOTFS_DIR)/$${src#$(SECRET_DIR)/}; \
 		echo "$$src -> $$dst"; \
 		mkdir -p "$${dst%/*}" && \
