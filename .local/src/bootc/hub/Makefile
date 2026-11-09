@@ -211,16 +211,27 @@ virt-install: qcow2
 # only the HTTP/HTTPS forwards are set up. The image's sshd sets
 # 'StreamLocalBindUnlink yes' (rootfs/etc/ssh/sshd_config.d/) so a stale
 # socket left there by a dropped session is replaced.
+#
+# The pf rules live in an in-kernel anchor, so they are lost on reboot, on
+# `pfctl -F all`, or when pf gets disabled by a VPN/security agent. Re-run
+# this target to put them back. -E takes a reference so a later -X from
+# another pf user cannot disable pf under us, and reloading /etc/pf.conf
+# makes sure the main ruleset's rdr-anchor "com.apple/*" exists; without it
+# the anchor is loaded but never evaluated. Rules are split inet/inet6
+# because *.localhost resolves to ::1 before 127.0.0.1 here, and ssh -L
+# listens on both families.
 portforward:
 	@test -n "$(VM_HOST)" || { \
 		echo "portforward: no VM address; set VM_HOST=host (or VM_NAME=<domain>)" >&2; \
 		exit 1; \
 	}
 ifeq ($(shell uname -s),Darwin)
-	@sudo pfctl -e 2>/dev/null || true
+	@sudo pfctl -E -f /etc/pf.conf
 	@printf '%s\n' \
-		'rdr pass on lo0 proto tcp from any to any port 80 -> 127.0.0.1 port $(PORT_HTTP)' \
-		'rdr pass on lo0 proto tcp from any to any port 443 -> 127.0.0.1 port $(PORT_HTTPS)' | \
+		'rdr pass on lo0 inet  proto tcp from any to any port 80  -> 127.0.0.1 port $(PORT_HTTP)' \
+		'rdr pass on lo0 inet  proto tcp from any to any port 443 -> 127.0.0.1 port $(PORT_HTTPS)' \
+		'rdr pass on lo0 inet6 proto tcp from any to any port 80  -> ::1 port $(PORT_HTTP)' \
+		'rdr pass on lo0 inet6 proto tcp from any to any port 443 -> ::1 port $(PORT_HTTPS)' | \
 		sudo pfctl -a '$(PF_ANCHOR)' -f -
 else
 	@echo "portforward: not macOS, skipping pf; forwarding on :$(PORT_HTTP) and :$(PORT_HTTPS)" >&2
